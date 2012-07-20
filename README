@@ -1,0 +1,81 @@
+/* 
+   The numbers in the "sinkmasses" file  are printed (e.g. line 112 in sink.c) 
+   at regular time intervals and for every sink in the simulation:
+*/
+fprintf(sinkmasses,"%17.13g %8d %15.6g %15.6d %15.11g %15.11g %15.11g\n", 
+	All.Time, P[i].ID, P[i].Mass, All.NumCurrentTiStep,
+	P[i].Pos[0], P[i].Pos[1], P[i].Pos[2]);
+
+/* 
+   So that corresponds to the simulation time (in units of 1/(1+z)), the sink
+   ID, sink Mass, simulation timestep, and the x, y, and z position of the 
+   sink(s).
+*/
+
+
+/* 
+   Numbers in "sinkdat" are printed whenever a particle has been accreted 
+   (print command is in both sink.c and accrete.c): 
+*/
+fprintf(sinkdat,"%17.13g %8d %15.6g %15.6g %15.6g %10d %10d %15.6g\n", 
+	All.Time, n_acc, r_sink_phys, 
+	(SphP[k].Entropy/(SphP[k].Gamma-1.0))
+	*pow(SphP[k].Density*a3inv,(SphP[k].Gamma-1.0)), 
+	SphP[num_sink_part].Entropy, P[k].ID, 
+	sink_ID, 
+	SphP[num_sink_part].Pressure);
+
+/*
+  That corresponds to simulation time, number of particles the sink has accreted
+  up to that point in that timestep, the physical accretion radius in kpc, the 
+  internal energy of the accreted particle, the entropy of the accreting sink,
+  ID of the accreting sink, and pressure of the accreting sink.
+*/
+
+/*
+  Numbers in "sinktemp" are the same as in sinkmasses, but only for the main, 
+  first-formed and most massive sink particle.  It's just one line that contains
+  the most recent info on the main sink particle, as opposed to sinkmasses which
+  contains records of the sink characteristics at regular time intervals and for
+  every sink.
+*/
+
+/*
+  Numbers in "sinkmergers" are printed only when two sinks have merged (print 
+  command is in both sink.c and accrete.c):
+*/
+
+fprintf(sinkmergers,"%17.13g %8d %8d %15.6g %15.6g \n", 
+	All.Time, P[k].ID, P[num_sink_part].ID, P[k].Mass, 
+	P[num_sink_part].Mass);
+
+/*
+  This corresponds to simulation time, ID of the first of the two merged sinks,
+  ID of the second of the two merged sinks, mass of the first sink, and mass of
+  the second sink.  After the merger, the 'new' sink is given the ID of the 
+  larger of the two original sinks.  In other words, sink mergers are tracked 
+  such that it's the bigger sink eating the smaller sink.
+*/
+
+/*
+  Numbers in "sinkangmom" are also printed every time a particle has been 
+  accreted (print command is in both sink.c and accrete.c):
+*/
+fprintf(sinkangmom,"%17.13g %15.6g %15.6g %15.6g %15.6g %15.6g %15.6g %15.6g %15.6g %15.6g %10d\n", 
+	All.Time, d_sink_phys, vx_phys, vy_phys, vz_phys, jx, jy, jz, 
+	jtot, sink_Mass, sink_ID);
+/*
+  This is the simulation time,  physical distance in cm between the sink and the
+  accreted particle, velocity in x, y, and z directions, specific angular 
+  momentum of the accreted particle wrt the sink in x, y, and z directions, 
+  total specific angular momentum of the accreted particle, mass of the 
+  accreting sink, and ID of the accreting sink.
+*/
+
+/*
+  As you can tell, a lot of the info printed may be unnecessary or repetitious, 
+  so feel free to modify as you see fit.  Note that there are multiple places in
+  sink.c and accrete.c where it will print to these files.  More specifically, 
+  sinkmerger, sinkangmom, and sinkdat each have three spots in both accrete.c 
+  and sink.c where there is a command to print to these files.
+*/
