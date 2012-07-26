@@ -21,7 +21,7 @@ class Snapshot:
             print key
         
     def close(self):
-        file_id.close()
+        self.file_id.close()
 
 class HDF5Group:
     """
