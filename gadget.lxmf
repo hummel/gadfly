@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<Xdmf>
+  <Domain>
+    <Grid Name="PartType0">
+      <Topology TopologyType="Polyvertex">
+      </Topology>
+      <Geometry GeometryType="XYZ">
+	<DataItem>/PartType0/Coordinates</DataItem>
+      </Geometry>
+      <Attribute>
+	<DataItem>/PartType0/ParticleIDs</DataItem>
+      </Attribute>
+      <Attribute>
+	<DataItem>/PartType0/Velocities</DataItem>
+      </Attribute>
+      <Time Value="0.5"/>
+    </Grid>
+    <Grid Name="PartType1">
+      <Topology TopologyType="Polyvertex">
+      </Topology>
+      <Geometry GeometryType="XYZ">
+	<DataItem>/PartType1/Coordinates</DataItem>
+      </Geometry>
+      <Attribute>
+	<DataItem>/PartType1/ParticleIDs</DataItem>
+      </Attribute>
+      <Attribute>
+	<DataItem>/PartType1/Velocities</DataItem>
+      </Attribute>
+      <Time Value="0.5"/>
+    </Grid>
+  </Domain>
+</Xdmf>
