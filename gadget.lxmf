@@ -11,7 +11,22 @@
 	<DataItem>/PartType0/ParticleIDs</DataItem>
       </Attribute>
       <Attribute>
+	<DataItem>/PartType0/Density</DataItem>
+      </Attribute>
+      <Attribute>
 	<DataItem>/PartType0/Velocities</DataItem>
+      </Attribute>
+      <Attribute>
+	<DataItem>/PartType0/Adiabatic index</DataItem>
+      </Attribute>
+      <Attribute>
+	<DataItem>/PartType0/ChemicalAbundances</DataItem>
+      </Attribute>
+      <Attribute>
+	<DataItem>/PartType0/Masses</DataItem>
+      </Attribute>
+      <Attribute>
+	<DataItem>/PartType0/SmoothingLength</DataItem>
       </Attribute>
       <Time Value="0.5"/>
     </Grid>
@@ -23,6 +38,9 @@
       </Geometry>
       <Attribute>
 	<DataItem>/PartType1/ParticleIDs</DataItem>
+      </Attribute>
+      <Attribute>
+	<DataItem>/PartType0/Masses</DataItem>
       </Attribute>
       <Attribute>
 	<DataItem>/PartType1/Velocities</DataItem>
