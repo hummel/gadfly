@@ -8,9 +8,10 @@ import h5py
 
 class Snapshot:
     """
-    Base Class for Gadget2 HDF5 snapshot files
+    Class for Gadget2 HDF5 snapshot files
     """
     def __init__(self, filename):
+        self.filename = filename
         self.file_id = h5py.File(filename, 'r')
         self.header = Header(self.file_id)
         self.gas = PartTypeX(self.file_id, 0)
@@ -31,6 +32,9 @@ class HDF5Group:
         for key in vars(self):
             print key
 
+    def get(self,key):
+        return vars(self)[key].value
+        
 class Header(HDF5Group):
     """
     Class for header information from Gadget2 HDF5 snapshots.
@@ -42,7 +46,7 @@ class Header(HDF5Group):
             
 class PartTypeX(HDF5Group):
     """
-    Class for dark matter particle info.
+    Class for generic particle info.
     """
     def __init__(self, file_id, ptype):
         group = file_id['PartType'+str(ptype)]
