@@ -1,52 +1,33 @@
-# particles3D.py
-# plot particle positions in 3D
+#!/usr/bin/env python
+# gas_phase.py
 # Jacob Hummel
 
 import os
-import sys
-
 import numpy
-import h5py
 from matplotlib import pyplot
-import mpl_toolkits.axes_grid1 as axes_grid
 
-from gadgetHDF5 import *
+import pyGadget
 #===============================================================================
 
 def plot_phase(path, write_dir, stride=50):
     snap = path[-8:-5]
-    f = h5py.File(path,'r')
+    wpath = write_dir+snap+'-phase.png'
     
-    # Code unit conversions
-    unitMass_g = 1.989e43 # g
-    unitLength_cm = 3.085678e21 # cm
-    unitVelocity_cgs= 1.0e5
-    unitDensity_cgs= unitMass_g / unitLength_cm**3
-    unitTime_s= unitLength_cm / unitVelocity_cgs
-    unitDensity_cgs= unitMass_g / unitLength_cm**3
-    unitPressure_cgs= unitMass_g / unitLength_cm/ unitTime_s**2
-    unitEnergy_cgs= unitMass_g * unitLength_cm**2 / unitTime_s**2
-    # Fundamental constants
-    k_B = 1.3806e-16 # erg/K
-    m_H = 1.6726e-24 # g
-    GRAVITY = 6.6726e-8 # dyne * cm**2 / g**2
-    G = GRAVITY / unitLength_cm**3 * unitMass_g * unitTime_s**2
-    X_h = 0.76 # Hydrogen Mass Fraction
-
-    # Set hdf5 pathways
-    header = f['Header']
+    units = pyGadget.units.cgs
+    constants = pyGadget.constants
+    snapshot = pyGadget.gadgetHDF5.Snapshot(path)
+    
     # Read relevant attributes
-    boxSize = header.attrs.get('BoxSize')
-    h = header.attrs.get("HubbleParam") # H = 100*h
-    redshift = header.attrs.get('Redshift')
-    f.close()
+    h = snapshot.header.HubbleParam # H = 100*h
+    redshift = snapshot.header.Redshift
 
-    particle_mass = partTypeN_readHDF5(path, 'Masses', 'gas')
-    dens = partTypeN_readHDF5(path, 'Density', 'gas')
-    energy =  partTypeN_readHDF5(path, 'InternalEnergy', 'gas')
-    gamma =  partTypeN_readHDF5(path, 'Adiabatic index', 'gas')
-    abundances = partTypeN_readHDF5(path, 'ChemicalAbundances', 'gas')
-
+    particle_mass = snapshot.gas.get('Masses')
+    dens = snapshot.gas.get('Density')
+    energy =  snapshot.gas.get('InternalEnergy')
+    gamma =  snapshot.gas.get('Adiabatic_index')
+    abundances = snapshot.gas.get('ChemicalAbundances')
+    snapshot.close()
+    
     # Initialization Complete --- Begin Analysis
     print 'Analyzing...'
     minimum = numpy.amin(particle_mass)
@@ -58,9 +39,9 @@ def plot_phase(path, write_dir, stride=50):
     abundances = abundances[refined]
 
     # Unit Conversions
-    dens = dens * unitDensity_cgs * h*h * (1 + redshift)**3
-    dens = dens * X_h / m_H
-    energy = energy * unitEnergy_cgs / unitMass_g
+    dens = dens * units.Density_cgs * h*h * (1 + redshift)**3
+    dens = dens * constants.X_h / constants.m_H
+    energy = energy * units.Energy_cgs / units.Mass_g
 
     # Chemical Abundances
     # 0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
@@ -70,7 +51,7 @@ def plot_phase(path, write_dir, stride=50):
     mu = 1 / mu # mean molecular weight
 
     # Derived Properties
-    temp = (mu * m_H / k_B) * energy * (gamma-1)
+    temp = (mu * constants.m_H / constants.k_B) * energy * (gamma-1)
     #hot = numpy.where(temp > 8e2*dens**.5)[0]
     electronfrac = abundances[:,1] + abundances[:,4] + abundances[:,5]
 
@@ -134,15 +115,17 @@ def plot_phase(path, write_dir, stride=50):
 
     title = fig.suptitle('Redshift: %.3f' %(redshift,))
     fig.subplots_adjust(top=0.94, left=0.085, right=.915)
-    pyplot.savefig(write_dir+snap+'-phase.png', 
+    pyplot.savefig(wpath, 
                    bbox_extra_artists=(title,),
                    bbox_inches='tight')
 #===============================================================================
 
 if __name__ == '__main__':
     pyplot.ioff()
-    wdir = os.getenv('HOME')+'/data/simplots/vanilla/'
-    for snap in range(224,227): 
-        path = (os.getenv('HOME')+'/sim/vanilla/snapshot_'+
+    wdir = os.getenv('HOME')+'/data/simplots/vanilla-100/'
+#    wdir = os.getenv('HOME')+'/data/simplots/r900/'
+    for snap in range(467,468):
+        path = (os.getenv('HOME')+'/sim/vanilla-100/snapshot_'+
+#        path = ('/scratch/cerberus/d4/jhummel/snapshot_'+
                 '{:0>3}'.format(snap)+'.hdf5')
         plot_phase(path, wdir, stride=50)
