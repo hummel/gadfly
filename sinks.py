@@ -26,29 +26,25 @@ class SinkData(object):
         self.sink_pressure = sinkdata['col8']
 
 class SingleSink(SinkData):
-    def __init__(self, filename, number, sink_id=False):
+    def __init__(self, filename, nform=None, ID=None):
         super(SingleSink,self).__init__(filename)
-        self.unique_id, unique_index = np.unique(self.sink_id,
-                                                      return_index=True)
+        if id:
+            # Restrict to a single sink
+            lines = np.where(self.sink_id == ID)
+            for key in vars(self).keys():
+                vars(self)[key] = vars(self)[key][lines]
+
+            # Select final output for each timestep
+            tsteps = np.unique(self.time)
+            selection = []
+            for t in tsteps:
+                times = np.where(self.time == t)[0]
+                selection.append(times[-1])
+            for key in vars(self).keys():
+                vars(self)[key] = vars(self)[key][selection]
+        '''
         if number <= self.unique_id.size:
             self.sink_num = number
         else:
             raise KeyError
-        
-
-
-        '''
-
-    # Select only main sink
-    sink0 = sinkdata['col7'][0]
-    sinkdata = sinkdata[np.where(sinkdata['col7'] == sink0)]
-    # Select final output for each timestep
-    tpoints = sinkdata['col1']
-    unique = np.unique(tpoints)
-    selection = []
-    for t in unique:
-        times = np.where(tpoints == t)[0]
-        selection.append(times[-1])
-    sinkdata = sinkdata[selection]
-    print sinkdata
         '''
