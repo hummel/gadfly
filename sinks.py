@@ -77,4 +77,4 @@ class SingleSink(SinkData):
             selection.append(times[-1])
         for key in vars(self).keys():
                 vars(self)[key] = vars(self)[key][selection]
-        self.id_ = id_
+        self.sink_id = id_
