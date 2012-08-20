@@ -40,8 +40,8 @@ def plot_phase(path, write_dir, stride=50):
 
     # Unit Conversions
     dens = dens * units.Density_cgs * h*h * (1 + redshift)**3
-    dens = dens * constants.X_h / constants.m_H
-    energy = energy * units.Energy_cgs / units.Mass_g
+    dens = dens * constants.X_h / constants.m_H # number Density
+    energy = energy * units.Energy_cgs / units.Mass_g #specific Energy
 
     # Chemical Abundances
     # 0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
