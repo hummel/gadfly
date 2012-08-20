@@ -6,6 +6,7 @@ Classes and routines for analyzing sink data output by gadget.
 import warnings
 import numpy as np
 import asciitable
+import units
 #===============================================================================
 
 class SinkData(object):
@@ -19,12 +20,18 @@ class SinkData(object):
 
         self.time = sinkdata['col1']
         self.npart_acc = sinkdata['col2']
-        self.r_sink_phys = sinkdata['col3']
+        self.radius = sinkdata['col3']
         self.part_internal_energy = sinkdata['col4']
-        self.sink_entropy = sinkdata['col5']
+        self.entropy = sinkdata['col5']
         self.part_id = sinkdata['col6']
         self.sink_id  = sinkdata['col7']
-        self.sink_pressure = sinkdata['col8']
+        self.pressure = sinkdata['col8']
+
+        ### Convert units
+        self.time = self.time*units.Time_yr
+        # npart_acc is a simple integer (no units)
+        self.pressure = self.pressure*units.Pressure_cgs
+        self.radius = self.radius*units.Length_AU
 
 class SingleSink(SinkData):
     '''
