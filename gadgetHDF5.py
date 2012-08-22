@@ -241,21 +241,21 @@ class PartTypeSPH(PartTypeX):
             self.load_number_density(conv, no_h, comoving)
             return self.ndensity
 
-    def load_internal_energy(self, conv=units.Energy_cgs):
+    def load_internal_energy(self, conv=units.Energy_cgs/units.Mass_g):
         """
         Load internal particle energies per unit mass in cgs units (default)
         conv: unit conversion from code units
         """
         self.energy = self._InternalEnergy.value*conv
-            self.ndensity = self.ndensity 
 
-    def get_number_density(self, conv=units.Density_cgs):
+
+    def get_internal_energy(self, conv=units.Density_cgs/units.Mass_g):
         """
         Return Particle Densities in cgs units (default)
         conv: unit conversion from code units
         """
         try:
-            return self.ndensity
+            return self.energy
         except AttributeError:
-            self.load_number_density(conv, no_h, comoving)
-            return self.ndensity
+            self.load_internal_energy(conv)
+            return self.energy
