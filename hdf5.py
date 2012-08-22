@@ -1,30 +1,10 @@
-# gadgetHDF5.py
+# hdf5.py
 # Jacob Hummel
 """
 This module contains classes for reading Gadget2 HDF5 snapshot data.
 """
-
-import h5py
 import units
 import constants
-
-class Snapshot:
-    """
-    Class for Gadget2 HDF5 snapshot files
-    """
-    def __init__(self, filename):
-        self.filename = filename
-        self.file_id = h5py.File(filename, 'r')
-        self.header = Header(self.file_id)
-        self.dm = PartTypeDM(self.file_id)
-        self.gas = PartTypeSPH(self.file_id)
-        
-    def keys(self):
-        for key in self.file_id.keys():
-            print key
-        
-    def close(self):
-        self.file_id.close()
 
 class HDF5Group(object):
     """
@@ -159,12 +139,3 @@ class PartTypeX(HDF5Group):
         self.load_coords(no_h=no_h, comoving=comoving)
         self.load_velocities()
         self.load_PIDs()
-
-class PartTypeDM(PartTypeX):
-    """
-    Class for Dark Matter particles.
-    Available to extend class PartTypeX for Dark Matter specific applications.
-    """
-    def __init__(self, file_id):
-        super(PartTypeDM,self).__init__(file_id,1)
-
