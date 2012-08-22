@@ -91,7 +91,7 @@ class PartTypeSPH(hdf5.PartTypeX):
         self.energy = self._InternalEnergy.value*conv
 
 
-    def get_internal_energy(self, conv=units.Density_cgs/units.Mass_g):
+    def get_internal_energy(self, conv=units.Energy_cgs/units.Mass_g):
         """
         Return Particle Densities in cgs units (default)
         conv: unit conversion from code units
@@ -129,7 +129,7 @@ class PartTypeSPH(hdf5.PartTypeX):
         self.abundances = self._ChemicalAbundances.value
 
 
-    def get_gamma(self):
+    def get_abundances(self):
         """
         Return chemical abundances array.
 
@@ -142,4 +142,36 @@ class PartTypeSPH(hdf5.PartTypeX):
             self.load_abundances()
             return self.abundances
 
-    
+    def load_sinks(self):
+        """
+        Load particle sink values.
+        """
+        self.sink_value = self._SinkValue.value
+
+
+    def get_sinks(self):
+        """
+        Return particle sink values.
+        """
+        try:
+            return self.sink_value
+        except AttributeError:
+            self.load_sinks()
+            return self.sink_value
+
+    def load_smoothing_length(self):
+        """
+        Load particle smoothing lengths.
+        """
+        self.smoothing_length = self._SmoothingLength.value
+
+
+    def get_smoothing_length(self):
+        """
+        Return particle smoothing lengths.
+        """
+        try:
+            return self.smoothing_length
+        except AttributeError:
+            self.load_smoothing_length()
+            return self.smoothing_length
