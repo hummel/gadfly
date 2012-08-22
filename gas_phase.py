@@ -13,19 +13,19 @@ def plot_phase(path, write_dir, stride=50):
     snap = path[-8:-5]
     wpath = write_dir+snap+'-phase.png'
     
-    units = pyGadget.units.cgs
+    units = pyGadget.units
     constants = pyGadget.constants
-    snapshot = pyGadget.gadgetHDF5.Snapshot(path)
+    snapshot = pyGadget.snapshot.Snapshot(path)
     
     # Read relevant attributes
     h = snapshot.header.HubbleParam # H = 100*h
     redshift = snapshot.header.Redshift
 
-    particle_mass = snapshot.gas.get('Masses')
-    dens = snapshot.gas.get('Density')
-    energy =  snapshot.gas.get('InternalEnergy')
-    gamma =  snapshot.gas.get('Adiabatic_index')
-    abundances = snapshot.gas.get('ChemicalAbundances')
+    particle_mass = snapshot.gas.get_masses()
+    dens = snapshot.gas.get_number_density()
+    energy =  snapshot.gas.get_internal_energy()
+    gamma =  snapshot.gas.get_gamma()
+    abundances = snapshot.gas.get_abundances()
     snapshot.close()
     
     # Initialization Complete --- Begin Analysis
@@ -38,11 +38,6 @@ def plot_phase(path, write_dir, stride=50):
     gamma = gamma[refined]
     abundances = abundances[refined]
 
-    # Unit Conversions
-    dens = dens * units.Density_cgs * h*h * (1 + redshift)**3
-    dens = dens * constants.X_h / constants.m_H # number Density
-    energy = energy * units.Energy_cgs / units.Mass_g #specific Energy
-
     # Chemical Abundances
     # 0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
     H2I = abundances[:,0]
@@ -50,8 +45,13 @@ def plot_phase(path, write_dir, stride=50):
     mu = (0.24/4.0) + ((1.0-h2frac)*0.76) + (h2frac*.76/2.0)
     mu = 1 / mu # mean molecular weight
 
+
+    e = energy * units.Energy_cgs / units.Mass_g
+    print '%.4e' %e.max(), '%.4e' %e.min()
     # Derived Properties
     temp = (mu * constants.m_H / constants.k_B) * energy * (gamma-1)
+    print '%.5e' %temp.max()
+    print '%.5e' %temp.min()
     #hot = numpy.where(temp > 8e2*dens**.5)[0]
     electronfrac = abundances[:,1] + abundances[:,4] + abundances[:,5]
 
@@ -121,7 +121,7 @@ def plot_phase(path, write_dir, stride=50):
 #===============================================================================
 
 if __name__ == '__main__':
-    pyplot.ioff()
+    #pyplot.ioff()
     wdir = os.getenv('HOME')+'/data/simplots/vanilla-100/'
 #    wdir = os.getenv('HOME')+'/data/simplots/r900/'
     for snap in range(467,468):
