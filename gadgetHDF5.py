@@ -135,7 +135,7 @@ class PartTypeX(HDF5Group):
         try:
             return self.velocities
         except AttributeError:
-            self.load_coords(conv)
+            self.load_velocities(conv)
             return self.velocities
 
     def load_PIDs(self):
@@ -156,7 +156,7 @@ class PartTypeX(HDF5Group):
 
     def load_all(self, no_h=True, comoving=False):
         self.load_masses(no_h=no_h)
-        self.load_coordinates(no_h=no_h, comoving=comoving)
+        self.load_coords(no_h=no_h, comoving=comoving)
         self.load_velocities()
         self.load_PIDs()
 
@@ -168,94 +168,3 @@ class PartTypeDM(PartTypeX):
     def __init__(self, file_id):
         super(PartTypeDM,self).__init__(file_id,1)
 
-class PartTypeSPH(PartTypeX):
-    """
-    Class for SPH particles.
-    Extends class PartTypeX to include gas physics stuff.
-    """
-    def __init__(self, file_id):
-        super(PartTypeSPH,self).__init__(file_id,0)
-
-    def load_density(self, conv=units.Density_cgs, no_h=True, comoving=False):
-        """
-        Load Particle Densities in cgs units (default)
-        conv: unit conversion from code units
-        no_h: if True, remove dependence on hubble parameter.
-        comoving: if False, remove dependence on scale factor.
-        """
-        try:
-            del self.ndensity
-        except AttributeError:
-            pass
-        self.density = self._Density.value*conv
-        if no_h:
-            h = self._header.HubbleParam
-            self.density = self.density * h*h
-        if not comoving:
-            ainv = self._header.Redshift + 1 # 1/(scale factor)
-            self.density = self.density * ainv**3
-
-    def get_density(self, conv=units.Density_cgs, no_h=True, comoving=False):
-        """
-        Return Particle Densities in cgs units (default)
-        conv: unit conversion from code units
-        no_h: if True, remove dependence on hubble parameter.
-        comoving: if False, remove dependence on scale factor.
-        """
-        try:
-            return self.density
-        except AttributeError:
-            self.load_density(conv, no_h, comoving)
-            return self.density
-
-    def load_number_density(self, conv=units.Density_cgs, no_h=True, comoving=False):
-        """
-        Load Particle Number Densities in cgs units (default)
-        conv: unit conversion from code units
-        no_h: if True, remove dependence on hubble parameter.
-        comoving: if False, remove dependence on scale factor.
-        """
-        try:
-            del self.density
-        except AttributeError:
-            pass
-        self.ndensity = self._Density.value*conv
-        self.ndensity = self.ndensity * constants.X_h / constants.m_H
-        if no_h:
-            h = self._header.HubbleParam
-            self.ndensity = self.density * h*h
-        if not comoving:
-            ainv = self._header.Redshift + 1 # 1/(scale factor)
-            self.ndensity = self.ndensity * ainv**3
-
-    def get_number_density(self, conv=units.Density_cgs, no_h=True, comoving=False):
-        """
-        Return Particle Densities in cgs units (default)
-        conv: unit conversion from code units
-        no_h: if True, remove dependence on hubble parameter.
-        comoving: if False, remove dependence on scale factor.
-        """
-        try:
-            return self.ndensity
-        except AttributeError:
-            self.load_number_density(conv, no_h, comoving)
-            return self.ndensity
-
-    def load_internal_energy(self, conv=units.Energy_cgs/units.Mass_g):
-        """
-        Load internal particle energies per unit mass in cgs units (default)
-        conv: unit conversion from code units
-        """
-        self.energy = self._InternalEnergy.value*conv
-
-
-    def get_internal_energy(self, conv=units.Density_cgs/units.Mass_g):
-        """
-        Return Particle Densities in cgs units (default)
-        conv: unit conversion from code units
-        """
-        try:
-            return self.energy
-        except AttributeError:
-            self.load_internal_energy(conv)
-            return self.energy
