@@ -1,6 +1,9 @@
 <?xml version="1.0" ?>
 <Xdmf>
   <Domain>
+    <Time TimeType="Single"> 
+      <DataItem>/Header/Time</DataItem>
+    </Time>
     <Grid Name="PartType0">
       <Topology TopologyType="Polyvertex">
       </Topology>
@@ -28,8 +31,8 @@
       <Attribute>
 	<DataItem>/PartType0/SmoothingLength</DataItem>
       </Attribute>
-      <Time Value="0.5"/>
     </Grid>
+
     <Grid Name="PartType1">
       <Topology TopologyType="Polyvertex">
       </Topology>
@@ -45,7 +48,6 @@
       <Attribute>
 	<DataItem>/PartType1/Velocities</DataItem>
       </Attribute>
-      <Time Value="0.5"/>
     </Grid>
   </Domain>
 </Xdmf>
