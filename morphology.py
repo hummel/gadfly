@@ -14,6 +14,12 @@ import pp
 import pyGadget
 #===============================================================================
 
+length_unit = pyGadget.units.Length_AU
+box = 1e3
+depth = 200
+
+pps = 1e3
+
 write_dir = os.getenv('HOME')+'/data/simplots/vanilla-100/'
 for snap in range(467,468):
     path = (os.getenv('HOME')+'/sim/vanilla-100/snapshot_'+
@@ -32,7 +38,7 @@ for snap in range(467,468):
 
     particle_mass = snapshot.gas.get_masses()
     dens = snapshot.gas.get_number_density()
-    pos = snapshot.gas.get_coords(pyGadget.units.Length_AU)
+    pos = snapshot.gas.get_coords(length_unit)
     snapshot.close()
 
     # Initialization Complete --- Begin Analysis
@@ -53,9 +59,7 @@ for snap in range(467,468):
     y = pos[:,1] - center[1]
     z = pos[:,2] - center[2]
 
-    box = 5e3
-    depth = box/100
-    slice_ = numpy.where(numpy.abs(z) < depth)[0]
+    slice_ = numpy.where(numpy.abs(z) < depth/2)[0]
     dens = dens[slice_]
     x = x[slice_]
     y = y[slice_]
@@ -76,7 +80,6 @@ for snap in range(467,468):
     print ' density:: max: %.3e min: %.3e' %(dens.max(),dens.min())
     print ' Array size:', dens.size
 
-    pps = 1e1
     xres = yres = box/pps
     xvals = numpy.arange(-box/2,box/2,xres)
     yvals = numpy.arange(-box/2,box/2,yres)
@@ -84,11 +87,11 @@ for snap in range(467,468):
     print 'Mesh created.'
 
     print 'Building image...'
-    points = [(i,j) for i in range(xvals.size) for j in range(yvals.size)]
-    print points
+    #points = [(i,j) for i in range(xvals.size) for j in range(yvals.size)]
+    #print points
 
     print 'Triangulating...'
-    zi = griddata(x,y,dens,xi,yi)
+    zi = griddata(x,y,dens**2,xi,yi)
     print 'Triangulation complete.'
 
     print 'Plotting...'
