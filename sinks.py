@@ -6,7 +6,7 @@ import os
 from matplotlib import pyplot
 
 import pyGadget
-from pyGadget.units import cgs as units
+from pyGadget import units
 #===============================================================================
 
 def plot_sinkdat(path, write_dir):
@@ -54,5 +54,5 @@ def plot_sinkdat(path, write_dir):
 if __name__ == '__main__':
     #pyplot.ioff()
     wdir = os.getenv('HOME')+'/data/simplots/vanilla-100/'
-    path = os.getenv('HOME')+'/research/work/v100/sinkdat'
+    path = os.getenv('HOME')+'/work/v100/sinkdat'
     plot_sinkdat(path, wdir)
