@@ -3,6 +3,7 @@
 """
 Classes and routines for analyzing sink data output by gadget.
 """
+import sys
 import warnings
 import numpy as np
 import asciitable
@@ -17,7 +18,7 @@ class SinkData(object):
             sinkdata = asciitable.read(filename)
         except IOError:
             print "Specified sinkdata file not found!"
-
+            sys.exit()
         self.time = sinkdata['col1']
         self.npart_acc = sinkdata['col2']
         self.radius = sinkdata['col3']
