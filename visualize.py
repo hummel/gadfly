@@ -16,6 +16,7 @@ import pyGadget
 
 length_unit = pyGadget.units.Length_AU
 pps = 1e3 # 'pixels' per side
+hsml_factor = 1.7
 
 write_dir = os.getenv('HOME')+'/data/simplots/vanilla-100/'
 for snap in range(467,468):
@@ -100,54 +101,50 @@ for snap in range(467,468):
     print 'Mesh created.'
 
 
-    """
+
 #===============================================================================
     IDmass = 0.0
     IDsink = 0
     flag_i = 0
     flag_j = 0
-        
-    for i = 0 i < N_grid i++):
-        for(j = 0 j < N_grid j++):
-            n_grid1[i][j] = 0
-            grid1[i][j] = 0.0
-            
+    h = numpy.fmax(hsml_factor * smL, width / pps / 2.0)
     for n in range(dens.size):
-        h = fmax(hsml_factor * P[n].Hsml, width / N_grid / 2.0)
         # if sink smoothing link is too inflated, 
         # artificially set it to accretion radius value
-        if(P[n].sink > 0):
-            h = hsml_factor * 3.57101e-07
-        weight = P[n].nh * P[n].nh
+        if(sinkval[n] > 0):
+            h[n] = hsml_factor * 3.57101e-07
+
+        weight = dens*dens
         i = 0
         j=0
-        i_min = int((P[n].Pos[0]-h-center_x+width/2.0)/width*N_grid)
+        i_min = int((x[n] - h[n] + width / 2.0) / width * pps)
         if(i_min < 0):
             i_min = 0
-        i_max = int((P[n].Pos[0]+h-center_x+width/2.0)/width*N_grid)
-        if(i_max > N_grid-1):
-            i_max = N_grid-1
-        j_min = int((P[n].Pos[1]-h-center_y+width/2.0)/width*N_grid)
+        i_max = int((x[n] + h[n] + width / 2.0) / width * pps)
+        if(i_max > pps-1):
+            i_max = pps-1
+        j_min = int((y[n] - h[n] + width / 2.0) / width * pps)
         if(j_min < 0):
             j_min = 0
-        j_max = int((P[n].Pos[1]+h-center_y+width/2.0)/width*N_grid)
-        if(j_max > N_grid-1):
-            j_max = N_grid-1
-	      
+        j_max = int((y[n] + h[n] + width / 2.0) / width * pps)
+        if(j_max > pps-1):
+            j_max = pps-1
+        print i_min, i_max, j_min, j_max
+    """
 	      do
 		
 		  if(i >= i_min && i <= i_max)
 		    
 		      flag_i = 1
 		      
-		      center_i = center_x - width / 2.0 + (i + 0.5) * width / (double) N_grid
+		      center_i = center_x - width / 2.0 + (i + 0.5) * width / (double) pps
 		      do
 			
 			  if(j >= j_min && j <= j_max)
 			    
 			      flag_j = 1
 			      
-			      center_j = center_y - width / 2.0 + (j + 0.5) * width / (double) N_grid
+			      center_j = center_y - width / 2.0 + (j + 0.5) * width / (double) pps
 			      
 			      x2 = ((P[n].Pos[0] - center_i) * (P[n].Pos[0] - center_i) + (P[n].Pos[1] - center_j) * (P[n].Pos[1] - center_j)) / h / h
 			      
@@ -179,7 +176,7 @@ for snap in range(467,468):
 			  
 			  j++
 			
-		      while((flag_j == 0 || flag_j == 1) && j < N_grid)
+		      while((flag_j == 0 || flag_j == 1) && j < pps)
 		      
 		      j = 0
 		    
@@ -194,15 +191,15 @@ for snap in range(467,468):
 		  
 		  i++
 		
-	      while((flag_i == 0 || flag_i == 1) && i < N_grid)
+	      while((flag_i == 0 || flag_i == 1) && i < pps)
 	      
 	      i = 0
 	    
 	
       
-      for(i = 0 i < N_grid i++)
+      for(i = 0 i < pps i++)
 	
-	  for(j = 0 j < N_grid j++)
+	  for(j = 0 j < pps j++)
 	    
 	      if(n_grid1[i][j] > 0)
 		
