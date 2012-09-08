@@ -8,14 +8,13 @@ import numpy
 from matplotlib import pyplot
 from matplotlib.mlab import griddata
 
-from mpl_toolkits.mplot3d import Axes3D
 import pp
 
 import pyGadget
 #===============================================================================
 
-length_unit = pyGadget.units.Length_AU
-pps = 1e3 # 'pixels' per side
+length_unit = pyGadget.units.Length_kpc
+pps = 1000 # 'pixels' per side
 hsml_factor = 1.7
 
 write_dir = os.getenv('HOME')+'/data/simplots/vanilla-100/'
@@ -24,7 +23,7 @@ for snap in range(467,468):
             '{:0>3}'.format(snap)+'.hdf5')
 
     snap = path[-8:-5]
-    wpath = write_dir+snap+'-morphology.png'
+    wpath = write_dir+snap+'-dens.png'
 
     units = pyGadget.units
     constants = pyGadget.constants
@@ -37,10 +36,10 @@ for snap in range(467,468):
 
     particle_mass = snapshot.gas.get_masses()
     dens = snapshot.gas.get_number_density()
-    pos = snapshot.gas.get_coords(length_unit)
+    pos = snapshot.gas.get_coords(length_unit,no_h=False, comoving=True)
     smL = snapshot.gas.get_smoothing_length()
     sinkval = snapshot.gas.get_sinks()
-    snapshot.close()
+    snapshot.close() 
 
     # Initialization Complete --- Begin Analysis
     print 'Analyzing...'
@@ -57,8 +56,8 @@ for snap in range(467,468):
     #pos = pos[refined]
     print 'Refinement complete.'
 
-    width= 1e3
-    depth= 200
+    width= 10
+    depth= 5
     center = pos[dens.argmax()]
     x = pos[:,0] - center[0]
     y = pos[:,1] - center[1]
@@ -98,136 +97,73 @@ for snap in range(467,468):
     yvals = numpy.arange(-width/2,width/2,yres)
     xi,yi = numpy.meshgrid(xvals,yvals)
     zi = numpy.zeros_like(xi)
-    print 'Mesh created.'
+    nzi = numpy.zeros_like(zi)
 
 
 
 #===============================================================================
-    IDmass = 0.0
-    IDsink = 0
-    flag_i = 0
-    flag_j = 0
-    h = numpy.fmax(hsml_factor * smL, width / pps / 2.0)
+    zmin = 1e-2
+    zmax = 1e1
+    hsml = numpy.fmax(hsml_factor * smL, width / pps / 2.0)
+    i_min = (x - hsml + width/2.0) / width*pps
+    i_max = (x + hsml + width/2.0) / width*pps
+    j_min = (y - hsml + width/2.0) / width*pps
+    j_max = (y + hsml + width/2.0) / width*pps
+    weight = dens*dens
+
+    print 'Filling mesh...'
     for n in range(dens.size):
+        percent = 100*n/dens.size
+        if n%(dens.size/100)==0:
+            print '%2i%%' %percent
         # if sink smoothing link is too inflated, 
         # artificially set it to accretion radius value
         if(sinkval[n] > 0):
-            h[n] = hsml_factor * 3.57101e-07
+            print 'sinkval > 0 !!!'
+            hsml[n] = hsml_factor * 3.57101e-07
 
-        weight = dens*dens
-        i = 0
-        j=0
-        i_min = int((x[n] - h[n] + width / 2.0) / width * pps)
-        if(i_min < 0):
-            i_min = 0
-        i_max = int((x[n] + h[n] + width / 2.0) / width * pps)
-        if(i_max > pps-1):
-            i_max = pps-1
-        j_min = int((y[n] - h[n] + width / 2.0) / width * pps)
-        if(j_min < 0):
-            j_min = 0
-        j_max = int((y[n] + h[n] + width / 2.0) / width * pps)
-        if(j_max > pps-1):
-            j_max = pps-1
-        print i_min, i_max, j_min, j_max
-    """
-	      do
-		
-		  if(i >= i_min && i <= i_max)
-		    
-		      flag_i = 1
-		      
-		      center_i = center_x - width / 2.0 + (i + 0.5) * width / (double) pps
-		      do
-			
-			  if(j >= j_min && j <= j_max)
-			    
-			      flag_j = 1
-			      
-			      center_j = center_y - width / 2.0 + (j + 0.5) * width / (double) pps
-			      
-			      x2 = ((P[n].Pos[0] - center_i) * (P[n].Pos[0] - center_i) + (P[n].Pos[1] - center_j) * (P[n].Pos[1] - center_j)) / h / h
-			      
-			      if(x2 <= 1.0)
-				
-				  x = sqrt(x2)
-				  
-				  if(x <= 0.5)
-				    W_x = 1.0 - 6.0 * x * x + 6.0 * x * x * x
-				  else
-				    W_x = 2.0 * (1.0 - x) * (1.0 - x) * (1.0 - x)
-				  
-				  grid1[i][j] += weight * P[n].nh * W_x
-				  
-				  n_grid1[i][j] += weight * W_x
-				
-			      
-			      
-			      
-			    
-			  else if(j > j_max)
-			    
-			      flag_j = 2
-			    
-			  else
-			    
-			      flag_j = 0
-			    
-			  
-			  j++
-			
-		      while((flag_j == 0 || flag_j == 1) && j < pps)
-		      
-		      j = 0
-		    
-		  else if(i > i_max)
-		    
-		      flag_i = 2
-		    
-		  else
-		    
-		      flag_i = 0
-		    
-		  
-		  i++
-		
-	      while((flag_i == 0 || flag_i == 1) && i < pps)
-	      
-	      i = 0
-	    
-	
-      
-      for(i = 0 i < pps i++)
-	
-	  for(j = 0 j < pps j++)
-	    
-	      if(n_grid1[i][j] > 0)
-		
-		  grid1[i][j] /= double(n_grid1[i][j])
-		
-	      
-	      if(grid1[i][j] < min)
-		
-		  grid1[i][j] = min
-		
-	      
-	      if(grid1[i][j] > max)
-		
-		  grid1[i][j] = max
-		
-	      
-	      grid1[i][j] = log10(grid1[i][j])
+        for i in range(int(pps)):
+            if(i >= i_min[n] and i <= i_max[n]):
+                center_i = -width/2.0 + (i+0.5) * width/pps
+                for j in range(int(pps)):
+                    if(j >= j_min[n] and j <= j_max[n]):
+                        center_j = -width/2.0 + (j+0.5) * width/pps
+                        r2 = ((x[n] - center_i)**2
+                              + (y[n] - center_j)**2) / hsml[n] / hsml[n]
+                        #print x[n],y[n],'(',center_i, center_j,')', r2,hsml[n]
+                        if(r2 <= 1.0):
+                            #print 'yes!'
+                            r = numpy.sqrt(r2)
+                            if(r <= 0.5):
+                                W_x = 1.0 - 6.0 * r**2 + 6.0 * r**3
+                            else:
+                                W_x = 2.0 * (1.0 - r)**3
+                            zi[i][j] += weight[n] * dens[n] * W_x
+                            nzi[i][j] += weight[n] * W_x
+                        
+                        #print 'coord:',i,j
+
+    for i in range(int(pps)):
+	  for j in range(int(pps)):
+	      if(nzi[i][j] > 0):
+		  zi[i][j] /= double(nzi[i][j])
+    '''
+    zi = numpy.where(zi < zmin, zi, zmin)
+    zi = numpy.where(zi > zmax, zi, zmax)
+    zi = numpy.log10(zi)
+    zi[0,0] = numpy.log10(zmin)
+    zi[-1,-1] = numpy.log10(zmax)
+    '''
 	    
 	
 
 #===============================================================================
 
               
-    """
-    #print 'Plotting...'
-    #fig = pyplot.figure(1,(12,12))
-    #fig.clf()
-    #pyplot.imshow(zi)
+    print 'Plotting...'
+    fig = pyplot.figure(1,(10,10))
+    fig.clf()
+    pyplot.imshow(zi)
     #pyplot.contourf(xi,yi,zi)
     #pyplot.contour(xi,yi,zi)
     #ax = fig.add_subplot(111,aspect='equal',projection='3d')
