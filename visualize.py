@@ -56,8 +56,8 @@ for snap in range(467,468):
     #pos = pos[refined]
     print 'Refinement complete.'
 
-    width= 10
-    depth= 5
+    width= 10*h/a/5e5
+    depth= width
     center = pos[dens.argmax()]
     x = pos[:,0] - center[0]
     y = pos[:,1] - center[1]
@@ -130,9 +130,7 @@ for snap in range(467,468):
                         center_j = -width/2.0 + (j+0.5) * width/pps
                         r2 = ((x[n] - center_i)**2
                               + (y[n] - center_j)**2) / hsml[n] / hsml[n]
-                        #print x[n],y[n],'(',center_i, center_j,')', r2,hsml[n]
                         if(r2 <= 1.0):
-                            #print 'yes!'
                             r = numpy.sqrt(r2)
                             if(r <= 0.5):
                                 W_x = 1.0 - 6.0 * r**2 + 6.0 * r**3
@@ -140,22 +138,13 @@ for snap in range(467,468):
                                 W_x = 2.0 * (1.0 - r)**3
                             zi[i][j] += weight[n] * dens[n] * W_x
                             nzi[i][j] += weight[n] * W_x
-                        
-                        #print 'coord:',i,j
 
-    for i in range(int(pps)):
-	  for j in range(int(pps)):
-	      if(nzi[i][j] > 0):
-		  zi[i][j] /= double(nzi[i][j])
-    '''
-    zi = numpy.where(zi < zmin, zi, zmin)
-    zi = numpy.where(zi > zmax, zi, zmax)
+    zi = numpy.where(nzi > 0, zi/nzi,zi)
+    zi = numpy.fmax(zi, zmin)
+    zi = numpy.fmin(zi, zmax)
     zi = numpy.log10(zi)
     zi[0,0] = numpy.log10(zmin)
     zi[-1,-1] = numpy.log10(zmax)
-    '''
-	    
-	
 
 #===============================================================================
 
