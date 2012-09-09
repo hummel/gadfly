@@ -12,6 +12,25 @@ import pp
 
 import pyGadget
 #===============================================================================
+def density_map(pps,width, x,y,dens,weight, i_min,i_max,j_min,j_max, h,zi,nzi):
+    for i in range(int(pps)):
+        if(i >= i_min and i <= i_max):
+            center_i = -width/2.0 + (i+0.5) * width/pps
+            for j in range(int(pps)):
+                if(j >= j_min and j <= j_max):
+                    center_j = -width/2.0 + (j+0.5) * width/pps
+                    r2 = ((x - center_i)**2
+                          + (y - center_j)**2) / h / h
+                    if(r2 <= 1.0):
+                        r = numpy.sqrt(r2)
+                        if(r <= 0.5):
+                            W_x = 1.0 - 6.0 * r**2 + 6.0 * r**3
+                        else:
+                            W_x = 2.0 * (1.0 - r)**3
+                        zi[i][j] += weight * dens * W_x
+                        nzi[i][j] += weight * W_x
+    return zi,nzi
+#===============================================================================
 
 length_unit = pyGadget.units.Length_kpc
 pps = 1000 # 'pixels' per side
@@ -56,8 +75,8 @@ for snap in range(467,468):
     #pos = pos[refined]
     print 'Refinement complete.'
 
-    width= 10*h/a/5e5
-    depth= width
+    width= h/a/5e5
+    depth= width/3
     center = pos[dens.argmax()]
     x = pos[:,0] - center[0]
     y = pos[:,1] - center[1]
@@ -112,33 +131,28 @@ for snap in range(467,468):
     weight = dens*dens
 
     print 'Filling mesh...'
+    job_server = pp.Server()
+    jobs = []
     for n in range(dens.size):
-        percent = 100*n/dens.size
-        if n%(dens.size/100)==0:
-            print '%2i%%' %percent
+        print 'particle number', n
         # if sink smoothing link is too inflated, 
         # artificially set it to accretion radius value
         if(sinkval[n] > 0):
             print 'sinkval > 0 !!!'
             hsml[n] = hsml_factor * 3.57101e-07
+#        zi,nzi = density_map(pps,width, x[n],y[n],dens[n],weight[n], 
+#                             i_min[n],i_max[n],j_min[n],j_max[n],hsml[n],zi,nzi)
+        jobs.append(job_server.submit(density_map,
+                                      (pps,width, x[n],y[n],dens[n],weight[n], 
+                                       i_min[n],i_max[n],j_min[n],j_max[n], 
+                                       hsml[n],zi,nzi),
+                                      (),('numpy',)))
+    for job in jobs:
+        pzi,pnzi = job()
+        zi += pzi
+        nzi += pnzi
 
-        for i in range(int(pps)):
-            if(i >= i_min[n] and i <= i_max[n]):
-                center_i = -width/2.0 + (i+0.5) * width/pps
-                for j in range(int(pps)):
-                    if(j >= j_min[n] and j <= j_max[n]):
-                        center_j = -width/2.0 + (j+0.5) * width/pps
-                        r2 = ((x[n] - center_i)**2
-                              + (y[n] - center_j)**2) / hsml[n] / hsml[n]
-                        if(r2 <= 1.0):
-                            r = numpy.sqrt(r2)
-                            if(r <= 0.5):
-                                W_x = 1.0 - 6.0 * r**2 + 6.0 * r**3
-                            else:
-                                W_x = 2.0 * (1.0 - r)**3
-                            zi[i][j] += weight[n] * dens[n] * W_x
-                            nzi[i][j] += weight[n] * W_x
-
+    job_server.print_stats()
     zi = numpy.where(nzi > 0, zi/nzi,zi)
     zi = numpy.fmax(zi, zmin)
     zi = numpy.fmin(zi, zmax)
