@@ -15,7 +15,6 @@ def plot_sinkdat(path, write_dir):
     sink.time = sink.time - sink.time[0] # set t=0 at sink formation.
 
     ### Create Plot!
-    ### All plots vs density
     print 'Plotting...'
     fig = pyplot.figure(1,(12,10))
     fig.clf()
@@ -43,11 +42,10 @@ def plot_sinkdat(path, write_dir):
     ax3.plot(sink.time, sink.pressure)
     ax3.set_xlabel('Time Since Formation [yr]')
     ax3.set_ylabel('Sink Pressure [dyne cm$^{-2}$]')
+    ax3.set_ylim(3.5888,3.58885)
 
-    #title = fig.suptitle('Redshift: %.3f' %(redshift,))
     fig.subplots_adjust(top=0.94, left=0.1, right=.915)
     pyplot.savefig(write_dir+'sinkdat.png', 
-                   #bbox_extra_artists=(title,),
                    bbox_inches='tight')
 #===============================================================================
 
