@@ -12,7 +12,14 @@ import pp
 
 import pyGadget
 #===============================================================================
-def density_map(pps,width, x,y,dens,weight, i_min,i_max,j_min,j_max, h,zi,nzi):
+def density_map(pps,width, x,y,dens,hsml,zshape):
+    zi = numpy.zeros(zshape)
+    nzi = numpy.zeros_like(zi)
+    i_min = (x - hsml + width/2.0) / width*pps
+    i_max = (x + hsml + width/2.0) / width*pps
+    j_min = (y - hsml + width/2.0) / width*pps
+    j_max = (y + hsml + width/2.0) / width*pps
+    weight = dens*dens
     for i in range(int(pps)):
         if(i >= i_min and i <= i_max):
             center_i = -width/2.0 + (i+0.5) * width/pps
@@ -20,7 +27,7 @@ def density_map(pps,width, x,y,dens,weight, i_min,i_max,j_min,j_max, h,zi,nzi):
                 if(j >= j_min and j <= j_max):
                     center_j = -width/2.0 + (j+0.5) * width/pps
                     r2 = ((x - center_i)**2
-                          + (y - center_j)**2) / h / h
+                          + (y - center_j)**2) / hsml / hsml
                     if(r2 <= 1.0):
                         r = numpy.sqrt(r2)
                         if(r <= 0.5):
@@ -33,7 +40,7 @@ def density_map(pps,width, x,y,dens,weight, i_min,i_max,j_min,j_max, h,zi,nzi):
 #===============================================================================
 
 length_unit = pyGadget.units.Length_kpc
-pps = 1000 # 'pixels' per side
+pps = 800 # 'pixels' per side
 hsml_factor = 1.7
 
 write_dir = os.getenv('HOME')+'/data/simplots/vanilla-100/'
@@ -75,8 +82,8 @@ for snap in range(467,468):
     #pos = pos[refined]
     print 'Refinement complete.'
 
-    width= h/a/5e5
-    depth= width/3
+    width= 3e-2
+    depth= width/100
     center = pos[dens.argmax()]
     x = pos[:,0] - center[0]
     y = pos[:,1] - center[1]
@@ -117,48 +124,40 @@ for snap in range(467,468):
     xi,yi = numpy.meshgrid(xvals,yvals)
     zi = numpy.zeros_like(xi)
     nzi = numpy.zeros_like(zi)
-
+    zshape = zi.shape
+    print 'Mesh created.'
 
 
 #===============================================================================
-    zmin = 1e-2
-    zmax = 1e1
     hsml = numpy.fmax(hsml_factor * smL, width / pps / 2.0)
-    i_min = (x - hsml + width/2.0) / width*pps
-    i_max = (x + hsml + width/2.0) / width*pps
-    j_min = (y - hsml + width/2.0) / width*pps
-    j_max = (y + hsml + width/2.0) / width*pps
-    weight = dens*dens
 
-    print 'Filling mesh...'
-    job_server = pp.Server()
+    job_server = pp.Server(ppservers=("*",))
     jobs = []
+    print 'Distributing...'
     for n in range(dens.size):
-        print 'particle number', n
         # if sink smoothing link is too inflated, 
         # artificially set it to accretion radius value
         if(sinkval[n] > 0):
             print 'sinkval > 0 !!!'
             hsml[n] = hsml_factor * 3.57101e-07
-#        zi,nzi = density_map(pps,width, x[n],y[n],dens[n],weight[n], 
-#                             i_min[n],i_max[n],j_min[n],j_max[n],hsml[n],zi,nzi)
+#        zi,nzi = density_map(pps,width, x[n],y[n],dens[n],hsml[n],zi)
         jobs.append(job_server.submit(density_map,
-                                      (pps,width, x[n],y[n],dens[n],weight[n], 
-                                       i_min[n],i_max[n],j_min[n],j_max[n], 
-                                       hsml[n],zi,nzi),
+                                      (pps,width, x[n],y[n],dens[n],
+                                       hsml[n],zshape),
                                       (),('numpy',)))
+    print 'Calculating...'
     for job in jobs:
         pzi,pnzi = job()
         zi += pzi
         nzi += pnzi
 
     job_server.print_stats()
-    zi = numpy.where(nzi > 0, zi/nzi,zi)
-    zi = numpy.fmax(zi, zmin)
-    zi = numpy.fmin(zi, zmax)
+    zi = numpy.where(nzi > 0, zi/nzi, zi)
+    #zi = numpy.fmax(zi, zmin)
+    #zi = numpy.fmin(zi, zmax)
     zi = numpy.log10(zi)
-    zi[0,0] = numpy.log10(zmin)
-    zi[-1,-1] = numpy.log10(zmax)
+    #zi[0,0] = numpy.log10(zmin)
+    #zi[-1,-1] = numpy.log10(zmax)
 
 #===============================================================================
 
@@ -175,3 +174,4 @@ for snap in range(467,468):
     #ax.set_xlim3d(-width/2,width/2)
     #ax.set_ylim3d(-width/2,width/2)
     #ax.set_zlim3d(-width/2,width/2)
+    pyplot.show()
