@@ -45,7 +45,7 @@ pps = 800 # 'pixels' per side
 hsml_factor = 1.7
 
 write_dir = os.getenv('HOME')+'/data/simplots/vanilla-100/'
-for snap in xrange(467,468):
+for snap in xrange(200,468):
     #Create jobserver
     job_server = pp.Server(ppservers=("*",))
     path = (os.getenv('HOME')+'/sim/vanilla-100/snapshot_'+
@@ -74,7 +74,7 @@ for snap in xrange(467,468):
     print 'Analyzing...'
     # Select only highest resolution particles
     minimum = numpy.amin(particle_mass)
-    refined = numpy.where(particle_mass <= minimum)[0]
+    refined = numpy.where(particle_mass <= 8.1*minimum)[0]
     dens = dens[refined]
     smL = smL[refined]
     sinkval = sinkval[refined]
@@ -85,8 +85,8 @@ for snap in xrange(467,468):
     #pos = pos[refined]
     print 'Refinement complete.'
 
-    width= 1e0
-    depth= width/100
+    width= 1e1
+    depth= width/10
     center = pos[dens.argmax()]
     x = pos[:,0] - center[0]
     y = pos[:,1] - center[1]
@@ -141,7 +141,7 @@ for snap in xrange(467,468):
     server_list = job_server.get_active_nodes()
     ncpus = sum(server_list.values())
     #Divide in to 8X as many tasks as there are cpus.
-    parts = ncpus*8
+    parts = ncpus*16
     start = 0
     end = dens.size - 1
     step = (end - start) / parts + 1
@@ -181,13 +181,12 @@ for snap in xrange(467,468):
     print 'Plotting...'
     fig = pyplot.figure(1,(10,10))
     fig.clf()
-    pyplot.imshow(zi)
-    #pyplot.contourf(xi,yi,zi)
-    #pyplot.contour(xi,yi,zi)
-    #ax = fig.add_subplot(111,aspect='equal',projection='3d')
-    #ax.scatter3D(x, y, z, s=5, c='k', linewidths=0.0)
-    #ax.scatter3D(xi, yi, 0, s=1, c='r', linewidths=0.0)
-    #ax.set_xlim3d(-width/2,width/2)
-    #ax.set_ylim3d(-width/2,width/2)
-    #ax.set_zlim3d(-width/2,width/2)
-    pyplot.show()
+    pyplot.imshow(zi, extent=[xi.min(),xi.max(),yi.min(),yi.max()])
+    #pyplot.colorbar()
+    ax = plt.gca()
+    ax.set_xlabel('comoving kpc/h')
+    ax.set_ylabel('comoving kpc/h')
+    ax.set_title('Redshift: %.5f' %(redshift,))
+    pyplot.savefig(wpath, 
+                   bbox_inches='tight')
+
