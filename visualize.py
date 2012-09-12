@@ -43,14 +43,13 @@ def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
 length_unit = pyGadget.units.Length_kpc
 pps = 800 # 'pixels' per side
 hsml_factor = 1.7
-
+job_server = pp.Server(ppservers=("*",))
 write_dir = os.getenv('HOME')+'/data/simplots/vanilla-100/'
-for snap in xrange(200,468):
+for snap in xrange(227,468):
     #Create jobserver
-    job_server = pp.Server(ppservers=("*",))
     path = (os.getenv('HOME')+'/sim/vanilla-100/snapshot_'+
             '{:0>3}'.format(snap)+'.hdf5')
-
+    print 'loading', path
     snap = path[-8:-5]
     wpath = write_dir+snap+'-dens.png'
 
@@ -167,7 +166,6 @@ for snap in xrange(200,468):
         nzi += pnzi
 
     job_server.print_stats()
-    job_server.destroy()
     zi = numpy.where(nzi > 0, zi/nzi, zi)
     #zi = numpy.fmax(zi, zmin)
     #zi = numpy.fmin(zi, zmax)
@@ -179,11 +177,12 @@ for snap in xrange(200,468):
 
               
     print 'Plotting...'
+    pyplot.ioff()
     fig = pyplot.figure(1,(10,10))
     fig.clf()
     pyplot.imshow(zi, extent=[xi.min(),xi.max(),yi.min(),yi.max()])
     #pyplot.colorbar()
-    ax = plt.gca()
+    ax = pyplot.gca()
     ax.set_xlabel('comoving kpc/h')
     ax.set_ylabel('comoving kpc/h')
     ax.set_title('Redshift: %.5f' %(redshift,))
