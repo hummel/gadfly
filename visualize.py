@@ -91,7 +91,7 @@ def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
         """
     weave.inline(code,['pps','width','x','y',
                        'scalar_field','hsml','zi','nzi','N_gas'],
-                 type_converters=converters.blitz, verbose=2, force=0)
+                 type_converters=converters.blitz)
     return zi,nzi
 #===============================================================================
 
@@ -140,8 +140,8 @@ for snap in xrange(467,468):
     #pos = pos[refined]
     print 'Refinement complete.'
 
-    width= 1e-4
-    depth= width/10
+    width= 1e-3
+    depth= width
     center = pos[dens.argmax()]
     x = pos[:,0] - center[0]
     y = pos[:,1] - center[1]
@@ -190,7 +190,7 @@ for snap in xrange(467,468):
     #if(sinkval[n] > 0):
     #    print 'sinkval > 0 !!!'
     #    hsml[n] = hsml_factor * 3.57101e-07
-    """
+
     print 'Distributing...'
     jobs = []
     server_list = job_server.get_active_nodes()
@@ -211,7 +211,8 @@ for snap in xrange(467,468):
                                        y[nstart:nend],
                                        dens[nstart:nend],
                                        hsml[nstart:nend],zshape),
-                                      (),('numpy','from scipy import weave')))
+                                      (),('numpy','from scipy import weave',
+                                          'from scipy.weave import converters')))
     print 'Calculating...'
     for job in jobs:
         pzi,pnzi = job()
@@ -220,8 +221,6 @@ for snap in xrange(467,468):
 
     job_server.print_stats()
     job_server.destroy()
-    """
-    zi,nzi = scalar_map(pps,width,x,y,dens,hsml,zshape)
     zi = numpy.where(nzi > 0, zi/nzi, zi)
     #zi = numpy.fmax(zi, zmin)
     #zi = numpy.fmin(zi, zmax)
