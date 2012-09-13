@@ -11,6 +11,14 @@ from matplotlib.mlab import griddata
 import pp
 
 import pyGadget
+
+#===============================================================================
+length_unit = pyGadget.units.Length_kpc
+pps = 800 # 'pixels' per side
+hsml_factor = 1.7
+job_server = pp.Server(ncpus=12)#ppservers=("*",))
+write_dir = os.getenv('HOME')+'/data/simplots/vanilla/'
+
 #===============================================================================
 def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
     zi = numpy.zeros(zshape)
@@ -38,13 +46,8 @@ def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
                             zi[i][j] += weight[n] * scalar_field[n] * W_x
                             nzi[i][j] += weight[n] * W_x
     return zi,nzi
-#===============================================================================
 
-length_unit = pyGadget.units.Length_kpc
-pps = 800 # 'pixels' per side
-hsml_factor = 1.7
-job_server = pp.Server(ncpus=12)#ppservers=("*",))
-write_dir = os.getenv('HOME')+'/data/simplots/vanilla/'
+#===============================================================================
 for snap in xrange(400,468):
     #Create jobserver
     path = (os.getenv('HOME')+'/sim/vanilla-100/snapshot_'+
@@ -71,17 +74,13 @@ for snap in xrange(400,468):
 
     # Initialization Complete --- Begin Analysis
     print 'Analyzing...'
-    # Select only highest resolution particles
+    # Select only two highest resolution level particles
     minimum = numpy.amin(particle_mass)
     refined = numpy.where(particle_mass <= 8.1*minimum)[0]
     dens = dens[refined]
     smL = smL[refined]
     sinkval = sinkval[refined]
     pos = pos[refined]
-    # Select only highest density particles
-    #refined = numpy.where(dens < 1e8)[0]
-    #dens = dens[refined]
-    #pos = pos[refined]
     print 'Refinement complete.'
 
     width= 5e-4
@@ -91,6 +90,7 @@ for snap in xrange(400,468):
     y = pos[:,1] - center[1]
     z = pos[:,2] - center[2]
 
+    assert dens.max() <= 1e12
     slice_ = numpy.where(numpy.abs(z) < depth/2)[0]
     dens = dens[slice_]
     smL = smL[slice_]
@@ -119,10 +119,6 @@ for snap in xrange(400,468):
     print ' sink values:: max: %.3e min: %.3e' %(sinkval.max(),sinkval.min())
     print ' smoothing length:: max: %.3e min: %.3e' %(smL.max(),smL.min())
     print ' Array size:', dens.size
-    # Artificially set max dens to 1e12 for all snapshots post sink creation
-    assert dens.max() <= 1e12
-    if int(snap) > 311:
-        dens[dens.argmax()] = 1e12
 
     xres = yres = width/pps
     xvals = numpy.arange(-width/2,width/2,xres)
@@ -133,12 +129,6 @@ for snap in xrange(400,468):
     zshape = zi.shape
 
     hsml = numpy.fmax(hsml_factor * smL, width / pps / 2.0)
-    # if sink smoothing link is too inflated, 
-    # artificially set it to accretion radius value
-    #if(sinkval[n] > 0):
-    #    print 'sinkval > 0 !!!'
-    #    hsml[n] = hsml_factor * 3.57101e-07
-
     print 'Distributing...'
     jobs = []
     server_list = job_server.get_active_nodes()
@@ -153,7 +143,6 @@ for snap in xrange(400,468):
     for cpu in xrange(parts):
         nstart = start+cpu*step
         nend = min(start+(cpu+1)*step, end)
-        #'''
         jobs.append(job_server.submit(scalar_map,
                                       (pps,width, 
                                        x[nstart:nend],
@@ -161,8 +150,6 @@ for snap in xrange(400,468):
                                        dens[nstart:nend],
                                        hsml[nstart:nend],zshape),
                                       (),('numpy',)))
-        #'''
-    #sys.exit()
     print 'Calculating...'
     for job in jobs:
         pzi,pnzi = job()
@@ -178,8 +165,6 @@ for snap in xrange(400,468):
     zi = numpy.log10(zi)
 
 #===============================================================================
-
-              
     print 'Plotting...'
     #pyplot.ioff()
     fig = pyplot.figure(1,(10,10))
