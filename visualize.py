@@ -43,9 +43,9 @@ def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
 length_unit = pyGadget.units.Length_kpc
 pps = 800 # 'pixels' per side
 hsml_factor = 1.7
-job_server = pp.Server(ppservers=("*",))
-write_dir = os.getenv('HOME')+'/data/simplots/vanilla-100/'
-for snap in xrange(227,468):
+job_server = pp.Server(ncpus=12)#ppservers=("*",))
+write_dir = os.getenv('HOME')+'/data/simplots/vanilla/'
+for snap in xrange(400,468):
     #Create jobserver
     path = (os.getenv('HOME')+'/sim/vanilla-100/snapshot_'+
             '{:0>3}'.format(snap)+'.hdf5')
@@ -84,8 +84,8 @@ for snap in xrange(227,468):
     #pos = pos[refined]
     print 'Refinement complete.'
 
-    width= 1e1
-    depth= width/10
+    width= 5e-4
+    depth= width
     center = pos[dens.argmax()]
     x = pos[:,0] - center[0]
     y = pos[:,1] - center[1]
@@ -119,6 +119,10 @@ for snap in xrange(227,468):
     print ' sink values:: max: %.3e min: %.3e' %(sinkval.max(),sinkval.min())
     print ' smoothing length:: max: %.3e min: %.3e' %(smL.max(),smL.min())
     print ' Array size:', dens.size
+    # Artificially set max dens to 1e12 for all snapshots post sink creation
+    assert dens.max() <= 1e12
+    if int(snap) > 311:
+        dens[dens.argmax()] = 1e12
 
     xres = yres = width/pps
     xvals = numpy.arange(-width/2,width/2,xres)
@@ -169,15 +173,15 @@ for snap in xrange(227,468):
     zi = numpy.where(nzi > 0, zi/nzi, zi)
     #zi = numpy.fmax(zi, zmin)
     #zi = numpy.fmin(zi, zmax)
+    #zi[0,0] = zmin
+    #zi[-1,-1] = zmax
     zi = numpy.log10(zi)
-    #zi[0,0] = numpy.log10(zmin)
-    #zi[-1,-1] = numpy.log10(zmax)
 
 #===============================================================================
 
               
     print 'Plotting...'
-    pyplot.ioff()
+    #pyplot.ioff()
     fig = pyplot.figure(1,(10,10))
     fig.clf()
     pyplot.imshow(zi, extent=[xi.min(),xi.max(),yi.min(),yi.max()])
