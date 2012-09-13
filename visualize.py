@@ -5,22 +5,104 @@
 import os
 import sys
 import numpy
+
+from scipy import weave
+from scipy.weave import converters
 from matplotlib import pyplot
 from matplotlib.mlab import griddata
-
 import pp
 
 import pyGadget
-
 #===============================================================================
 length_unit = pyGadget.units.Length_kpc
 pps = 800 # 'pixels' per side
 hsml_factor = 1.7
-job_server = pp.Server(ncpus=12)#ppservers=("*",))
+job_server = pp.Server()
 write_dir = os.getenv('HOME')+'/data/simplots/vanilla/'
 
 #===============================================================================
 def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
+    zi = numpy.zeros(zshape)
+    nzi = numpy.zeros_like(zi)
+    N_gas = scalar_field.size
+
+    code = \
+        """
+        int i,j,n, i_min,i_max,j_min,j_max;
+        int flag_i = 0;
+        int flag_j = 0;
+        double center_i,center_j;
+        double r,r2,weight,W_x;
+        for(n =0; n < N_gas; n++) 
+          {
+            i = 0;
+            j = 0;
+            i_min = int((x(n) - hsml(n) + width/2.0) / width*pps);
+            i_max = int((x(n) + hsml(n) + width/2.0) / width*pps);
+            j_min = int((y(n) - hsml(n) + width/2.0) / width*pps);
+            j_max = int((y(n) + hsml(n) + width/2.0) / width*pps);
+            weight = scalar_field(n)*scalar_field(n);
+            do 
+              {
+                if(i >= i_min && i <= i_max)
+                  {
+                    flag_i = 1;
+                    center_i = -width/2.0 + (i+0.5) * width/ (double) pps;
+                    do
+                      {
+                        if(j >= j_min && j <= j_max)
+                          {
+                            flag_j = 1;
+                            center_j = -width/2.0 + (j+0.5)
+                              * width / (double) pps;
+                            r2 = ((x(n) - center_i) * (x(n) - center_i)
+                                  + (y(n) - center_j) * (y(n) - center_j))
+                              / hsml(n) / hsml(n);
+                            if(r2 <= 1.0)
+                              {
+                                r = sqrt(r2);
+                                if(r <= 0.5)
+                                  W_x = 1.0 - 6.0 * r*r + 6.0 * r*r*r;
+                                else
+                                  W_x = 2.0 * (1.0-r) * (1.0-r) * (1.0-r);
+                                zi(i,j) += weight * scalar_field(n) * W_x;
+                                nzi(i,j) += weight * W_x;
+                              }
+                          }
+                        else if(j > j_max)
+                          {
+                            flag_j = 2;
+                          }
+                        else
+                          {
+                            flag_j = 0;
+                          }
+                        j++;
+                      }
+                    while((flag_j == 0 || flag_j == 1) && j < pps);
+                    j = 0;
+                  }
+                else if(i > i_max)
+                  {
+                    flag_i = 2;
+                  }
+                else
+                  {
+                    flag_i = 0;
+                  }
+                i++;
+              }
+            while((flag_i == 0 || flag_i == 1) && i < pps);
+            i = 0;
+          }
+        """
+    weave.inline(code,['pps','width','x','y',
+                       'scalar_field','hsml','zi','nzi','N_gas'],
+                 type_converters=converters.blitz)
+    return zi,nzi
+
+#===============================================================================
+def py_scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
     zi = numpy.zeros(zshape)
     nzi = numpy.zeros_like(zi)
     i_min = (x - hsml + width/2.0) / width*pps
@@ -149,7 +231,8 @@ for snap in xrange(400,468):
                                        y[nstart:nend],
                                        dens[nstart:nend],
                                        hsml[nstart:nend],zshape),
-                                      (),('numpy',)))
+                                      (),('numpy','from scipy import weave',
+                                          'from scipy.weave import converters')))
     print 'Calculating...'
     for job in jobs:
         pzi,pnzi = job()
