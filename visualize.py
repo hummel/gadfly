@@ -7,6 +7,7 @@ import sys
 import numpy
 
 from scipy import weave
+from scipy.weave import converters
 from matplotlib import pyplot
 from matplotlib.mlab import griddata
 import pp
@@ -16,25 +17,27 @@ import pyGadget
 def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
     zi = numpy.zeros(zshape)
     nzi = numpy.zeros_like(zi)
+    N_gas = scalar_field.size
 
-#/##==== C code ====
     code = \
         """
-        # line 23 visualize.py
-        int i,j, i_min,i_max,j_min,j_max;
+        int i,j,n, i_min,i_max,j_min,j_max;
+        int flag_i = 0;
+        int flag_j = 0;
+        double center_i,center_j;
         double r,r2,weight,W_x;
         for(n =0; n < N_gas; n++) 
           {
             i = 0;
             j = 0;
-            i_min = int((x[n] - hsml[n] + width/2.0) / width*pps);
-            i_max = int((x[n] + hsml[n] + width/2.0) / width*pps);
-            j_min = int((y[n] - hsml[n] + width/2.0) / width*pps);
-            j_max = int((y[n] + hsml[n] + width/2.0) / width*pps);
-            weight = scalar_field*scalar_field;
+            i_min = int((x(n) - hsml(n) + width/2.0) / width*pps);
+            i_max = int((x(n) + hsml(n) + width/2.0) / width*pps);
+            j_min = int((y(n) - hsml(n) + width/2.0) / width*pps);
+            j_max = int((y(n) + hsml(n) + width/2.0) / width*pps);
+            weight = scalar_field(n)*scalar_field(n);
             do 
               {
-                if(i >= i_min && i <= i_max[n])
+                if(i >= i_min && i <= i_max)
                   {
                     flag_i = 1;
                     center_i = -width/2.0 + (i+0.5) * width/ (double) pps;
@@ -45,9 +48,9 @@ def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
                             flag_j = 1;
                             center_j = -width/2.0 + (j+0.5)
                               * width / (double) pps;
-                            r2 = ((x[n] - center_i) * (x[n] - center_i)
-                                  + (y[n] - center_j) * (y[n] - center_j))
-                              / hsml[n] / hsml[n];
+                            r2 = ((x(n) - center_i) * (x(n) - center_i)
+                                  + (y(n) - center_j) * (y(n) - center_j))
+                              / hsml(n) / hsml(n);
                             if(r2 <= 1.0)
                               {
                                 r = sqrt(r2);
@@ -55,8 +58,8 @@ def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
                                   W_x = 1.0 - 6.0 * r*r + 6.0 * r*r*r;
                                 else
                                   W_x = 2.0 * (1.0-r) * (1.0-r) * (1.0-r);
-                                zi[i][j] += weight[n] * scalar_field[n] * W_x;
-                                nzi[i][j] += weight[n] * W_x;
+                                zi(i,j) += weight * scalar_field(n) * W_x;
+                                nzi(i,j) += weight * W_x;
                               }
                           }
                         else if(j > j_max)
@@ -69,7 +72,7 @@ def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
                           }
                         j++;
                       }
-                    while((flag_j == 0 || flag_j == 1) && j < N_grid);
+                    while((flag_j == 0 || flag_j == 1) && j < pps);
                     j = 0;
                   }
                 else if(i > i_max)
@@ -82,14 +85,13 @@ def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
                   }
                 i++;
               }
-            while((flag_i == 0 || flag_i == 1) && i < N_grid);
+            while((flag_i == 0 || flag_i == 1) && i < pps);
             i = 0;
           }
-        return_val = zi
         """
-    zi = weave.inline(code,['pps','width',' x','y',
-                            'scalar_field','hsml','zi','nzi'],
-                      verbose=2,force=1)
+    weave.inline(code,['pps','width','x','y',
+                       'scalar_field','hsml','zi','nzi','N_gas'],
+                 type_converters=converters.blitz, verbose=2, force=0)
     return zi,nzi
 #===============================================================================
 
@@ -203,7 +205,6 @@ for snap in xrange(467,468):
     for cpu in xrange(parts):
         nstart = start+cpu*step
         nend = min(start+(cpu+1)*step, end)
-        #'''
         jobs.append(job_server.submit(scalar_map,
                                       (pps,width, 
                                        x[nstart:nend],
@@ -211,8 +212,6 @@ for snap in xrange(467,468):
                                        dens[nstart:nend],
                                        hsml[nstart:nend],zshape),
                                       (),('numpy','from scipy import weave')))
-        #'''
-    #sys.exit()
     print 'Calculating...'
     for job in jobs:
         pzi,pnzi = job()
@@ -222,7 +221,7 @@ for snap in xrange(467,468):
     job_server.print_stats()
     job_server.destroy()
     """
-    zi,nzi = scalar_map(pps,width,x,y,dens,hsml,zshape),
+    zi,nzi = scalar_map(pps,width,x,y,dens,hsml,zshape)
     zi = numpy.where(nzi > 0, zi/nzi, zi)
     #zi = numpy.fmax(zi, zmin)
     #zi = numpy.fmin(zi, zmax)
