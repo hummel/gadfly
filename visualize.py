@@ -18,75 +18,78 @@ def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
     nzi = numpy.zeros_like(zi)
 
 #/##==== C code ====
-    code = r"""
-    int i,j, i_min,i_max,j_min,j_max;
-    double r,r2,weight,W_x;
-    for(n =0; n < N_gas; n++) 
-      {
-        i = 0;
-        j = 0;
-        i_min = int((x[n] - hsml[n] + width/2.0) / width*pps);
-        i_max = int((x[n] + hsml[n] + width/2.0) / width*pps);
-        j_min = int((y[n] - hsml[n] + width/2.0) / width*pps);
-        j_max = int((y[n] + hsml[n] + width/2.0) / width*pps);
-        weight = scalar_field*scalar_field;
-        do 
+    code = \
+        """
+        # line 23 visualize.py
+        int i,j, i_min,i_max,j_min,j_max;
+        double r,r2,weight,W_x;
+        for(n =0; n < N_gas; n++) 
           {
-            if(i >= i_min && i <= i_max[n])
+            i = 0;
+            j = 0;
+            i_min = int((x[n] - hsml[n] + width/2.0) / width*pps);
+            i_max = int((x[n] + hsml[n] + width/2.0) / width*pps);
+            j_min = int((y[n] - hsml[n] + width/2.0) / width*pps);
+            j_max = int((y[n] + hsml[n] + width/2.0) / width*pps);
+            weight = scalar_field*scalar_field;
+            do 
               {
-                flag_i = 1;
-                center_i = -width/2.0 + (i+0.5) * width/ (double) pps;
-                do
+                if(i >= i_min && i <= i_max[n])
                   {
-                    if(j >= j_min && j <= j_max)
+                    flag_i = 1;
+                    center_i = -width/2.0 + (i+0.5) * width/ (double) pps;
+                    do
                       {
-                        flag_j = 1;
-                        center_j = -width/2.0 + (j+0.5)
-                          * width / (double) pps;
-                        r2 = ((x[n] - center_i) * (x[n] - center_i)
-                              + (y[n] - center_j) * (y[n] - center_j))
-                          / hsml[n] / hsml[n];
-                        if(r2 <= 1.0)
+                        if(j >= j_min && j <= j_max)
                           {
-                            r = sqrt(r2);
-                            if(r <= 0.5)
-                              W_x = 1.0 - 6.0 * r*r + 6.0 * r*r*r;
-                            else
-                              W_x = 2.0 * (1.0-r) * (1.0-r) * (1.0-r);
-                            zi[i][j] += weight[n] * scalar_field[n] * W_x;
-                            nzi[i][j] += weight[n] * W_x;
+                            flag_j = 1;
+                            center_j = -width/2.0 + (j+0.5)
+                              * width / (double) pps;
+                            r2 = ((x[n] - center_i) * (x[n] - center_i)
+                                  + (y[n] - center_j) * (y[n] - center_j))
+                              / hsml[n] / hsml[n];
+                            if(r2 <= 1.0)
+                              {
+                                r = sqrt(r2);
+                                if(r <= 0.5)
+                                  W_x = 1.0 - 6.0 * r*r + 6.0 * r*r*r;
+                                else
+                                  W_x = 2.0 * (1.0-r) * (1.0-r) * (1.0-r);
+                                zi[i][j] += weight[n] * scalar_field[n] * W_x;
+                                nzi[i][j] += weight[n] * W_x;
+                              }
                           }
+                        else if(j > j_max)
+                          {
+                            flag_j = 2;
+                          }
+                        else
+                          {
+                            flag_j = 0;
+                          }
+                        j++;
                       }
-                    else if(j > j_max)
-                      {
-                        flag_j = 2;
-                      }
-                    else
-                      {
-                        flag_j = 0;
-                      }
-                    j++;
+                    while((flag_j == 0 || flag_j == 1) && j < N_grid);
+                    j = 0;
                   }
-                while((flag_j == 0 || flag_j == 1) && j < N_grid);
-                j = 0;
+                else if(i > i_max)
+                  {
+                    flag_i = 2;
+                  }
+                else
+                  {
+                    flag_i = 0;
+                  }
+                i++;
               }
-            else if(i > i_max)
-              {
-                flag_i = 2;
-              }
-            else
-              {
-                flag_i = 0;
-              }
-            i++;
+            while((flag_i == 0 || flag_i == 1) && i < N_grid);
+            i = 0;
           }
-        while((flag_i == 0 || flag_i == 1) && i < N_grid);
-        i = 0;
-      }
-    return_val = zi
-    """
+        return_val = zi
+        """
     zi = weave.inline(code,['pps','width',' x','y',
-                            'scalar_field','hsml','zi','nzi'])
+                            'scalar_field','hsml','zi','nzi'],
+                      verbose=2,force=1)
     return zi,nzi
 #===============================================================================
 
