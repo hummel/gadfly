@@ -13,12 +13,6 @@ from matplotlib.mlab import griddata
 import pp
 
 import pyGadget
-#===============================================================================
-length_unit = pyGadget.units.Length_kpc
-pps = 1000 # 'pixels' per side
-hsml_factor = 1.7
-job_server = pp.Server()
-write_dir = os.getenv('HOME')+'/data/simplots/vanilla/'
 
 #===============================================================================
 def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
@@ -130,17 +124,27 @@ def py_scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
     return zi,nzi
 
 #===============================================================================
-for snap in xrange(100,468):
-    #Create jobserver
-    path = (os.getenv('HOME')+'/sim/vanilla/snapshot_'+
-            '{:0>3}'.format(snap)+'.hdf5')
-    print 'loading', path
-    snap = path[-8:-5]
-    wpath = write_dir+snap+'-structure.png'
+length_unit = pyGadget.units.Length_kpc
+pps = 1000 # 'pixels' per side
+hsml_factor = 1.7
+job_server = pp.Server()
+
+path = os.getenv('HOME')+'/sim/vanilla/snapshot_'
+write_dir = os.getenv('HOME')+'/data/simplots/vanilla/'
+suffix = '-dens.png'
+boxsize = 1e-3
+pyplot.ioff()
+
+#===============================================================================
+for snap in xrange(467,468):
+    fname = path + '{:0>3}'.format(snap) + '.hdf5'
+    print 'loading', fname
+    snap = fname[-8:-5]
+    wpath = write_dir + snap + suffix
 
     units = pyGadget.units
     constants = pyGadget.constants
-    snapshot = pyGadget.snapshot.load(path)
+    snapshot = pyGadget.snapshot.load(fname)
 
     # Read relevant attributes
     h = snapshot.header.HubbleParam
@@ -149,8 +153,8 @@ for snap in xrange(100,468):
 
     particle_mass = snapshot.gas.get_masses()
     dens = snapshot.gas.get_number_density()
-    pos = snapshot.gas.get_coords(length_unit,no_h=False, comoving=True)
-    smL = snapshot.gas.get_smoothing_length()
+    pos = snapshot.gas.get_coords(length_unit)
+    smL = snapshot.gas.get_smoothing_length(length_unit)
     sinkval = snapshot.gas.get_sinks()
     snapshot.close() 
 
@@ -166,7 +170,7 @@ for snap in xrange(100,468):
     pos = pos[refined]
     print 'Refinement complete.'
     '''
-    width= 5e1
+    width= boxsize
     depth= width
     center = pos[dens.argmax()]
     x = pos[:,0] - center[0]
@@ -254,7 +258,6 @@ for snap in xrange(100,468):
 
 #===============================================================================
     print 'Plotting...'
-    pyplot.ioff()
     fig = pyplot.figure(1,(10,10))
     fig.clf()
     #xi = xi*pyGadget.units.Length_AU/h*a
