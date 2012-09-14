@@ -15,7 +15,7 @@ import pp
 import pyGadget
 #===============================================================================
 length_unit = pyGadget.units.Length_kpc
-pps = 800 # 'pixels' per side
+pps = 1000 # 'pixels' per side
 hsml_factor = 1.7
 job_server = pp.Server()
 write_dir = os.getenv('HOME')+'/data/simplots/vanilla/'
@@ -130,13 +130,13 @@ def py_scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
     return zi,nzi
 
 #===============================================================================
-for snap in xrange(400,468):
+for snap in xrange(100,468):
     #Create jobserver
-    path = (os.getenv('HOME')+'/sim/vanilla-100/snapshot_'+
+    path = (os.getenv('HOME')+'/sim/vanilla/snapshot_'+
             '{:0>3}'.format(snap)+'.hdf5')
     print 'loading', path
     snap = path[-8:-5]
-    wpath = write_dir+snap+'-dens.png'
+    wpath = write_dir+snap+'-structure.png'
 
     units = pyGadget.units
     constants = pyGadget.constants
@@ -157,6 +157,7 @@ for snap in xrange(400,468):
     # Initialization Complete --- Begin Analysis
     print 'Analyzing...'
     # Select only two highest resolution level particles
+    '''
     minimum = numpy.amin(particle_mass)
     refined = numpy.where(particle_mass <= 8.1*minimum)[0]
     dens = dens[refined]
@@ -164,15 +165,19 @@ for snap in xrange(400,468):
     sinkval = sinkval[refined]
     pos = pos[refined]
     print 'Refinement complete.'
-
-    width= 5e-4
+    '''
+    width= 5e1
     depth= width
     center = pos[dens.argmax()]
     x = pos[:,0] - center[0]
     y = pos[:,1] - center[1]
     z = pos[:,2] - center[2]
 
-    assert dens.max() <= 1e12
+    try: 
+        assert dens.max() <= 1e12
+    except AssertionError: 
+        print 'Warning: Maximum density exceeds 1e12 particles/cc!'
+        print 'Max Density: %.5e' %dens.max()
     slice_ = numpy.where(numpy.abs(z) < depth/2)[0]
     dens = dens[slice_]
     smL = smL[slice_]
@@ -215,7 +220,7 @@ for snap in xrange(400,468):
     jobs = []
     server_list = job_server.get_active_nodes()
     ncpus = sum(server_list.values())
-    #Divide in to 8X as many tasks as there are cpus.
+    #Divide in to 16X as many tasks as there are cpus.
     parts = ncpus*16
     start = 0
     end = dens.size - 1
@@ -230,9 +235,9 @@ for snap in xrange(400,468):
                                        x[nstart:nend],
                                        y[nstart:nend],
                                        dens[nstart:nend],
-                                       hsml[nstart:nend],zshape),
-                                      (),('numpy','from scipy import weave',
-                                          'from scipy.weave import converters')))
+                                       hsml[nstart:nend],zshape),(),
+                                      ('numpy','from scipy import weave',
+                                       'from scipy.weave import converters')))
     print 'Calculating...'
     for job in jobs:
         pzi,pnzi = job()
@@ -249,14 +254,20 @@ for snap in xrange(400,468):
 
 #===============================================================================
     print 'Plotting...'
-    #pyplot.ioff()
+    pyplot.ioff()
     fig = pyplot.figure(1,(10,10))
     fig.clf()
+    #xi = xi*pyGadget.units.Length_AU/h*a
+    #yi = yi*pyGadget.units.Length_AU/h*a
+    xi = xi*pyGadget.units.Length_kpc/h*a
+    yi = yi*pyGadget.units.Length_kpc/h*a
     pyplot.imshow(zi, extent=[xi.min(),xi.max(),yi.min(),yi.max()])
     #pyplot.colorbar()
     ax = pyplot.gca()
-    ax.set_xlabel('comoving kpc/h')
-    ax.set_ylabel('comoving kpc/h')
+    #ax.set_xlabel('AU')
+    #ax.set_ylabel('AU')
+    ax.set_xlabel('kpc')
+    ax.set_ylabel('kpc')
     ax.set_title('Redshift: %.5f' %(redshift,))
     pyplot.savefig(wpath, 
                    bbox_inches='tight')
