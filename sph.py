@@ -159,19 +159,32 @@ class PartTypeSPH(hdf5.PartTypeX):
             self.load_sinks()
             return self.sink_value
 
-    def load_smoothing_length(self):
+    def load_smoothing_length(self, conv=units.Length_kpc, 
+                              no_h=True, comoving=False):
         """
-        Load particle smoothing lengths.
+        Load Particle Smoothing Lengths in units of kpc (default)
+        conv: unit conversion from code units
+        no_h: if True, remove dependence on hubble parameter.
+        comoving: if False, remove dependence on scale factor.
         """
-        self.smoothing_length = self._SmoothingLength.value
+        self.smoothing_length = self._SmoothingLength.value*conv
+        if no_h:
+            h = self._header.HubbleParam
+            self.smoothing_length = self.smoothing_length/h
+        if not comoving:
+            a = self._header.ScaleFactor
+            self.smoothing_length = self.smoothing_length*a
 
-
-    def get_smoothing_length(self):
+    def get_smoothing_length(self, conv=units.Length_kpc, 
+                             no_h=True, comoving=False):
         """
-        Return particle smoothing lengths.
+        Return Particle Smoothing Lengths in units of kpc (default)
+        conv: unit conversion from code units
+        no_h: if True, remove dependence on hubble parameter.
+        comoving: if False, remove dependence on scale factor.
         """
         try:
             return self.smoothing_length
         except AttributeError:
-            self.load_smoothing_length()
+            self.load_smoothing_length(conv, no_h, comoving)
             return self.smoothing_length
