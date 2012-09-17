@@ -131,12 +131,12 @@ job_server = pp.Server()
 
 path = os.getenv('HOME')+'/sim/vanilla/snapshot_'
 write_dir = os.getenv('HOME')+'/data/simplots/vanilla/'
-suffix = '-dens.png'
-boxsize = 1e-3
+suffix = '-structure.png'
+boxsize = 1e2/.71
 pyplot.ioff()
 
 #===============================================================================
-for snap in xrange(467,468):
+for snap in xrange(0,468):
     fname = path + '{:0>3}'.format(snap) + '.hdf5'
     print 'loading', fname
     snap = fname[-8:-5]
@@ -153,8 +153,8 @@ for snap in xrange(467,468):
 
     particle_mass = snapshot.gas.get_masses()
     dens = snapshot.gas.get_number_density()
-    pos = snapshot.gas.get_coords(length_unit)
-    smL = snapshot.gas.get_smoothing_length(length_unit)
+    pos = snapshot.gas.get_coords(length_unit,comoving=True)
+    smL = snapshot.gas.get_smoothing_length(length_unit,comoving=True)
     sinkval = snapshot.gas.get_sinks()
     snapshot.close() 
 
@@ -171,7 +171,7 @@ for snap in xrange(467,468):
     print 'Refinement complete.'
     '''
     width= boxsize
-    depth= width
+    depth= width/10
     center = pos[dens.argmax()]
     x = pos[:,0] - center[0]
     y = pos[:,1] - center[1]
@@ -260,18 +260,14 @@ for snap in xrange(467,468):
     print 'Plotting...'
     fig = pyplot.figure(1,(10,10))
     fig.clf()
-    #xi = xi*pyGadget.units.Length_AU/h*a
-    #yi = yi*pyGadget.units.Length_AU/h*a
-    xi = xi*pyGadget.units.Length_kpc/h*a
-    yi = yi*pyGadget.units.Length_kpc/h*a
+    xi = xi*length_unit
+    yi = yi*length_unit
     pyplot.imshow(zi, extent=[xi.min(),xi.max(),yi.min(),yi.max()])
     #pyplot.colorbar()
     ax = pyplot.gca()
-    #ax.set_xlabel('AU')
-    #ax.set_ylabel('AU')
-    ax.set_xlabel('kpc')
-    ax.set_ylabel('kpc')
+    ax.set_xlabel('comoving kpc')
+    ax.set_ylabel('comoving kpc')
     ax.set_title('Redshift: %.5f' %(redshift,))
+#    pyplot.show()
     pyplot.savefig(wpath, 
                    bbox_inches='tight')
-
