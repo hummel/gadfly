@@ -124,19 +124,18 @@ def py_scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
     return zi,nzi
 
 #===============================================================================
-length_unit = pyGadget.units.Length_kpc
+length_unit = pyGadget.units.Length_pc
 pps = 1000 # 'pixels' per side
 hsml_factor = 1.7
-job_server = pp.Server()
-
 path = os.getenv('HOME')+'/sim/vanilla/snapshot_'
 write_dir = os.getenv('HOME')+'/data/simplots/vanilla/'
 suffix = '-dens.png'
-boxsize = 1e-3
-pyplot.ioff()
+boxsize = 2e0
+#pyplot.ioff()
 
 #===============================================================================
-for snap in xrange(467,468):
+job_server = pp.Server()
+for snap in xrange(150,468):
     fname = path + '{:0>3}'.format(snap) + '.hdf5'
     print 'loading', fname
     snap = fname[-8:-5]
@@ -225,7 +224,12 @@ for snap in xrange(467,468):
     server_list = job_server.get_active_nodes()
     ncpus = sum(server_list.values())
     #Divide in to 16X as many tasks as there are cpus.
-    parts = ncpus*16
+    if ncpus <= 2:
+        parts = ncpus
+    elif ncpus <=8:
+        parts = ncpus*8
+    else:
+        parts = ncpus*16
     start = 0
     end = dens.size - 1
     step = (end - start) / parts + 1
@@ -250,28 +254,24 @@ for snap in xrange(467,468):
 
     job_server.print_stats()
     zi = numpy.where(nzi > 0, zi/nzi, zi)
-    #zi = numpy.fmax(zi, zmin)
-    #zi = numpy.fmin(zi, zmax)
+    zmin,zmax = (3,9)
+    zi = numpy.fmax(zi, 10**zmin)
+    zi = numpy.fmin(zi, 10**zmax)
+    zi = numpy.log10(zi)
     #zi[0,0] = zmin
     #zi[-1,-1] = zmax
-    zi = numpy.log10(zi)
+    print zi.min(),zi.max()
 
 #===============================================================================
     print 'Plotting...'
     fig = pyplot.figure(1,(10,10))
     fig.clf()
-    #xi = xi*pyGadget.units.Length_AU/h*a
-    #yi = yi*pyGadget.units.Length_AU/h*a
-    xi = xi*pyGadget.units.Length_kpc/h*a
-    yi = yi*pyGadget.units.Length_kpc/h*a
     pyplot.imshow(zi, extent=[xi.min(),xi.max(),yi.min(),yi.max()])
     #pyplot.colorbar()
     ax = pyplot.gca()
-    #ax.set_xlabel('AU')
-    #ax.set_ylabel('AU')
-    ax.set_xlabel('kpc')
-    ax.set_ylabel('kpc')
+    ax.set_xlabel('pc')
+    ax.set_ylabel('pc')
     ax.set_title('Redshift: %.5f' %(redshift,))
     pyplot.savefig(wpath, 
                    bbox_inches='tight')
-
+    #pyplot.show()
