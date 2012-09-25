@@ -13,6 +13,7 @@ from matplotlib.mlab import griddata
 import pp
 
 import pyGadget
+import statistics
 
 #===============================================================================
 def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
@@ -124,22 +125,10 @@ def py_scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
     return zi,nzi
 
 #===============================================================================
-length_unit = pyGadget.units.Length_pc
-pps = 1000 # 'pixels' per side
-hsml_factor = 1.7
-path = os.getenv('HOME')+'/sim/vanilla/snapshot_'
-write_dir = os.getenv('HOME')+'/data/simplots/vanilla/'
-suffix = '-dens.png'
-boxsize = 2e0
-#pyplot.ioff()
-
-#===============================================================================
-job_server = pp.Server()
-for snap in xrange(150,468):
-    fname = path + '{:0>3}'.format(snap) + '.hdf5'
+def main(fname, write_dir, suffix, width, thickness, length_unit, 
+         job_server, pps=1000, hsml_factor=1.7):
     print 'loading', fname
     snap = fname[-8:-5]
-    wpath = write_dir + snap + suffix
 
     units = pyGadget.units
     constants = pyGadget.constants
@@ -169,18 +158,29 @@ for snap in xrange(150,468):
     pos = pos[refined]
     print 'Refinement complete.'
     '''
-    width= boxsize
-    depth= width
-    center = pos[dens.argmax()]
-    x = pos[:,0] - center[0]
-    y = pos[:,1] - center[1]
-    z = pos[:,2] - center[2]
+    dens_limit = 1e11
+    hidens = numpy.where(dens >= dens_limit)[0]
+    while hidens.size < 100:
+        dens_limit /= 2
+        hidens = numpy.where(dens >= dens_limit)[0]
+    print 'Center averaged over all particles with density greater than ',
+    print '%.2e particles/cc' %dens_limit
+    x = pos[:,0]
+    centerx = numpy.average(statistics.reject_outliers(x[hidens]))
+    x = x - centerx
+    y = pos[:,1]    
+    centery = numpy.average(statistics.reject_outliers(y[hidens]))
+    y = y - centery
+    z = pos[:,2]    
+    centerz = numpy.average(statistics.reject_outliers(z[hidens]))
+    z = z - centerz
 
     try: 
         assert dens.max() <= 1e12
     except AssertionError: 
         print 'Warning: Maximum density exceeds 1e12 particles/cc!'
         print 'Max Density: %.5e' %dens.max()
+    depth= width*thickness
     slice_ = numpy.where(numpy.abs(z) < depth/2)[0]
     dens = dens[slice_]
     smL = smL[slice_]
@@ -223,17 +223,20 @@ for snap in xrange(150,468):
     jobs = []
     server_list = job_server.get_active_nodes()
     ncpus = sum(server_list.values())
-    #Divide in to 16X as many tasks as there are cpus.
-    if ncpus <= 2:
+    #Divide in to more tasks than there are cpus for load balancing.
+    if ncpus <= 2: # dual-core, limited memory laptop and gradbox
         parts = ncpus
-    elif ncpus <=8:
+    elif ncpus <=8: # for my 4-core hyper-threaded core i7 desktop
         parts = ncpus*8
     else:
         parts = ncpus*16
     start = 0
     end = dens.size - 1
     step = (end - start) / parts + 1
-    print 'Dividing the input into',parts,'arrays of',step,'particles'
+    if step < 100:
+        parts = ncpus
+        step = (end - start) / parts + 1
+    print 'Dividing into',parts,'arrays of',step,'particles'
     print 'for calculation on',ncpus,'cpus.'
     for cpu in xrange(parts):
         nstart = start+cpu*step
@@ -254,24 +257,42 @@ for snap in xrange(150,468):
 
     job_server.print_stats()
     zi = numpy.where(nzi > 0, zi/nzi, zi)
-    zmin,zmax = (3,9)
+    print 'density:: min: %.3e max: %.3e' %(zi.min(),zi.max())
+    zmin,zmax = (7,12)
     zi = numpy.fmax(zi, 10**zmin)
     zi = numpy.fmin(zi, 10**zmax)
     zi = numpy.log10(zi)
-    #zi[0,0] = zmin
-    #zi[-1,-1] = zmax
-    print zi.min(),zi.max()
-
+    zi[0,0] = zmin
+    zi[-1,-1] = zmax
+    return xi,yi,zi,redshift
 #===============================================================================
+
+length_unit = pyGadget.units.Length_AU
+pps = 1000 # 'pixels' per side
+hsml_factor = 1.7
+path = os.getenv('HOME')+'/sim/vanilla/snapshot_'
+write_dir = os.getenv('HOME')+'/data/simplots/vanilla/'
+suffix = '-dens-xy.png'
+boxsize = 5e3
+pyplot.ioff()
+
+job_server = pp.Server()
+for snap in xrange(468,614):
+#for snap in [300]:
+    fname = path + '{:0>3}'.format(snap) + '.hdf5'
+    wpath = write_dir + str(snap) + suffix
+    xi,yi,zi,redshift = main(fname, write_dir, suffix, boxsize, 1., 
+                             length_unit, job_server, pps, hsml_factor)
     print 'Plotting...'
     fig = pyplot.figure(1,(10,10))
     fig.clf()
     pyplot.imshow(zi, extent=[xi.min(),xi.max(),yi.min(),yi.max()])
     #pyplot.colorbar()
     ax = pyplot.gca()
-    ax.set_xlabel('pc')
-    ax.set_ylabel('pc')
+    ax.set_xlabel('AU')
+    ax.set_ylabel('AU')
     ax.set_title('Redshift: %.5f' %(redshift,))
+    pyplot.draw()
     pyplot.savefig(wpath, 
                    bbox_inches='tight')
     #pyplot.show()
