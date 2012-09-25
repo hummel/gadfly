@@ -8,5 +8,6 @@ import hdf5
 import nbody
 import sph
 import snapshot
+import visualize
 import sinks
 import xdmf
