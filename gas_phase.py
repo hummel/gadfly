@@ -15,7 +15,7 @@ def plot_phase(path, write_dir, stride=50):
     
     units = pyGadget.units
     constants = pyGadget.constants
-    snapshot = pyGadget.snapshot.Snapshot(path)
+    snapshot = pyGadget.snapshot.load(path)
     
     # Read relevant attributes
     h = snapshot.header.HubbleParam # H = 100*h
@@ -121,11 +121,9 @@ def plot_phase(path, write_dir, stride=50):
 #===============================================================================
 
 if __name__ == '__main__':
-    #pyplot.ioff()
-    wdir = os.getenv('HOME')+'/data/simplots/vanilla-100/'
-#    wdir = os.getenv('HOME')+'/data/simplots/r900/'
-    for snap in range(467,468):
-        path = (os.getenv('HOME')+'/sim/vanilla-100/snapshot_'+
-#        path = ('/scratch/cerberus/d4/jhummel/snapshot_'+
+    pyplot.ioff()
+    wdir = os.getenv('HOME')+'/data/simplots/vanilla/'
+    for snap in range(0,614):
+        path = (os.getenv('HOME')+'/sim/vanilla/snapshot_'+
                 '{:0>3}'.format(snap)+'.hdf5')
         plot_phase(path, wdir, stride=50)
