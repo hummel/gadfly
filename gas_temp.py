@@ -104,8 +104,8 @@ def uniplot(path, write_dir, ptype='gas'):
 
 if __name__ == '__main__':
     pyplot.ioff()
-    wdir = os.getenv('HOME')+'/data/simplots/vanilla/'
-    for snap in range(220,227): 
-        path = (os.getenv('HOME')+'/sim/vanilla/snapshot_'+
+    wdir = os.getenv('HOME')+'/data/simplots/test/'
+    for snap in range(560,690): 
+        path = (os.getenv('HOME')+'/sim/test/snapshot_'+
                 '{:0>3}'.format(snap)+'.hdf5')
         uniplot(path, wdir)

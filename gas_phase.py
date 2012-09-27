@@ -47,11 +47,8 @@ def plot_phase(path, write_dir, stride=50):
 
 
     e = energy * units.Energy_cgs / units.Mass_g
-    print '%.4e' %e.max(), '%.4e' %e.min()
     # Derived Properties
     temp = (mu * constants.m_H / constants.k_B) * energy * (gamma-1)
-    print '%.5e' %temp.max()
-    print '%.5e' %temp.min()
     #hot = numpy.where(temp > 8e2*dens**.5)[0]
     electronfrac = abundances[:,1] + abundances[:,4] + abundances[:,5]
 
@@ -122,8 +119,9 @@ def plot_phase(path, write_dir, stride=50):
 
 if __name__ == '__main__':
     pyplot.ioff()
-    wdir = os.getenv('HOME')+'/data/simplots/vanilla/'
-    for snap in range(0,614):
-        path = (os.getenv('HOME')+'/sim/vanilla/snapshot_'+
+    wdir = os.getenv('HOME')+'/data/simplots/test/'
+    for snap in range(560,690):
+        path = (os.getenv('HOME')+'/sim/test/snapshot_'+
                 '{:0>3}'.format(snap)+'.hdf5')
+        print 'loading', path
         plot_phase(path, wdir, stride=50)
