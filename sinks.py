@@ -42,7 +42,8 @@ def plot_sinkdat(path, write_dir):
     ax3.plot(sink.time, sink.pressure)
     ax3.set_xlabel('Time Since Formation [yr]')
     ax3.set_ylabel('Sink Pressure [dyne cm$^{-2}$]')
-    ax3.set_ylim(3.5888,3.58885)
+    #ax3.set_yscale('log')
+    ax3.set_ylim(.1,.5)
 
     fig.subplots_adjust(top=0.94, left=0.1, right=.915)
     pyplot.savefig(write_dir+'sinkdat.png', 
@@ -51,6 +52,6 @@ def plot_sinkdat(path, write_dir):
 
 if __name__ == '__main__':
     #pyplot.ioff()
-    wdir = os.getenv('HOME')+'/data/simplots/vanilla-100/'
-    path = os.getenv('HOME')+'/work/v100/sinkdat'
+    wdir = os.getenv('HOME')+'/data/simplots/test/'
+    path = os.getenv('HOME')+'/work/test/sinkdat'
     plot_sinkdat(path, wdir)
