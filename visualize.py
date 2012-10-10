@@ -200,6 +200,20 @@ def density(snapshot, view, width, thickness, length_unit,
     print ' smoothing length:: max: %.3e min: %.3e' %(smL.max(),smL.min())
     print ' Array size:', dens.size
 
+    # Exclude sink particles themselves, saving positions
+    sink_ids = numpy.where(sinkval != 0)[0]
+    print sink_ids.size,'sinks found.'
+    snapshot.sinks = []
+    for sink_id in sink_ids:
+        snapshot.sinks.append((x[sink_id],y[sink_id],z[sink_id]))
+    slice_ = numpy.where(sinkval == 0)[0]
+    dens = dens[slice_]
+    smL = smL[slice_]
+    sinkval = sinkval[slice_]
+    x = x[slice_]
+    y = y[slice_]
+    z = z[slice_]
+
     xres = yres = width/pps
     xvals = numpy.arange(-width/2,width/2,xres)
     yvals = numpy.arange(-width/2,width/2,yres)
@@ -223,7 +237,7 @@ def density(snapshot, view, width, thickness, length_unit,
     start = 0
     end = dens.size - 1
     step = (end - start) / parts + 1
-    if step < 100:
+    if step < 25:
         parts = ncpus
         step = (end - start) / parts + 1
     print 'Dividing into',parts,'arrays of',step,'particles'
@@ -248,10 +262,10 @@ def density(snapshot, view, width, thickness, length_unit,
     job_server.print_stats()
     zi = numpy.where(nzi > 0, zi/nzi, zi)
     print 'density:: min: %.3e max: %.3e' %(zi.min(),zi.max())
-    zmin,zmax = (7,12)
-    zi = numpy.fmax(zi, 10**zmin)
-    zi = numpy.fmin(zi, 10**zmax)
-    zi = numpy.log10(zi)
+    zmin,zmax = (5e9,1e12)
+    zi = numpy.fmax(zi, zmin)
+    zi = numpy.fmin(zi, zmax)
     zi[0,0] = zmin
     zi[-1,-1] = zmax
+    zi = numpy.log10(zi)
     return xi,yi,zi
