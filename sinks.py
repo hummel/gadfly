@@ -28,12 +28,13 @@ class SinkData(object):
         self.sink_id  = sinkdata['col7']
         self.pressure = sinkdata['col8']
         self.a = self.time # Scale Facor
+        a3 = self.a**3
 
         h = 0.7 #Hubble Parameter
         ### Convert units
         self.time = self.time*units.Time_yr
         # npart_acc is a simple integer (no units)
-        self.pressure = self.pressure*units.Pressure_cgs*h*h/self.a**5
+        self.pressure = self.pressure*units.Pressure_cgs*h*h/(a3**1.4)
         self.radius = self.radius*units.Length_AU
 
 class SingleSink(SinkData):
