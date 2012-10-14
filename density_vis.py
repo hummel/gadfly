@@ -17,19 +17,25 @@ from pyGadget import snapshot
 from pyGadget import visualize
 import statistics
 
+if len(sys.argv) < 4:
+    print 'Usage: python density_vis.py (simulation name) (beginning snapshot)'\
+        ' (final snapshot)'
+    sys.exit()
+
 length_unit = units.Length_AU
 pps = 1000 # 'pixels' per side
-hsml_factor = .8
-#path = os.getenv('HOME')+'/sim/vanilla/snapshot_'
-#write_dir = os.getenv('HOME')+'/data/simplots/vanilla/'
-path = os.getenv('HOME')+'/sim/test/snapshot_'
-write_dir = os.getenv('HOME')+'/data/simplots/test/'
-boxsize = 6e2
+hsml_factor = 1.
+simulation = sys.argv[1]
+path = os.getenv('HOME')+'/sim/'+simulation+'/snapshot_'
+write_dir = os.getenv('HOME')+'/data/simplots/'+simulation+'/'
+boxsize = 8e2
 
 pyplot.ioff()
 job_server = pp.Server()
 
-for i in xrange(300,841):
+start = int(sys.argv[2])
+stop = int(sys.argv[3])+1
+for i in xrange(start,stop):
     fname = path + '{:0>3}'.format(i) + '.hdf5'
     snap = snapshot.load(fname)
     redshift = snap.header.Redshift
