@@ -3,6 +3,7 @@
 # Jacob Hummel
 
 import os
+import sys
 import numpy
 from matplotlib import pyplot
 
@@ -118,10 +119,20 @@ def plot_phase(path, write_dir, stride=50):
 #===============================================================================
 
 if __name__ == '__main__':
+
     pyplot.ioff()
-    wdir = os.getenv('HOME')+'/data/simplots/test/'
-    for snap in range(560,690):
-        path = (os.getenv('HOME')+'/sim/test/snapshot_'+
-                '{:0>3}'.format(snap)+'.hdf5')
-        print 'loading', path
-        plot_phase(path, wdir, stride=50)
+    if len(sys.argv) < 4:
+        print 'Usage: python density_vis.py (simulation name) '\
+            '(beginning snapshot) (final snapshot)'
+        sys.exit()
+
+    simulation = sys.argv[1]
+    path = os.getenv('HOME')+'/sim/'+simulation+'/snapshot_'
+    write_dir = os.getenv('HOME')+'/data/simplots/'+simulation+'/'
+
+    start = int(sys.argv[2])
+    stop = int(sys.argv[3])+1
+    for snap in xrange(start,stop):
+        fname = path + '{:0>3}'.format(snap)+'.hdf5'
+        print 'loading', fname
+        plot_phase(fname, write_dir, stride=50)
