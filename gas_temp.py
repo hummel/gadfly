@@ -116,4 +116,5 @@ if __name__ == '__main__':
     stop = int(sys.argv[3])+1
     for snap in xrange(start,stop):
         fname = path + '{:0>3}'.format(snap)+'.hdf5'
-        uniplot(path, write_dir)
+        print 'loading', fname
+        uniplot(fname, write_dir)
