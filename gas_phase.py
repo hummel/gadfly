@@ -122,7 +122,7 @@ if __name__ == '__main__':
 
     pyplot.ioff()
     if len(sys.argv) < 4:
-        print 'Usage: python density_vis.py (simulation name) '\
+        print 'Usage: python gas_phase.py (simulation name) '\
             '(beginning snapshot) (final snapshot)'
         sys.exit()
 
