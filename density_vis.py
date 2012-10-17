@@ -24,11 +24,11 @@ if len(sys.argv) < 4:
 
 length_unit = units.Length_AU
 pps = 1000 # 'pixels' per side
-hsml_factor = 1.
+hsml_factor = 1.5
 simulation = sys.argv[1]
 path = os.getenv('HOME')+'/sim/'+simulation+'/snapshot_'
 write_dir = os.getenv('HOME')+'/data/simplots/'+simulation+'/'
-boxsize = 8e2
+boxsize = 1e3
 
 pyplot.ioff()
 job_server = pp.Server()
