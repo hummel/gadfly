@@ -6,52 +6,34 @@ import os
 import sys
 import numpy
 from matplotlib import pyplot
-
 import pyGadget
 #===============================================================================
 
 def plot_phase(path, write_dir, stride=50):
     snap = path[-8:-5]
     wpath = write_dir+snap+'-phase.png'
-    
-    units = pyGadget.units
-    constants = pyGadget.constants
+
     snapshot = pyGadget.snapshot.load(path)
-    
     # Read relevant attributes
     h = snapshot.header.HubbleParam # H = 100*h
     redshift = snapshot.header.Redshift
-
     particle_mass = snapshot.gas.get_masses()
     dens = snapshot.gas.get_number_density()
-    energy =  snapshot.gas.get_internal_energy()
-    gamma =  snapshot.gas.get_gamma()
-    abundances = snapshot.gas.get_abundances()
+    gamma = snapshot.gas.get_gamma()
+    temp = snapshot.gas.get_temperature()
+    h2frac = snapshot.gas.get_H2_fraction()
+    electronfrac = snapshot.gas.get_electron_fraction()
     snapshot.close()
     
     # Initialization Complete --- Begin Analysis
     print 'Analyzing...'
     minimum = numpy.amin(particle_mass)
     refined = numpy.where(particle_mass <= minimum)[0][0:-1:stride]
-
     dens = dens[refined]
-    energy = energy[refined]
     gamma = gamma[refined]
-    abundances = abundances[refined]
-
-    # Chemical Abundances
-    # 0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
-    H2I = abundances[:,0]
-    h2frac = 2*H2I
-    mu = (0.24/4.0) + ((1.0-h2frac)*0.76) + (h2frac*.76/2.0)
-    mu = 1 / mu # mean molecular weight
-
-
-    e = energy * units.Energy_cgs / units.Mass_g
-    # Derived Properties
-    temp = (mu * constants.m_H / constants.k_B) * energy * (gamma-1)
-    #hot = numpy.where(temp > 8e2*dens**.5)[0]
-    electronfrac = abundances[:,1] + abundances[:,4] + abundances[:,5]
+    temp = temp[refined]
+    h2frac = h2frac[refined]
+    electronfrac = electronfrac[refined]
 
     ### Create Plot!
     ### All plots vs density
@@ -62,15 +44,12 @@ def plot_phase(path, write_dir, stride=50):
     ax1 = fig.add_subplot(222)
     ax2 = fig.add_subplot(223)
     ax3 = fig.add_subplot(224)
-    
     density_labels = (1e-2,1e0,1e2,1e4,1e6,1e8,1e10,1e12)
-    
+
     # Temperature
     ax0.scatter(dens, temp, s=1, c='k', linewidths=0.0)
-    #ax0.scatter(dens[hot], temp[hot], s=2, c='r', linewidths=0.0)
     ax0.set_xscale('log')
     ax0.set_yscale('log')
-
     ax0.set_xlim(1e-2, 1e12)
     ax0.set_ylim(7, 1e4)
     ax0.set_xticks(density_labels)
@@ -79,10 +58,8 @@ def plot_phase(path, write_dir, stride=50):
 
     # Free electron fraction
     ax1.scatter(dens, electronfrac, s=1, c='k', linewidths=0.0)
-    #ax1.scatter(dens[hot], electronfrac[hot], s=2, c='r', linewidths=0.0)
     ax1.set_xscale('log')
     ax1.set_yscale('log')
-
     ax1.set_xlim(1e-2, 1e12)
     ax1.set_ylim(1e-12, 1e-2)
     ax1.set_xticks(density_labels)
@@ -91,12 +68,10 @@ def plot_phase(path, write_dir, stride=50):
 
     # Molecular Hydrogen Fraction
     ax2.scatter(dens, h2frac, s=1, c='k', linewidths=0.0)
-    #ax2.scatter(dens[hot], h2frac[hot], s=2, c='r', linewidths=0.0)
     ax2.set_xscale('log')
     ax2.set_yscale('log')
-
     ax2.set_xlim(1e-2, 1e12)
-    ax2.set_ylim(1e-7,1)
+    ax2.set_ylim(1e-7,2)
     ax2.set_xticks(density_labels)
     ax2.set_xlabel('n [cm$^{-3}$]')
     ax2.set_ylabel('f$_{H_2}$')
@@ -104,7 +79,6 @@ def plot_phase(path, write_dir, stride=50):
     # Adiabatic exponent
     ax3.scatter(dens, gamma, s=1, c='k', linewidths=0.0)
     ax3.set_xscale('log')
-
     ax3.set_xlim(1e-2, 1e12)
     ax3.set_ylim(1,2)
     ax3.set_xticks(density_labels)
@@ -116,11 +90,12 @@ def plot_phase(path, write_dir, stride=50):
     pyplot.savefig(wpath, 
                    bbox_extra_artists=(title,),
                    bbox_inches='tight')
+    return dens,temp
 #===============================================================================
 
 if __name__ == '__main__':
 
-    pyplot.ioff()
+    #pyplot.ioff()
     if len(sys.argv) < 4:
         print 'Usage: python gas_phase.py (simulation name) '\
             '(beginning snapshot) (final snapshot)'
@@ -135,4 +110,4 @@ if __name__ == '__main__':
     for snap in xrange(start,stop):
         fname = path + '{:0>3}'.format(snap)+'.hdf5'
         print 'loading', fname
-        plot_phase(fname, write_dir, stride=50)
+        dens, temp = plot_phase(fname, write_dir, stride=50)
