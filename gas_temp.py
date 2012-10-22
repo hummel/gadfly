@@ -47,7 +47,7 @@ def plot_temp(path, write_dir):
 #===============================================================================
 
 if __name__ == '__main__':
-    #pyplot.ioff()
+    pyplot.ioff()
     if len(sys.argv) < 4:
         print 'Usage: python gas_temp.py [simulation name] '\
             '[beginning snapshot] [final snapshot]'

@@ -95,7 +95,7 @@ def plot_phase(path, write_dir, stride=50):
 
 if __name__ == '__main__':
 
-    #pyplot.ioff()
+    pyplot.ioff()
     if len(sys.argv) < 4:
         print 'Usage: python gas_phase.py (simulation name) '\
             '(beginning snapshot) (final snapshot)'
