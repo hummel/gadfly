@@ -59,6 +59,8 @@ for i in xrange(start,stop):
                 ax.plot(sink[1],sink[2],'ko')
             else:
                 raise KeyError
+        ax.set_xlim(x.min(),x.max())
+        ax.set_ylim(y.min(),y.max())
         ax.set_xlabel('AU')
         ax.set_ylabel('AU')
         ax.set_title('Redshift: %.5f' %redshift)
