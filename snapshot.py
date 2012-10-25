@@ -15,6 +15,7 @@ class load:
     """
     def __init__(self, filename):
         self.filename = filename
+        self.number = int(filename[-8:-5])
         self.file_id = h5py.File(filename, 'r')
         self.header = hdf5.Header(self.file_id)
         self.dm = nbody.PartTypeDM(self.file_id)
