@@ -200,19 +200,12 @@ def density(snapshot, view, width, thickness, length_unit,
     print ' smoothing length:: max: %.3e min: %.3e' %(smL.max(),smL.min())
     print ' Array size:', dens.size
 
-    # Exclude sink particles themselves, saving positions
+    # Save sink particle positions for over-plotting
     sink_ids = numpy.where(sinkval != 0)[0]
     print sink_ids.size,'sinks found.'
     snapshot.sinks = []
     for sink_id in sink_ids:
         snapshot.sinks.append((x[sink_id],y[sink_id],z[sink_id]))
-    slice_ = numpy.where(sinkval == 0)[0]
-    dens = dens[slice_]
-    smL = smL[slice_]
-    sinkval = sinkval[slice_]
-    x = x[slice_]
-    y = y[slice_]
-    z = z[slice_]
 
     xres = yres = width/pps
     xvals = numpy.arange(-width/2,width/2,xres)
