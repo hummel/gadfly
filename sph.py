@@ -189,30 +189,60 @@ class PartTypeSPH(hdf5.PartTypeX):
             self.load_smoothing_length(conv, no_h, comoving)
             return self.smoothing_length
 
+    def load_electron_fraction(self):
+        """
+        Load the free electron fraction.
+        """
+        # Chemical Abundances--> 0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
+        abundances = self.get_abundances()
+        self.electron_frac = abundances[:,1] + abundances[:,4] + abundances[:,5]
+
     def get_electron_fraction(self):
         """
         Return the free electron fraction.
         """
+        try:
+            return self.electron_frac
+        except AttributeError:
+            self.load_electron_fraction()
+            return self.electron_frac
+
+    def load_H2_fraction(self):
+        """
+        Load the molecular hydrogen fraction.
+        """
         # Chemical Abundances--> 0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
         abundances = self.get_abundances()
-        return abundances[:,1] + abundances[:,4] + abundances[:,5]
+        self.h2frac = 2*abundances[:,0]
 
     def get_H2_fraction(self):
         """
-        Return the free electron fraction.
+        Return the molecular hydrogen fraction.
         """
-        # Chemical Abundances--> 0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
-        abundances = self.get_abundances()
-        return 2*abundances[:,0]
+        try:
+            return self.h2frac
+        except AttributeError:
+            self.load_H2_fraction()
+            return self.h2frac
 
-    def get_temperature(self):
+    def load_temperature(self):
         """
-        Return Particle Temperatures in degrees Kelvin.
+        Load Particle Temperatures in degrees Kelvin.
         """
         gamma = self.get_gamma()
         energy = self.get_internal_energy()
         h2frac = self.get_H2_fraction()
         mu = (0.24/4.0) + ((1.0-h2frac)*0.76) + (h2frac*.76/2.0)
         mu = 1 / mu # mean molecular weight
-        return (mu * constants.m_H / constants.k_B) * energy * (gamma-1)
+        self.temp = (mu * constants.m_H / constants.k_B) * energy * (gamma-1)
+
+    def get_temperature(self):
+        """
+        Return Particle Temperatures in degrees Kelvin.
+        """
+        try:
+            return self.temp
+        except AttributeError:
+            self.load_temperature()
+            return self.temp
 
