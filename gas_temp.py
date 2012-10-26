@@ -5,10 +5,13 @@ import os
 import sys
 import glob
 import numpy
+import Queue
+import threading
+import multiprocessing
 from matplotlib import pyplot
 import pyGadget
-#===============================================================================
 
+#===============================================================================
 def load_snapshot(path):
     snapshot = pyGadget.snapshot.load(path)
     snapshot.gas.load_masses()
@@ -19,7 +22,7 @@ def load_snapshot(path):
     snapshot.close()
     return snapshot
 
-def plot_temp(snapshot):
+def plot_temp(snapshot,wpath):
     h = snapshot.header.HubbleParam
     redshift = snapshot.header.Redshift
     particle_mass = snapshot.gas.get_masses()
@@ -27,7 +30,6 @@ def plot_temp(snapshot):
     temp = snapshot.gas.get_temperature()
 
     # Refine
-    print 'Refining...'
     minimum = numpy.amin(particle_mass)
     stride = 100
     refined = numpy.where(particle_mass <= minimum)[0]#[0:-1:stride]
@@ -35,7 +37,6 @@ def plot_temp(snapshot):
     temp = temp[refined]
 
     # Plot!
-    print 'Plotting...'
     fig = pyplot.figure(figsize=(15,10))
     fig.clf()
     ax = fig.add_subplot(111)
@@ -48,22 +49,60 @@ def plot_temp(snapshot):
     pyplot.title('Redshift: %.2f' %(redshift,))
     ax.set_xlabel('n [cm^-3]')
     ax.set_ylabel('Temperature [K]')
-    return fig
-
-def save_plot(fig,path):
-    pyplot.savefig(path+'-temp.png',
+    pyplot.savefig(wpath+'-temp.png',
                    bbox_inches='tight')
+
+#===============================================================================
+class Loader(threading.Thread):
+    def __init__(self, file_queue, data_queue):
+        self.file_queue = file_queue
+        self.data_queue = data_queue
+        threading.Thread.__init__(self)
+        
+    def run(self):
+        while 1:
+            fname = self.file_queue.get()
+            if fname is None:
+                self.data_queue.put(None)
+                break # reached end of queue
+            print 'loading', fname
+            snapshot = load_snapshot(fname)
+            self.data_queue.put(snapshot)
+
+class Worker(threading.Thread):
+    def __init__(self, queue,wdir):
+        self.__queue = queue
+        self.wdir = wdir
+        self.procs = []
+        threading.Thread.__init__(self)
+        
+    def run(self):
+        while 1:
+            snapshot = self.__queue.get()
+            if snapshot is None:
+                for p in self.procs:
+                    p.join()
+                break # reached end of queue
+            print 'Plotting', snapshot.filename
+            procs = []
+            p = multiprocessing.Process(target=plot_temp, 
+                                        args=(snapshot,
+                                              self.wdir+str(snapshot.number)))
+            self.procs.append(p)
+            p.start()
+            
 #===============================================================================
 def multitask(path,write_dir,start,stop):
-    for snap in xrange(start,stop):
+    file_queue = Queue.Queue(3)
+    data_queue = Queue.Queue(multiprocessing.cpu_count())
+    Loader(file_queue,data_queue).start()
+    Worker(data_queue,write_dir).start()
+    for snap in xrange(start,stop,2):
         fname = path + '{:0>3}'.format(snap)+'.hdf5'
-        print 'loading', fname
-        snapshot = load_snapshot(fname)
-        fig = plot_temp(snapshot)
-        save_plot(fig,write_dir+str(snapshot.number))
+        file_queue.put(fname)
+    file_queue.put(None)
 
 #===============================================================================
-
 if __name__ == '__main__':
     pyplot.ioff()
     if ((len(sys.argv) not in [2,3,4]) or (sys.argv[1] == '-h')):
@@ -85,8 +124,7 @@ if __name__ == '__main__':
         fname = path + '{:0>3}'.format(snap)+'.hdf5'
         print 'loading', fname
         snapshot = load_snapshot(fname)
-        fig = plot_temp(snapshot)
-        save_plot(fig,write_dir+snap)
+        plot_temp(snapshot,write_dir+snap)
         
     elif len(sys.argv) == 4:
         start = int(sys.argv[2])
