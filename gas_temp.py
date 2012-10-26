@@ -93,11 +93,11 @@ class Worker(threading.Thread):
             
 #===============================================================================
 def multitask(path,write_dir,start,stop):
-    file_queue = Queue.Queue(3)
+    file_queue = Queue.Queue(4)
     data_queue = Queue.Queue(multiprocessing.cpu_count())
     Loader(file_queue,data_queue).start()
     Worker(data_queue,write_dir).start()
-    for snap in xrange(start,stop,2):
+    for snap in xrange(start,stop):
         fname = path + '{:0>3}'.format(snap)+'.hdf5'
         file_queue.put(fname)
     file_queue.put(None)
