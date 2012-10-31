@@ -255,10 +255,4 @@ def density(snapshot, view, width, thickness, length_unit,
     job_server.print_stats()
     zi = numpy.where(nzi > 0, zi/nzi, zi)
     print 'density:: min: %.3e max: %.3e' %(zi.min(),zi.max())
-    zmin,zmax = (5e9,1e12)
-    zi = numpy.fmax(zi, zmin)
-    zi = numpy.fmin(zi, zmax)
-    zi[0,0] = zmin
-    zi[-1,-1] = zmax
-    zi = numpy.log10(zi)
     return xi,yi,zi
