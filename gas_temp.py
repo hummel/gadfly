@@ -93,8 +93,8 @@ class Worker(threading.Thread):
             
 #===============================================================================
 def multitask(path,write_dir,start,stop):
-    file_queue = Queue.Queue(4)
-    data_queue = Queue.Queue(multiprocessing.cpu_count())
+    file_queue = Queue.Queue(2)
+    data_queue = Queue.Queue(8)
     Loader(file_queue,data_queue).start()
     Worker(data_queue,write_dir).start()
     for snap in xrange(start,stop):
