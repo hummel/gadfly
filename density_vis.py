@@ -9,6 +9,7 @@ import numpy
 from scipy import weave
 from scipy.weave import converters
 from matplotlib import pyplot
+from matplotlib import cm
 from matplotlib.mlab import griddata
 import pp
 
@@ -28,7 +29,7 @@ hsml_factor = 1.5
 simulation = sys.argv[1]
 path = os.getenv('HOME')+'/sim/'+simulation+'/snapshot_'
 write_dir = os.getenv('HOME')+'/data/simplots/'+simulation+'/'
-boxsize = 1e3
+boxsize = 2e3
 
 pyplot.ioff()
 job_server = pp.Server()
@@ -44,26 +45,23 @@ for i in xrange(start,stop):
         view = suffix[-6:-4]
         x,y,z = visualize.density(snap, view, boxsize, 1., length_unit, 
                                   job_server, pps, hsml_factor)
+        z = numpy.log10(z)
+        zmin,zmax = (1e9,7e11)
+
         print 'Plotting',view+'...'
-        fig = pyplot.figure(1,(10,10))
+        fig = pyplot.figure(1,(12,12))
         fig.clf()
-        pyplot.imshow(z, extent=[x.min(),x.max(),y.min(),y.max()])
-        #pyplot.colorbar()
+        pyplot.imshow(z, extent=[x.min(),x.max(),y.min(),y.max()],
+                      cmap=cm.jet)
+        pyplot.clim(numpy.log10(zmin),numpy.log10(zmax))
         ax = pyplot.gca()
         for sink in snap.sinks:
-            if view == 'xy':
-                ax.plot(sink[0],sink[1],'ko')
-            elif view == 'xz':
-                ax.plot(sink[0],sink[2],'ko')
-            elif view == 'yz':
-                ax.plot(sink[1],sink[2],'ko')
-            else:
-                raise KeyError
+            ax.plot(sink[1], -sink[0], 'ko') # 90-degree rotation
         ax.set_xlim(x.min(),x.max())
         ax.set_ylim(y.min(),y.max())
         ax.set_xlabel('AU')
         ax.set_ylabel('AU')
-        ax.set_title('Redshift: %.5f' %redshift)
+        ax.set_title('Redshift: %.7f' %redshift)
         pyplot.draw()
         pyplot.savefig(wpath, 
                        bbox_inches='tight')
