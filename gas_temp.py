@@ -14,27 +14,29 @@ import pyGadget
 #===============================================================================
 def load_snapshot(path):
     snapshot = pyGadget.snapshot.load(path)
-    snapshot.gas.load_masses()
+    masses = snapshot.gas.get_masses()
     snapshot.gas.load_number_density()
-    snapshot.gas.load_internal_energy()
-    snapshot.gas.load_gamma()
-    snapshot.gas.load_H2_fraction()
+    snapshot.gas.load_temperature()
     snapshot.close()
+    # Refine
+    minimum = numpy.amin(masses)
+    refined = numpy.where(masses <= minimum)[0]
+    snapshot.gas.ndensity = snapshot.gas.ndensity[refined]
+    snapshot.gas.temp = snapshot.gas.temp[refined]
+    # Cleanup to save memory
+    del snapshot.gas.masses
+    del snapshot.gas.abundances
+    del snapshot.gas.energy
+    del snapshot.gas.h2frac
+    del snapshot.gas.gamma
+
     return snapshot
 
 def plot_temp(snapshot,wpath):
     h = snapshot.header.HubbleParam
     redshift = snapshot.header.Redshift
-    particle_mass = snapshot.gas.get_masses()
     dens = snapshot.gas.get_number_density()
     temp = snapshot.gas.get_temperature()
-
-    # Refine
-    minimum = numpy.amin(particle_mass)
-    stride = 100
-    refined = numpy.where(particle_mass <= minimum)[0]#[0:-1:stride]
-    dens = dens[refined]
-    temp = temp[refined]
 
     # Plot!
     fig = pyplot.figure(figsize=(15,10))
@@ -84,7 +86,6 @@ class Worker(threading.Thread):
                     p.join()
                 break # reached end of queue
             print 'Plotting', snapshot.filename
-            procs = []
             p = multiprocessing.Process(target=plot_temp, 
                                         args=(snapshot,
                                               self.wdir+str(snapshot.number)))
@@ -93,8 +94,8 @@ class Worker(threading.Thread):
             
 #===============================================================================
 def multitask(path,write_dir,start,stop):
-    file_queue = Queue.Queue(2)
-    data_queue = Queue.Queue(8)
+    file_queue = Queue.Queue(1)
+    data_queue = Queue.Queue(1)
     Loader(file_queue,data_queue).start()
     Worker(data_queue,write_dir).start()
     for snap in xrange(start,stop):
