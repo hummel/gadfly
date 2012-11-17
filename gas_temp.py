@@ -68,40 +68,45 @@ class Loader(threading.Thread):
                 self.data_queue.put(None)
                 break # reached end of queue
             print 'loading', fname
-            snapshot = load_snapshot(fname)
-            self.data_queue.put(snapshot)
+            try:
+                snapshot = load_snapshot(fname)
+                self.data_queue.put(snapshot)
+            except IOError:
+                pass
 
-class Worker(threading.Thread):
-    def __init__(self, queue,wdir):
-        self.__queue = queue
-        self.wdir = wdir
-        self.procs = []
-        threading.Thread.__init__(self)
-        
-    def run(self):
-        while 1:
-            snapshot = self.__queue.get()
-            if snapshot is None:
-                for p in self.procs:
-                    p.join()
-                break # reached end of queue
-            print 'Plotting', snapshot.filename
-            p = multiprocessing.Process(target=plot_temp, 
-                                        args=(snapshot,
-                                              self.wdir+str(snapshot.number)))
-            self.procs.append(p)
-            p.start()
-            
 #===============================================================================
 def multitask(path,write_dir,start,stop):
-    file_queue = Queue.Queue(1)
-    data_queue = Queue.Queue(1)
+    maxprocs = multiprocessing.cpu_count()
+    file_queue = Queue.Queue()
+    data_queue = Queue.Queue(2)
+    process_queue = Queue.Queue(maxprocs)
     Loader(file_queue,data_queue).start()
-    Worker(data_queue,write_dir).start()
     for snap in xrange(start,stop):
         fname = path + '{:0>3}'.format(snap)+'.hdf5'
         file_queue.put(fname)
     file_queue.put(None)
+    procs = []
+    done = False
+    while not done:
+        snapshot = data_queue.get()
+        if snapshot is None:
+            done = True
+            for process in procs:
+                process.join()
+        else:
+            p = multiprocessing.Process(target=plot_temp, 
+                                        args=(snapshot,
+                                              write_dir+str(snapshot.number)))
+            procs.append(p)
+            while True:
+                running_procs = 0
+                for proc in procs:
+                    if proc.is_alive():
+                        running_procs +=1
+                if running_procs < maxprocs:
+                    print 'Plotting', snapshot.filename
+                    p.start()
+                    break
 
 #===============================================================================
 if __name__ == '__main__':
@@ -133,7 +138,7 @@ if __name__ == '__main__':
         multitask(path,write_dir,start,stop)
 
     else:
-        files = glob.glob(path+'???.hdf5')
+        files = glob.glob(path+'*.hdf5')
         files.sort()
         start = int(files[0][-8:-5])
         stop = start + len(files)
