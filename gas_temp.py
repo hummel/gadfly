@@ -7,7 +7,7 @@ import glob
 import numpy
 import Queue
 import threading
-import multiprocessing
+import multiprocessing as mp
 from matplotlib import pyplot
 import pyGadget
 
@@ -76,7 +76,7 @@ class Loader(threading.Thread):
 
 #===============================================================================
 def multitask(path,write_dir,start,stop):
-    maxprocs = multiprocessing.cpu_count()
+    maxprocs = mp.cpu_count()
     file_queue = Queue.Queue()
     data_queue = Queue.Queue(2)
     process_queue = Queue.Queue(maxprocs)
@@ -94,9 +94,11 @@ def multitask(path,write_dir,start,stop):
             for process in procs:
                 process.join()
         else:
-            p = multiprocessing.Process(target=plot_temp, 
-                                        args=(snapshot,
-                                              write_dir+str(snapshot.number)))
+            p = mp.Process(target=plot_temp, 
+                           args=(snapshot,
+                                 write_dir+'{:0>3}'.format(snapshot.number)))
+                                              
+                                              
             procs.append(p)
             while True:
                 running_procs = 0
