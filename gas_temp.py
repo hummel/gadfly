@@ -96,7 +96,7 @@ def multitask(path,write_dir,start,stop):
         else:
             p = mp.Process(target=plot_temp, 
                            args=(snapshot,
-                                 write_dir+'{:0>3}'.format(snapshot.number)))
+                                 write_dir+'{:0>4}'.format(snapshot.number)))
                                               
                                               
             procs.append(p)

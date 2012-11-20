@@ -31,7 +31,7 @@ path = os.getenv('HOME')+'/sim/'+simulation+'/snapshot_'
 write_dir = os.getenv('HOME')+'/data/simplots/'+simulation+'/'
 boxsize = 2e3
 
-pyplot.ioff()
+#pyplot.ioff()
 job_server = pp.Server()
 
 start = int(sys.argv[2])
@@ -41,7 +41,7 @@ for i in xrange(start,stop):
     snap = snapshot.load(fname)
     redshift = snap.header.Redshift
     for suffix in ['-dens-xy.png','-dens-xz.png','-dens-yz.png']:
-        wpath = write_dir + '{:0>3}'.format(i) + suffix
+        wpath = write_dir + '{:0>4}'.format(i) + suffix
         view = suffix[-6:-4]
         x,y,z = visualize.density(snap, view, boxsize, 1., length_unit, 
                                   job_server, pps, hsml_factor)

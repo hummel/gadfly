@@ -9,9 +9,8 @@ from matplotlib import pyplot
 import pyGadget
 #===============================================================================
 
-def plot_phase(path, write_dir, stride=50):
-    snap = path[-8:-5]
-    wpath = write_dir+snap+'-phase.png'
+def plot_phase(path, snap, write_dir, stride=50):
+    wpath = write_dir + '{:0>4}'.format(snap)+'-phase.png'
 
     snapshot = pyGadget.snapshot.load(path)
     # Read relevant attributes
@@ -110,4 +109,4 @@ if __name__ == '__main__':
     for snap in xrange(start,stop):
         fname = path + '{:0>3}'.format(snap)+'.hdf5'
         print 'loading', fname
-        dens, temp = plot_phase(fname, write_dir, stride=50)
+        dens, temp = plot_phase(fname, snap, write_dir, stride=50)
