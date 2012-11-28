@@ -30,7 +30,7 @@ class File:
 
 #===============================================================================
 class Loader(threading.Thread):
-    def __init__(self, file_queue, data_queue):
+    def __init__(self, load_function, file_queue, data_queue):
         self.file_queue = file_queue
         self.data_queue = data_queue
         threading.Thread.__init__(self)
@@ -43,7 +43,7 @@ class Loader(threading.Thread):
                 break # reached end of queue
             print 'loading', fname
             try:
-                snapshot = load_snapshot(fname)
+                snapshot = load_function(fname)
                 self.data_queue.put(snapshot)
             except IOError:
                 print 'Warning:',fname,'not found!'
