@@ -3,7 +3,7 @@
 """
 This module contains classes for reading Gadget2 HDF5 snapshot files.
 """
-
+import threading
 import h5py
 import hdf5
 import nbody
