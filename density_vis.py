@@ -38,7 +38,7 @@ start = int(sys.argv[2])
 stop = int(sys.argv[3])+1
 for i in xrange(start,stop):
     fname = path + '{:0>3}'.format(i) + '.hdf5'
-    snap = snapshot.load(fname)
+    snap = snapshot.File(fname)
     redshift = snap.header.Redshift
     for suffix in ['-dens-xy.png','-dens-xz.png','-dens-yz.png']:
         wpath = write_dir + '{:0>4}'.format(i) + suffix

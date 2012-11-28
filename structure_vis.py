@@ -129,14 +129,14 @@ pps = 1000 # 'pixels' per side
 hsml_factor = 1.7
 job_server = pp.Server()
 
-path = os.getenv('HOME')+'/sim/vanilla/snapshot_'
-write_dir = os.getenv('HOME')+'/data/simplots/vanilla/'
+path = os.getenv('HOME')+'/sim/vanilla900/snapshot_'
+write_dir = os.getenv('HOME')+'/data/simplots/vanilla900/'
 suffix = '-structure.png'
 boxsize = 1e2/.71
 pyplot.ioff()
 
 #===============================================================================
-for snap in xrange(0,468):
+for snap in xrange(74,300):
     fname = path + '{:0>3}'.format(snap) + '.hdf5'
     print 'loading', fname
     snap = fname[-8:-5]
@@ -144,7 +144,7 @@ for snap in xrange(0,468):
 
     units = pyGadget.units
     constants = pyGadget.constants
-    snapshot = pyGadget.snapshot.load(fname)
+    snapshot = pyGadget.snapshot.File(fname)
 
     # Read relevant attributes
     h = snapshot.header.HubbleParam

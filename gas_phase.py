@@ -12,7 +12,7 @@ import pyGadget
 def plot_phase(path, snap, write_dir, stride=50):
     wpath = write_dir + '{:0>4}'.format(snap)+'-phase.png'
 
-    snapshot = pyGadget.snapshot.load(path)
+    snapshot = pyGadget.snapshot.File(path)
     # Read relevant attributes
     h = snapshot.header.HubbleParam # H = 100*h
     redshift = snapshot.header.Redshift

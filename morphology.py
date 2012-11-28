@@ -30,7 +30,7 @@ for snap in range(467,468):
 
     units = pyGadget.units
     constants = pyGadget.constants
-    snapshot = pyGadget.snapshot.load(path)
+    snapshot = pyGadget.snapshot.File(path)
 
     # Read relevant attributes
     h = snapshot.header.HubbleParam # H = 100*h

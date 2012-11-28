@@ -13,7 +13,7 @@ import pyGadget
 
 #===============================================================================
 def load_snapshot(path):
-    snapshot = pyGadget.snapshot.load(path)
+    snapshot = pyGadget.snapshot.File(path)
     masses = snapshot.gas.get_masses()
     snapshot.gas.load_number_density()
     snapshot.gas.load_temperature()
