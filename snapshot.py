@@ -9,7 +9,7 @@ import hdf5
 import nbody
 import sph
 
-class load:
+class File:
     """
     Class for Gadget2 HDF5 snapshot files.
     """
