@@ -27,3 +27,24 @@ class File:
         
     def close(self):
         self.file_id.close()
+
+#===============================================================================
+class Loader(threading.Thread):
+    def __init__(self, file_queue, data_queue):
+        self.file_queue = file_queue
+        self.data_queue = data_queue
+        threading.Thread.__init__(self)
+        
+    def run(self):
+        while 1:
+            fname = self.file_queue.get()
+            if fname is None:
+                self.data_queue.put(None)
+                break # reached end of queue
+            print 'loading', fname
+            try:
+                snapshot = load_snapshot(fname)
+                self.data_queue.put(snapshot)
+            except IOError:
+                pass
+
