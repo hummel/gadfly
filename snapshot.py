@@ -46,5 +46,6 @@ class Loader(threading.Thread):
                 snapshot = load_snapshot(fname)
                 self.data_queue.put(snapshot)
             except IOError:
+                print 'Warning:',fname,'not found!'
                 pass
 
