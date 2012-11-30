@@ -59,9 +59,9 @@ def multitask(path,write_dir,start,stop):
     file_queue = Queue.Queue()
     data_queue = Queue.Queue(2)
     pyGadget.snapshot.Loader(load_snapshot, file_queue, data_queue).start()
-    for snap in xrange(start,stop):
+    for snap in xrange(start,stop+1):
         fname = path + '{:0>3}'.format(snap)+'.hdf5'
-        file_queue.put(fname)
+        file_queue.put((fname,))
     file_queue.put(None)
     procs = []
     done = False
@@ -118,9 +118,12 @@ if __name__ == '__main__':
         multitask(path,write_dir,start,stop)
 
     else:
-        files = glob.glob(path+'*.hdf5')
-        files.sort()
+        files0 = glob.glob(path+'???.hdf5')
+        files1 = glob.glob(path+'1???.hdf5')
+        files0.sort()
+        files1.sort()
+        files = files0 + files1
         start = int(files[0][-8:-5])
-        stop = start + len(files)
+        stop = int(files[-1][-8:-5])
         multitask(path,write_dir,start,stop)
 
