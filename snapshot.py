@@ -33,17 +33,19 @@ class Loader(threading.Thread):
     def __init__(self, load_function, file_queue, data_queue):
         self.file_queue = file_queue
         self.data_queue = data_queue
+        self.load_function = load_function
         threading.Thread.__init__(self)
         
     def run(self):
         while 1:
-            fname = self.file_queue.get()
+            args = self.file_queue.get()
+            fname = args[0]
             if fname is None:
                 self.data_queue.put(None)
                 break # reached end of queue
             print 'loading', fname
             try:
-                snapshot = load_function(fname)
+                snapshot = self.load_function(*args)
                 self.data_queue.put(snapshot)
             except IOError:
                 print 'Warning:',fname,'not found!'
