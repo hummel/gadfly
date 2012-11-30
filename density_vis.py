@@ -77,6 +77,7 @@ def multitask(path, write_dir, start, stop,
     print 'Done.'
     
 #===============================================================================
+pyplot.ioff()
 if ((len(sys.argv) not in [2,3,4]) or (sys.argv[1] == '-h')):
     print 'Usage::'
     print '   Option 1: python gas_temp.py [simulation name] '\
