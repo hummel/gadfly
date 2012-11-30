@@ -6,7 +6,6 @@ import sys
 import glob
 import numpy
 import Queue
-import threading
 import multiprocessing as mp
 from matplotlib import pyplot
 import pyGadget
@@ -55,32 +54,12 @@ def plot_temp(snapshot,wpath):
                    bbox_inches='tight')
 
 #===============================================================================
-class Loader(threading.Thread):
-    def __init__(self, file_queue, data_queue):
-        self.file_queue = file_queue
-        self.data_queue = data_queue
-        threading.Thread.__init__(self)
-        
-    def run(self):
-        while 1:
-            fname = self.file_queue.get()
-            if fname is None:
-                self.data_queue.put(None)
-                break # reached end of queue
-            print 'loading', fname
-            try:
-                snapshot = load_snapshot(fname)
-                self.data_queue.put(snapshot)
-            except IOError:
-                pass
-
-#===============================================================================
 def multitask(path,write_dir,start,stop):
     maxprocs = mp.cpu_count()
     file_queue = Queue.Queue()
     data_queue = Queue.Queue(2)
     process_queue = Queue.Queue(maxprocs)
-    Loader(file_queue,data_queue).start()
+    pyGadget.snapshot.Loader(load_snapshot, file_queue, data_queue).start()
     for snap in xrange(start,stop):
         fname = path + '{:0>3}'.format(snap)+'.hdf5'
         file_queue.put(fname)
