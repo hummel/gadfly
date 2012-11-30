@@ -58,7 +58,6 @@ def multitask(path,write_dir,start,stop):
     maxprocs = mp.cpu_count()
     file_queue = Queue.Queue()
     data_queue = Queue.Queue(2)
-    process_queue = Queue.Queue(maxprocs)
     pyGadget.snapshot.Loader(load_snapshot, file_queue, data_queue).start()
     for snap in xrange(start,stop):
         fname = path + '{:0>3}'.format(snap)+'.hdf5'
