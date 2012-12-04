@@ -28,6 +28,10 @@ def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
         int flag_j = 0;
         double center_i,center_j;
         double r,r2,weight,W_x;
+        
+        #pragma omp parallel for private(n,i,j,i_min,i_max,j_min,j_max,   
+                                         flag_i,flag_j,center_i,center_j,
+                                         r,r2,weight,W_x);
         for(n =0; n < N_gas; n++) 
           {
             i = 0;
@@ -91,9 +95,16 @@ def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
             i = 0;
           }
         """
-    weave.inline(code,['pps','width','x','y',
-                       'scalar_field','hsml','zi','nzi','N_gas'],
-                 type_converters=converters.blitz)
+    weave_omp = \
+        {
+        'headers': ['<omp.h>'],
+        'extra_compile_args': ['-openmp'],
+        'extra_link_args': ['-lgomp']
+        }
+    weave.inline(code,
+                 ['pps','width','x','y','scalar_field',
+                  'hsml','zi','nzi','N_gas'],
+                 type_converters=converters.blitz, **weave_omp)
     return zi,nzi
 
 #===============================================================================
@@ -127,7 +138,6 @@ def py_scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
 #===============================================================================
 def density(snapshot, view, width, thickness, length_unit, 
             job_server=pp.Server(), pps=1000, hsml_factor=1.7):
-    print 'loading', snapshot.filename
     # Read relevant attributes
     h = snapshot.header.HubbleParam
     a = snapshot.header.ScaleFactor
@@ -217,6 +227,7 @@ def density(snapshot, view, width, thickness, length_unit,
 
     hsml = numpy.fmax(hsml_factor * smL, width / pps / 2.0)
     print 'Distributing...'
+    '''
     jobs = []
     server_list = job_server.get_active_nodes()
     ncpus = sum(server_list.values())
@@ -251,8 +262,8 @@ def density(snapshot, view, width, thickness, length_unit,
         pzi,pnzi = job()
         zi += pzi
         nzi += pnzi
-
-    job_server.print_stats()
+    '''
+    zi,nzi = scalar_map(pps,width,x,y,dens,hsml,zshape)
     zi = numpy.where(nzi > 0, zi/nzi, zi)
     print 'density:: min: %.3e max: %.3e' %(zi.min(),zi.max())
     return xi,yi,zi
