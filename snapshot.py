@@ -3,6 +3,7 @@
 """
 This module contains classes for reading Gadget2 HDF5 snapshot files.
 """
+import string
 import threading
 import h5py
 import hdf5
@@ -15,7 +16,8 @@ class File:
     """
     def __init__(self, filename):
         self.filename = filename
-        self.number = int(filename[-8:-5])
+        f = filename.replace('.hdf5','')
+        self.number = int(f.split('_')[-1])
         self.file_id = h5py.File(filename, 'r')
         self.header = hdf5.Header(self.file_id)
         self.dm = nbody.PartTypeDM(self.file_id)
