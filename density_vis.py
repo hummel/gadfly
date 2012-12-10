@@ -34,7 +34,7 @@ def plot_dens(snap, write_dir, job_server,
                                            length_unit, job_server, 
                                            pps, hsml_factor)
         z = numpy.log10(z)
-        zmin,zmax = (1e9,7e11)
+        zmin,zmax = (1e9,1e12)
         
         print 'Plotting '+view+'...'
         fig = pyplot.figure(1,(12,12))
@@ -99,7 +99,7 @@ write_dir = os.getenv('HOME')+'/data/simplots/'+simulation+'/'
 
 length_unit = pyGadget.units.Length_AU
 pps = 1000 # 'pixels' per side
-hsml_factor = 1.5
+hsml_factor = 1.7
 boxsize = 2e3
 
 print sinkpath
