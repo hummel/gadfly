@@ -11,14 +11,20 @@ import units
 #===============================================================================
 
 class SinkData(object):
-    def __init__(self,filename):
+    def __init__(self,path):
         super(SinkData,self).__init__()
         ### Read in the data
         try:
-            sinkdata = asciitable.read(filename)
+            sinkdata = asciitable.read(path+'sinkdat')
         except IOError:
             print "Specified sinkdata file not found!"
             sys.exit()
+        try:
+            sinkmasses = asciitable.read(path+'sinkmasses')
+        except IOError:
+            print "Specified sinkmasses file not found!"
+            sys.exit()
+
         self.time = sinkdata['col1']
         self.npart_acc = sinkdata['col2']
         self.radius = sinkdata['col3']
@@ -28,14 +34,25 @@ class SinkData(object):
         self.sink_id  = sinkdata['col7']
         self.pressure = sinkdata['col8']
         self.a = self.time # Scale Facor
-        a3 = self.a**3
+
+        # Restrict to real sinks
+        IDs = np.unique(sinkmasses['col2'])
+        real = np.in1d(self.sink_id, IDs)
+        for key in vars(self).keys():
+            vars(self)[key] = vars(self)[key][real]
 
         h = 0.7 #Hubble Parameter
+        h2 = h*h
+        a3 = self.a**3
         ### Convert units
         self.time = self.time*units.Time_yr
         # npart_acc is a simple integer (no units)
-        self.pressure = self.pressure*units.Pressure_cgs*h*h/(a3**1.4)
-        self.radius = self.radius*units.Length_AU
+        self.pressure = self.pressure*units.Pressure_cgs*h2/(a3**1.4)
+        self.radius = self.radius*units.Length_AU*h
+
+        good = np.where(self.radius > 10)[0]
+        for key in vars(self).keys():
+            vars(self)[key] = vars(self)[key][good]
 
 class SingleSink(SinkData):
     '''
@@ -45,8 +62,8 @@ class SingleSink(SinkData):
     nform: select the n(th) sink to form.
     ID: select sink by ID.
     '''
-    def __init__(self, filename, nform=None, id_=None):
-        super(SingleSink,self).__init__(filename)
+    def __init__(self, path, nform=None, id_=None):
+        super(SingleSink,self).__init__(path)
         if((nform is None) and (id_ is None)):
             print "No sink specified: Selecting first sink to form..."
             nform = 1
@@ -60,7 +77,6 @@ class SingleSink(SinkData):
                 if self.sink_id[i] not in new:
                     new.append(self.sink_id[i])
                 i += 1
-            print "Unique ID's found:", new
             id_ = new[-1]
         elif id_ is not None:
             print "Key set: id_ =", id_
@@ -82,3 +98,9 @@ class SingleSink(SinkData):
         for key in vars(self).keys():
                 vars(self)[key] = vars(self)[key][selection]
         self.sink_id = id_
+
+        # Calculate sink mass at each timestep
+        self.mass = np.zeros_like(self.npart_acc)
+        for i in xrange(self.mass.size):
+            self.mass[i] = 0.015*self.npart_acc[:i].sum()
+
