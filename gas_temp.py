@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # gas_temp.py
 # Jacob Hummel
 

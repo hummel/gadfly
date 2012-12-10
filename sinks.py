@@ -1,5 +1,5 @@
-# particles3D.py
-# plot particle positions in 3D
+#!/usr/bin/env python
+# sinks.py
 # Jacob Hummel
 
 import os

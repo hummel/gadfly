@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# visualize.py
+# structure_vis.py
 # Jacob Hummel
 
 import os

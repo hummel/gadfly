@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# visualize.py
+# density_vis.py
 # Jacob Hummel
 
 import os
