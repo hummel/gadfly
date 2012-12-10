@@ -117,8 +117,10 @@ else:
     files1 = glob.glob(path+'1???.hdf5')
     files0.sort()
     files1.sort()
-    files = files0 + files1
-    start = int(files[0][-8:-5])
-    stop = int(files[-1][-8:-5])
+    start = int(files0[0][:-5])
+    stop = int(files0[-1][-8:-5])
+    if files1:
+        stop = int(files1[-1][-9:-5])
+        
     multitask(path,write_dir,start,stop,
               boxsize,length_unit,pps,hsml_factor)
