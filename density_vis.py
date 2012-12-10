@@ -26,7 +26,7 @@ def load_dens(fname,length_unit):
     return snapshot
 
 def plot_dens(snap, write_dir, job_server, 
-              boxsize, length_unit, pps, hsml_factor):
+              boxsize, length_unit, pps, hsml_factor,t0):
     for suffix in ['-dens-xy.png','-dens-xz.png','-dens-yz.png']:
         wpath = write_dir + '{:0>4}'.format(snap.number) + suffix
         view = suffix[-6:-4]
@@ -49,14 +49,18 @@ def plot_dens(snap, write_dir, job_server,
         ax.set_ylim(y.min(),y.max())
         ax.set_xlabel('AU')
         ax.set_ylabel('AU')
-        ax.set_title('Redshift: %.7f' %snap.header.Redshift)
+        ax.text(-950,925,'z: %.2f' %snap.header.Redshift,
+                color='white',fontsize=18)
+        t_acc = snap.header.Time*pyGadget.units.Time_yr - t0
+        ax.text(550,925,'t$_{form}$: %.1f yr' %t_acc,
+                color='white',fontsize=18)
         pyplot.draw()
         pyplot.savefig(wpath, 
                        bbox_inches='tight')
     snap.close()
 
 def multitask(path, write_dir, start, stop,
-              boxsize,length_unit,pps,hsml_factor):
+              boxsize,length_unit,pps,hsml_factor,t0):
     job_server = pp.Server()
     file_queue = Queue.Queue()
     data_queue = Queue.Queue(3)
@@ -72,7 +76,7 @@ def multitask(path, write_dir, start, stop,
         if snapshot is None:
             break # reached end of queue!
         plot_dens(snapshot,write_dir,job_server,
-                  boxsize,length_unit,pps,hsml_factor)
+                  boxsize,length_unit,pps,hsml_factor,t0)
     job_server.destroy()
     print 'Done.'
     
@@ -90,6 +94,7 @@ if ((len(sys.argv) not in [2,3,4]) or (sys.argv[1] == '-h')):
 
 simulation = sys.argv[1]
 path = os.getenv('HOME')+'/sim/'+simulation+'/snapshot_'
+sinkpath = os.getenv('HOME')+'/data/sinks/'+simulation.replace('anilla','')+'/'
 write_dir = os.getenv('HOME')+'/data/simplots/'+simulation+'/'
 
 length_unit = pyGadget.units.Length_AU
@@ -97,30 +102,35 @@ pps = 1000 # 'pixels' per side
 hsml_factor = 1.5
 boxsize = 2e3
 
+print sinkpath
+sink = pyGadget.sinks.SingleSink(sinkpath)
+t0 = sink.time[0]
+print t0
+
 if len(sys.argv) == 3:
     snap = sys.argv[2]
     fname = path + '{:0>3}'.format(snap)+'.hdf5'
     print 'loading', fname
     snapshot = load_dens(fname,length_unit)
     js = pp.Server()
-    plot_dens(snapshot,write_dir,js,boxsize,length_unit,pps,hsml_factor)
+    plot_dens(snapshot,write_dir,js,boxsize,length_unit,pps,hsml_factor,t0)
     js.destroy()
 
 elif len(sys.argv) == 4:
     start = int(sys.argv[2])
     stop = int(sys.argv[3])+1
     multitask(path,write_dir,start,stop,
-              boxsize,length_unit,pps,hsml_factor)
+              boxsize,length_unit,pps,hsml_factor,t0)
 
 else:
     files0 = glob.glob(path+'???.hdf5')
     files1 = glob.glob(path+'1???.hdf5')
     files0.sort()
     files1.sort()
-    start = int(files0[0][:-5])
+    start = int(files0[0][-8:-5])
     stop = int(files0[-1][-8:-5])
     if files1:
         stop = int(files1[-1][-9:-5])
         
     multitask(path,write_dir,start,stop,
-              boxsize,length_unit,pps,hsml_factor)
+              boxsize,length_unit,pps,hsml_factor,t0)
