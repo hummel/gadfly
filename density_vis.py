@@ -10,7 +10,6 @@ import Queue
 from matplotlib import pyplot
 from matplotlib import cm
 from matplotlib.mlab import griddata
-import pp
 
 import pyGadget
 import statistics
@@ -25,14 +24,12 @@ def load_dens(fname,length_unit):
     sinkval = snapshot.gas.load_sinks()
     return snapshot
 
-def plot_dens(snap, write_dir, job_server, 
-              boxsize, length_unit, pps, hsml_factor,t0):
+def plot_dens(snap, write_dir, boxsize, length_unit, pps, hsml_factor,t0):
     for suffix in ['-dens-xy.png','-dens-xz.png','-dens-yz.png']:
         wpath = write_dir + '{:0>4}'.format(snap.number) + suffix
         view = suffix[-6:-4]
         x,y,z = pyGadget.visualize.density(snap, view, boxsize, 1., 
-                                           length_unit, job_server, 
-                                           pps, hsml_factor)
+                                           length_unit, pps, hsml_factor)
         z = numpy.log10(z)
         zmin,zmax = (1e9,1e12)
         
@@ -61,9 +58,9 @@ def plot_dens(snap, write_dir, job_server,
 
 def multitask(path, write_dir, start, stop,
               boxsize,length_unit,pps,hsml_factor,t0):
-    job_server = pp.Server()
     file_queue = Queue.Queue()
     data_queue = Queue.Queue(3)
+    # Start the file-load thread
     pyGadget.snapshot.Loader(load_dens, file_queue, data_queue).start()
     # Add filenames to the queue
     for i in xrange(start,stop+1):
@@ -75,9 +72,7 @@ def multitask(path, write_dir, start, stop,
         snapshot = data_queue.get()
         if snapshot is None:
             break # reached end of queue!
-        plot_dens(snapshot,write_dir,job_server,
-                  boxsize,length_unit,pps,hsml_factor,t0)
-    job_server.destroy()
+        plot_dens(snapshot,write_dir,boxsize,length_unit,pps,hsml_factor,t0)
     print 'Done.'
     
 #===============================================================================
@@ -105,16 +100,13 @@ boxsize = 2e3
 print sinkpath
 sink = pyGadget.sinks.SingleSink(sinkpath)
 t0 = sink.time[0]
-print t0
 
 if len(sys.argv) == 3:
     snap = sys.argv[2]
     fname = path + '{:0>3}'.format(snap)+'.hdf5'
     print 'loading', fname
     snapshot = load_dens(fname,length_unit)
-    js = pp.Server()
-    plot_dens(snapshot,write_dir,js,boxsize,length_unit,pps,hsml_factor,t0)
-    js.destroy()
+    plot_dens(snapshot,write_dir,boxsize,length_unit,pps,hsml_factor,t0)
 
 elif len(sys.argv) == 4:
     start = int(sys.argv[2])
