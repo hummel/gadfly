@@ -10,7 +10,6 @@ from scipy import weave
 from scipy.weave import converters
 from matplotlib import pyplot
 from matplotlib.mlab import griddata
-import pp
 
 import pyGadget
 import statistics
@@ -22,12 +21,16 @@ def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
     N_gas = scalar_field.size
 
     code = \
-        """
+        r"""
         int i,j,n, i_min,i_max,j_min,j_max;
         int flag_i = 0;
         int flag_j = 0;
         double center_i,center_j;
         double r,r2,weight,W_x;
+        
+        #pragma omp parallel for \
+          private(n,i,j,i_min,i_max,j_min,j_max,flag_i,flag_j, \
+          center_i,center_j,r,r2,weight,W_x)
         for(n =0; n < N_gas; n++) 
           {
             i = 0;
@@ -91,9 +94,12 @@ def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
             i = 0;
           }
         """
-    weave.inline(code,['pps','width','x','y',
-                       'scalar_field','hsml','zi','nzi','N_gas'],
-                 type_converters=converters.blitz)
+    weave.inline(code,
+                 ['pps','width','x','y','scalar_field',
+                  'hsml','zi','nzi','N_gas'],
+                 headers=['<stdio.h>','<math.h>','<omp.h>'],
+                 extra_compile_args=['-march=native  -O3  -fopenmp ' ],
+                 libraries=['gomp'], type_converters=converters.blitz)
     return zi,nzi
 
 #===============================================================================
@@ -126,8 +132,7 @@ def py_scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
 
 #===============================================================================
 def density(snapshot, view, width, thickness, length_unit, 
-            job_server=pp.Server(), pps=1000, hsml_factor=1.7):
-    print 'loading', snapshot.filename
+            pps=1000, hsml_factor=1.7):
     # Read relevant attributes
     h = snapshot.header.HubbleParam
     a = snapshot.header.ScaleFactor
@@ -214,45 +219,10 @@ def density(snapshot, view, width, thickness, length_unit,
     zi = numpy.zeros_like(xi)
     nzi = numpy.zeros_like(zi)
     zshape = zi.shape
-
     hsml = numpy.fmax(hsml_factor * smL, width / pps / 2.0)
-    print 'Distributing...'
-    jobs = []
-    server_list = job_server.get_active_nodes()
-    ncpus = sum(server_list.values())
-    #Divide in to more tasks than there are cpus for load balancing.
-    if ncpus <= 2: # dual-core, limited memory laptop and gradbox
-        parts = ncpus
-    elif ncpus <=8: # for my 4-core hyper-threaded core i7 desktop
-        parts = ncpus*8
-    else:
-        parts = ncpus*16
-    start = 0
-    end = dens.size - 1
-    step = (end - start) / parts + 1
-    if step < 25:
-        parts = ncpus
-        step = (end - start) / parts + 1
-    print 'Dividing into',parts,'arrays of',step,'particles'
-    print 'for calculation on',ncpus,'cpus.'
-    for cpu in xrange(parts):
-        nstart = start+cpu*step
-        nend = min(start+(cpu+1)*step, end)
-        jobs.append(job_server.submit(scalar_map,
-                                      (pps,width, 
-                                       x[nstart:nend],
-                                       y[nstart:nend],
-                                       dens[nstart:nend],
-                                       hsml[nstart:nend],zshape),(),
-                                      ('numpy','from scipy import weave',
-                                       'from scipy.weave import converters')))
-    print 'Calculating...'
-    for job in jobs:
-        pzi,pnzi = job()
-        zi += pzi
-        nzi += pnzi
 
-    job_server.print_stats()
+    print 'Calculating...'
+    zi,nzi = scalar_map(pps,width,x,y,dens,hsml,zshape)
     zi = numpy.where(nzi > 0, zi/nzi, zi)
     print 'density:: min: %.3e max: %.3e' %(zi.min(),zi.max())
     return xi,yi,zi
