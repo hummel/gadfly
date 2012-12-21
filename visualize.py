@@ -98,7 +98,7 @@ def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
                  ['pps','width','x','y','scalar_field',
                   'hsml','zi','nzi','N_gas'],
                  headers=['<stdio.h>','<math.h>','<omp.h>'],
-                 extra_compile_args=['-march=native  -O3  -fopenmp ' ],
+                 extra_compile_args=['-fopenmp ' ],
                  libraries=['gomp'], type_converters=converters.blitz)
     return zi,nzi
 
