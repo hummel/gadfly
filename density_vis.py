@@ -89,7 +89,9 @@ if ((len(sys.argv) not in [2,3,4]) or (sys.argv[1] == '-h')):
 
 simulation = sys.argv[1]
 path = os.getenv('HOME')+'/sim/'+simulation+'/snapshot_'
-sinkpath = os.getenv('HOME')+'/data/sinks/'+simulation.replace('anilla','')+'/'
+sinkpath = os.getenv('HOME')+'/data/sinks/'+simulation+'/'
+sinkpath.replace('vanilla','v')
+sinkpath.replace('heating','h')
 write_dir = os.getenv('HOME')+'/data/simplots/'+simulation+'/'
 
 length_unit = pyGadget.units.Length_AU
