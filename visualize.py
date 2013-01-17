@@ -22,12 +22,20 @@ def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
 
     code = \
         r"""
+        int procs, nthreads;
         int i,j,n, i_min,i_max,j_min,j_max;
         int flag_i = 0;
         int flag_j = 0;
         double center_i,center_j;
         double r,r2,weight,W_x;
-        
+
+        /* Get environment information */
+        procs = omp_get_num_procs();
+        nthreads = omp_get_num_threads();
+        /* Print environment information */
+        printf("Number of processors = %d\n", procs);
+        printf("Number of threads = %d\n", nthreads);
+                
         #pragma omp parallel for \
           private(n,i,j,i_min,i_max,j_min,j_max,flag_i,flag_j, \
           center_i,center_j,r,r2,weight,W_x)
@@ -97,6 +105,7 @@ def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
     weave.inline(code,
                  ['pps','width','x','y','scalar_field',
                   'hsml','zi','nzi','N_gas'],
+                 compiler='gcc',
                  headers=['<stdio.h>','<math.h>','<omp.h>'],
                  extra_compile_args=['-fopenmp ' ],
                  libraries=['gomp'], type_converters=converters.blitz)
