@@ -214,13 +214,6 @@ def density(snapshot, view, width, thickness, length_unit,
     print ' smoothing length:: max: %.3e min: %.3e' %(smL.max(),smL.min())
     print ' Array size:', dens.size
 
-    # Save sink particle positions for over-plotting
-    sink_ids = numpy.where(sinkval != 0)[0]
-    print sink_ids.size,'sinks found.'
-    snapshot.sinks = []
-    for sink_id in sink_ids:
-        snapshot.sinks.append((x[sink_id],y[sink_id],z[sink_id]))
-
     xres = yres = width/pps
     xvals = numpy.arange(-width/2,width/2,xres)
     yvals = numpy.arange(-width/2,width/2,yres)
@@ -229,6 +222,17 @@ def density(snapshot, view, width, thickness, length_unit,
     nzi = numpy.zeros_like(zi)
     zshape = zi.shape
     hsml = numpy.fmax(hsml_factor * smL, width / pps / 2.0)
+
+    ### Sinks!
+    sink_ids = numpy.where(sinkval != 0)[0]
+    print sink_ids.size,'sinks found.'
+    snapshot.sinks = []
+    for sink_id in sink_ids:
+        # Save sink particle positions for over-plotting
+        snapshot.sinks.append((x[sink_id],y[sink_id],z[sink_id]))
+        # If sink smooting length is too inflated, artificially set it to 
+        # accretion radius
+        hsml[sink_id] = hsml_factor * 3.57101e-7
 
     print 'Calculating...'
     zi,nzi = scalar_map(pps,width,x,y,dens,hsml,zshape)
