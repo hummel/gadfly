@@ -42,10 +42,11 @@ def plot_temp(snapshot,wpath):
     fig = pyplot.figure(figsize=(15,10))
     fig.clf()
     ax = fig.add_subplot(111)
-    ax.scatter(dens, temp, s=.75, c='k', linewidths=0.0)
+    ax.hexbin(dens,temp,gridsize=500,bins='log',xscale='log',yscale='log',
+              mincnt=1)
     ax.set_xscale('log')
     ax.set_yscale('log')
-    ax.set_xlim(2e-3, 1e13)
+    ax.set_xlim(2e-3, 1e12)
     ax.set_ylim(10, 2e4)
 
     pyplot.title('Redshift: %.2f' %(redshift,))

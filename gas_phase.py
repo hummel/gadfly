@@ -46,7 +46,8 @@ def plot_phase(path, snap, write_dir, stride=50):
     density_labels = (1e-2,1e0,1e2,1e4,1e6,1e8,1e10,1e12)
 
     # Temperature
-    ax0.scatter(dens, temp, s=1, c='k', linewidths=0.0)
+    ax0.hexbin(dens,temp,gridsize=500,bins='log',xscale='log',yscale='log',
+               mincnt=1)
     ax0.set_xscale('log')
     ax0.set_yscale('log')
     ax0.set_xlim(1e-2, 1e12)
@@ -56,7 +57,8 @@ def plot_phase(path, snap, write_dir, stride=50):
     ax0.set_ylabel('Temperature [K]')
 
     # Free electron fraction
-    ax1.scatter(dens, electronfrac, s=1, c='k', linewidths=0.0)
+    ax1.hexbin(dens,electronfrac,gridsize=500,bins='log',xscale='log',
+               yscale='log',mincnt=1)
     ax1.set_xscale('log')
     ax1.set_yscale('log')
     ax1.set_xlim(1e-2, 1e12)
@@ -66,7 +68,8 @@ def plot_phase(path, snap, write_dir, stride=50):
     ax1.set_ylabel('f$_{e^-}$')
 
     # Molecular Hydrogen Fraction
-    ax2.scatter(dens, h2frac, s=1, c='k', linewidths=0.0)
+    ax2.hexbin(dens, h2frac,gridsize=500,bins='log',xscale='log',yscale='log',
+               mincnt=1)
     ax2.set_xscale('log')
     ax2.set_yscale('log')
     ax2.set_xlim(1e-2, 1e12)
@@ -76,7 +79,8 @@ def plot_phase(path, snap, write_dir, stride=50):
     ax2.set_ylabel('f$_{H_2}$')
 
     # Adiabatic exponent
-    ax3.scatter(dens, gamma, s=1, c='k', linewidths=0.0)
+    ax3.hexbin(dens, gamma,gridsize=500,bins='log',xscale='log',yscale='log',
+               mincnt=1)
     ax3.set_xscale('log')
     ax3.set_xlim(1e-2, 1e12)
     ax3.set_ylim(1,2)
