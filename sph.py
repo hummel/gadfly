@@ -225,9 +225,9 @@ class PartTypeSPH(hdf5.PartTypeX):
             self.load_H2_fraction()
             return self.h2frac
 
-    def load_temperature(self):
+    def calculate_temperature(self):
         """
-        Load Particle Temperatures in degrees Kelvin.
+        Calculate Particle Temperatures in degrees Kelvin.
         """
         gamma = self.get_gamma()
         energy = self.get_internal_energy()
@@ -243,12 +243,12 @@ class PartTypeSPH(hdf5.PartTypeX):
         try:
             return self.temp
         except AttributeError:
-            self.load_temperature()
+            self.calculate_temperature()
             return self.temp
 
-    def load_sound_speed(self):
+    def calculate_sound_speed(self):
         """
-        Load the sound speed of the gas in cm/s.
+        Calculate the sound speed of the gas in cm/s.
         """
         temp = self.get_temperature()
         self.c_s = numpy.sqrt(constants.k_B*temp/constants.m_H)
@@ -260,12 +260,12 @@ class PartTypeSPH(hdf5.PartTypeX):
         try:
             return self.c_s
         except AttributeError:
-            self.load_sound_speed()
+            self.calculate_sound_speed()
             return self.c_s
 
-    def load_freefall_time(self):
+    def calculate_freefall_time(self):
         """
-        Load the freefall time of the gas in s.
+        Calculate the freefall time of the gas in s.
         """
         rho = self.get_density() # NOT number density!
         denominator = 32 * numpy.pi * constants.G * rho
@@ -278,12 +278,12 @@ class PartTypeSPH(hdf5.PartTypeX):
         try:
             return self.t_ff
         except AttributeError:
-            self.load_freefall_time()
+            self.calculate_freefall_time()
             return self.t_ff
 
-    def load_jeans_length(self):
+    def calculate_jeans_length(self):
         """
-        Load Jeans Length for gas in cm.
+        Calculate Jeans Length for gas in cm.
         """
         c_s = self.get_sound_speed()
         t_ff = self.get_freefall_time()
@@ -296,6 +296,6 @@ class PartTypeSPH(hdf5.PartTypeX):
         try:
             return self.jeans_length
         except AttributeError:
-            self.load_jeans_length()
+            self.calculate_jeans_length()
             return self.jeans_length
 
