@@ -299,3 +299,22 @@ class PartTypeSPH(hdf5.PartTypeX):
             self.calculate_jeans_length()
             return self.jeans_length
 
+    def calculate_optical_depth(self,sigma):
+        """
+        Estimate optical depth of the gas based on Jeans Length.
+        sigma:: cross-section of the species of interest.
+        """
+        n = self.get_number_density()
+        L = self.get_jeans_length()
+        self.tau = n*L*sigma
+
+    def get_optical_depth(self,sigma):
+        """
+        Return estimate of the optical depth based on Jeans Length.
+        sigma:: cross-section of the species of interest.
+        """
+        try:
+            return self.tau
+        except AttributeError:
+            self.calculate_optical_depth(self,sigma)
+            return self.tau
