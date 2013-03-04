@@ -3,7 +3,7 @@
 """
 This module contains classes for reading Gadget2 SPH particle data.
 """
-
+import numpy
 import units
 import constants
 import hdf5
@@ -225,9 +225,9 @@ class PartTypeSPH(hdf5.PartTypeX):
             self.load_H2_fraction()
             return self.h2frac
 
-    def load_temperature(self):
+    def calculate_temperature(self):
         """
-        Load Particle Temperatures in degrees Kelvin.
+        Calculate Particle Temperatures in degrees Kelvin.
         """
         gamma = self.get_gamma()
         energy = self.get_internal_energy()
@@ -243,6 +243,78 @@ class PartTypeSPH(hdf5.PartTypeX):
         try:
             return self.temp
         except AttributeError:
-            self.load_temperature()
+            self.calculate_temperature()
             return self.temp
 
+    def calculate_sound_speed(self):
+        """
+        Calculate the sound speed of the gas in cm/s.
+        """
+        temp = self.get_temperature()
+        self.c_s = numpy.sqrt(constants.k_B*temp/constants.m_H)
+
+    def get_sound_speed(self):
+        """
+        Return the sound speed of the gas in cm/s.
+        """
+        try:
+            return self.c_s
+        except AttributeError:
+            self.calculate_sound_speed()
+            return self.c_s
+
+    def calculate_freefall_time(self):
+        """
+        Calculate the freefall time of the gas in s.
+        """
+        rho = self.get_density() # NOT number density!
+        denominator = 32 * numpy.pi * constants.G * rho
+        self.t_ff = numpy.sqrt(3/denominator)
+
+    def get_freefall_time(self):
+        """
+        Return Jeans Length for gas in cm.
+        """
+        try:
+            return self.t_ff
+        except AttributeError:
+            self.calculate_freefall_time()
+            return self.t_ff
+
+    def calculate_jeans_length(self):
+        """
+        Calculate Jeans Length for gas in cm.
+        """
+        c_s = self.get_sound_speed()
+        t_ff = self.get_freefall_time()
+        self.jeans_length = c_s * t_ff
+
+    def get_jeans_length(self):
+        """
+        Return Jeans Length for gas in cm.
+        """
+        try:
+            return self.jeans_length
+        except AttributeError:
+            self.calculate_jeans_length()
+            return self.jeans_length
+
+    def calculate_optical_depth(self,sigma):
+        """
+        Estimate optical depth of the gas based on Jeans Length.
+        sigma:: cross-section of the species of interest.
+        """
+        n = self.get_number_density()
+        L = self.get_jeans_length()
+        self.tau = n*L*sigma
+
+    def get_optical_depth(self,sigma):
+        """
+        Return estimate of the optical depth based on Jeans Length.
+        sigma:: cross-section of the species of interest.
+        """
+        try:
+            return self.tau
+        except AttributeError:
+            self.calculate_optical_depth(self,sigma)
+            return self.tau
