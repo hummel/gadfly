@@ -14,22 +14,35 @@ from matplotlib.mlab import griddata
 import pyGadget
 import statistics
 
+global t0
 #===============================================================================
 def load_dens(fname,length_unit):
+    global t0
     snapshot = pyGadget.snapshot.File(fname)
-    particle_mass = snapshot.gas.load_masses()
-    dens = snapshot.gas.load_number_density()
-    pos = snapshot.gas.load_coords(length_unit)
-    smL = snapshot.gas.load_smoothing_length(length_unit)
-    sinkval = snapshot.gas.load_sinks()
+    snapshot.gas.load_masses()
+    snapshot.gas.load_number_density()
+    snapshot.gas.load_coords(length_unit)
+    smL = snapshot.gas.get_smoothing_length(length_unit)
+    sinkval = snapshot.gas.get_sinks()
+
+    ### Sinks!
+    ids = snapshot.sink_ids = numpy.where(sinkval != 0)[0] 
+    if snapshot.sink_ids.size > 0:
+        print snapshot.sink_ids.size,'sinks found.'
+        if t0 is None:
+            t0 = snapshot.header.Time*pyGadget.units.Time_yr
+        # If sink smooting length is too inflated, artificially shrink it.
+        snapshot.gas.smoothing_length[ids] *= 1e-6
+
     return snapshot
 
-def plot_dens(snap, write_dir, boxsize, length_unit, pps, hsml_factor,t0):
+def plot_dens(snap, write_dir, boxsize, length_unit, pps, hsml_factor):
+    global t0
     for suffix in ['-dens-xy.png','-dens-xz.png','-dens-yz.png']:
         wpath = write_dir + '{:0>4}'.format(snap.number) + suffix
         view = suffix[-6:-4]
         x,y,z = pyGadget.visualize.density(snap, view, boxsize, 1., 
-                                           length_unit, pps, hsml_factor)
+                                           length_unit, t0, pps, hsml_factor)
         z = numpy.log10(z)
         zmin,zmax = (1e9,1e12)
         
@@ -48,16 +61,18 @@ def plot_dens(snap, write_dir, boxsize, length_unit, pps, hsml_factor,t0):
         ax.set_ylabel('AU')
         ax.text(-950,925,'z: %.2f' %snap.header.Redshift,
                 color='white',fontsize=18)
-        t_acc = snap.header.Time*pyGadget.units.Time_yr - t0
-        ax.text(550,925,'t$_{form}$: %.1f yr' %t_acc,
-                color='white',fontsize=18)
+        if t0:
+            t_acc = snap.header.Time*pyGadget.units.Time_yr - t0
+            ax.text(550,925,'t$_{form}$: %.1f yr' %t_acc,
+                    color='white',fontsize=18)
         pyplot.draw()
         pyplot.savefig(wpath, 
                        bbox_inches='tight')
     snap.close()
 
 def multitask(path, write_dir, start, stop,
-              boxsize,length_unit,pps,hsml_factor,t0):
+              boxsize,length_unit,pps,hsml_factor):
+    global t0
     file_queue = Queue.Queue()
     data_queue = Queue.Queue(3)
     # Start the file-load thread
@@ -72,7 +87,7 @@ def multitask(path, write_dir, start, stop,
         snapshot = data_queue.get()
         if snapshot is None:
             break # reached end of queue!
-        plot_dens(snapshot,write_dir,boxsize,length_unit,pps,hsml_factor,t0)
+        plot_dens(snapshot,write_dir,boxsize,length_unit,pps,hsml_factor)
     print 'Done.'
     
 #===============================================================================
@@ -97,21 +112,25 @@ pps = 1000 # 'pixels' per side
 hsml_factor = 1.7
 boxsize = 2e3
 
-sink = pyGadget.sinks.SingleSink(sinkpath)
-t0 = sink.time[0]
+
+try:
+    sink = pyGadget.sinks.SingleSink(sinkpath)
+    t0 = sink.time[0]
+except IOError:
+    t0 = None
 
 if len(sys.argv) == 3:
     snap = sys.argv[2]
     fname = path + '{:0>3}'.format(snap)+'.hdf5'
     print 'loading', fname
     snapshot = load_dens(fname,length_unit)
-    plot_dens(snapshot,write_dir,boxsize,length_unit,pps,hsml_factor,t0)
+    plot_dens(snapshot,write_dir,boxsize,length_unit,pps,hsml_factor)
 
 elif len(sys.argv) == 4:
     start = int(sys.argv[2])
     stop = int(sys.argv[3])+1
     multitask(path,write_dir,start,stop,
-              boxsize,length_unit,pps,hsml_factor,t0)
+              boxsize,length_unit,pps,hsml_factor)
 
 else:
     files0 = glob.glob(path+'???.hdf5')
@@ -124,4 +143,4 @@ else:
         stop = int(files1[-1][-9:-5])
         
     multitask(path,write_dir,start,stop,
-              boxsize,length_unit,pps,hsml_factor,t0)
+              boxsize,length_unit,pps,hsml_factor)
