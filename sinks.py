@@ -17,13 +17,11 @@ class SinkData(object):
         try:
             sinkdata = asciitable.read(path+'sinkdat')
         except IOError:
-            print "Specified sinkdata file not found!"
-            sys.exit()
+            raise IOError("Specified sinkmasses file not found!")
         try:
             sinkmasses = asciitable.read(path+'sinkmasses')
         except IOError:
-            print "Specified sinkmasses file not found!"
-            sys.exit()
+            raise IOError("Specified sinkmasses file not found!")
 
         self.time = sinkdata['col1']
         self.npart_acc = sinkdata['col2']
