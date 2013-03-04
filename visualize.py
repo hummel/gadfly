@@ -9,11 +9,8 @@ import numpy
 from scipy import weave
 from scipy.weave import converters
 from matplotlib import pyplot
-from matplotlib.mlab import griddata
 
-import pyGadget
 import statistics
-
 #===============================================================================
 def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
     zi = numpy.zeros(zshape)
@@ -140,7 +137,7 @@ def py_scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
     return zi,nzi
 
 #===============================================================================
-def density(snapshot, view, width, thickness, length_unit, 
+def density(snapshot, view, width, thickness, length_unit, t0,
             pps=1000, hsml_factor=1.7):
     # Read relevant attributes
     h = snapshot.header.HubbleParam
@@ -179,6 +176,10 @@ def density(snapshot, view, width, thickness, length_unit,
     x = x - numpy.average(statistics.reject_outliers(x[hidens]))
     y = y - numpy.average(statistics.reject_outliers(y[hidens]))
     z = z - numpy.average(statistics.reject_outliers(z[hidens]))
+    # Save sink particle positions for overplotting
+    snapshot.sinks = []
+    for sink_id in snapshot.sink_ids:
+        snapshot.sinks.append((x[sink_id],y[sink_id],z[sink_id]))
 
     try: 
         assert dens.max() <= 1e12
@@ -222,17 +223,6 @@ def density(snapshot, view, width, thickness, length_unit,
     nzi = numpy.zeros_like(zi)
     zshape = zi.shape
     hsml = numpy.fmax(hsml_factor * smL, width / pps / 2.0)
-
-    ### Sinks!
-    sink_ids = numpy.where(sinkval != 0)[0]
-    print sink_ids.size,'sinks found.'
-    snapshot.sinks = []
-    for sink_id in sink_ids:
-        # Save sink particle positions for over-plotting
-        snapshot.sinks.append((x[sink_id],y[sink_id],z[sink_id]))
-        # If sink smooting length is too inflated, artificially set it to 
-        # accretion radius
-        hsml[sink_id] = hsml_factor * 3.57101e-7
 
     print 'Calculating...'
     zi,nzi = scalar_map(pps,width,x,y,dens,hsml,zshape)
