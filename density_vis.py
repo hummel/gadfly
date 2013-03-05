@@ -54,7 +54,8 @@ def plot_dens(snap, write_dir, boxsize, length_unit, pps, hsml_factor):
         pyplot.clim(numpy.log10(zmin),numpy.log10(zmax))
         ax = pyplot.gca()
         for sink in snap.sinks:
-            ax.plot(sink[1], -sink[0], 'ko') # 90-degree rotation
+            ax.plot(sink[1], -sink[0], 'k+', ms=7, mew=1.5) #90-degree rotation
+            ax.text(sink[1]+10, -sink[0]+5, '%.1f' %sink[3])
         ax.set_xlim(x.min(),x.max())
         ax.set_ylim(y.min(),y.max())
         ax.set_xlabel('AU')
