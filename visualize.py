@@ -179,7 +179,8 @@ def density(snapshot, view, width, thickness, length_unit, t0,
     # Save sink particle positions for overplotting
     snapshot.sinks = []
     for sink_id in snapshot.sink_ids:
-        snapshot.sinks.append((x[sink_id],y[sink_id],z[sink_id]))
+        snapshot.sinks.append((x[sink_id],y[sink_id],z[sink_id],
+                               particle_mass[sink_id]))
 
     try: 
         assert dens.max() <= 1e12
