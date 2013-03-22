@@ -9,5 +9,6 @@ import nbody
 import sph
 import snapshot
 import visualize
+import analyze
 import sinks
 import xdmf
