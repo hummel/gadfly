@@ -31,9 +31,8 @@ def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
         nthreads = omp_get_num_threads();
         /* Print environment information */
         printf("Number of processors = %d\n", procs);
-        printf("Number of threads = %d\n", nthreads);
                 
-        #pragma omp parallel for \
+        #pragma omp parallel for schedule(guided) \
           private(n,i,j,i_min,i_max,j_min,j_max,flag_i,flag_j, \
           center_i,center_j,r,r2,weight,W_x)
         for(n =0; n < N_gas; n++) 
