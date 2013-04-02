@@ -32,7 +32,7 @@ def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
         /* Print environment information */
         printf("Number of processors = %d\n", procs);
                 
-        #pragma omp parallel for schedule(guided) \
+        #pragma omp parallel for schedule(dynamic) \
           private(n,i,j,i_min,i_max,j_min,j_max,flag_i,flag_j, \
           center_i,center_j,r,r2,weight,W_x)
         for(n =0; n < N_gas; n++) 
