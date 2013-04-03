@@ -42,16 +42,23 @@ def plot_dens(snap, write_dir, boxsize, length_unit, pps, hsml_factor):
         wpath = write_dir + '{:0>4}'.format(snap.number) + suffix
         view = suffix[-6:-4]
         boxsize = boxsize/snap.header.Redshift
-        x,y,z = pyGadget.visualize.structure(snap, view, boxsize, .3, 
+        x,y,z = pyGadget.visualize.structure(snap, view, boxsize, .5, 
                                            length_unit, t0, pps, hsml_factor)
         z = numpy.log10(z)
+
+        #set colorbar limits
+        zmax = z.max()
+        zmin = z.min()
+        if zmax < 1.5: zmax = 1.5
+        if zmin > -1.5: zmin = -1.5
+        if zmax > 3: zmax = 3
         
         print 'Plotting '+view+'...'
         fig = pyplot.figure(1,(16,12))
         fig.clf()
-        p = pyplot.imshow(z, extent=[x.min(),x.max(),y.min(),y.max()],
-                          cmap=cm.jet)
-        pyplot.colorbar(p)
+        pyplot.imshow(z, extent=[x.min(),x.max(),y.min(),y.max()], cmap=cm.jet)
+        pyplot.clim(zmin,zmax)
+        pyplot.colorbar()
         ax = pyplot.gca()
         ax.set_xlim(x.min(),x.max())
         ax.set_ylim(y.min(),y.max())
