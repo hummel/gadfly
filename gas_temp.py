@@ -116,7 +116,7 @@ if __name__ == '__main__':
         fname = path + '{:0>3}'.format(snap)+'.hdf5'
         print 'loading', fname
         snapshot = load_snapshot(fname)
-        plot_temp(snapshot,write_dir+snap)
+        plot_temp(snapshot,write_dir+'{:0>4}'.format(snap))
         
     elif len(sys.argv) == 4:
         start = int(sys.argv[2])
