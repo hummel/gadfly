@@ -53,8 +53,8 @@ class Loader(threading.Thread):
                 snapshot = self.load_function(*args)
                 self.data_queue.put(snapshot)
             except IOError:
-                self.lock.acquire()
+                lock.acquire()
                 print 'Warning: '+fname+' not found!'
-                self.lock.release()
+                lock.release()
                 pass
 
