@@ -42,21 +42,17 @@ def plot_dens(snap, write_dir, boxsize, length_unit, pps, hsml_factor):
         wpath = write_dir + '{:0>4}'.format(snap.number) + suffix
         view = suffix[-6:-4]
         boxsize = boxsize/snap.header.Redshift
-        x,y,z = pyGadget.visualize.density(snap, view, boxsize, 1., 
+        x,y,z = pyGadget.visualize.structure(snap, view, boxsize, .3, 
                                            length_unit, t0, pps, hsml_factor)
         z = numpy.log10(z)
-        zmin,zmax = (1e9,1e12)
         
         print 'Plotting '+view+'...'
-        fig = pyplot.figure(1,(12,12))
+        fig = pyplot.figure(1,(16,12))
         fig.clf()
-        pyplot.imshow(z, extent=[x.min(),x.max(),y.min(),y.max()],
-                      cmap=cm.jet)
-        #pyplot.clim(numpy.log10(zmin),numpy.log10(zmax))
+        p = pyplot.imshow(z, extent=[x.min(),x.max(),y.min(),y.max()],
+                          cmap=cm.jet)
+        pyplot.colorbar(p)
         ax = pyplot.gca()
-        for sink in snap.sinks:
-            ax.plot(sink[1], -sink[0], 'k+', ms=7, mew=1.5) #90-degree rotation
-            ax.text(sink[1]+10, -sink[0]+5, '%.1f' %sink[3])
         ax.set_xlim(x.min(),x.max())
         ax.set_ylim(y.min(),y.max())
         ax.set_xlabel('comoving kpc')
@@ -93,7 +89,7 @@ def multitask(path, write_dir, start, stop,
     print 'Done.'
     
 #===============================================================================
-pyplot.ioff()
+#pyplot.ioff()
 if ((len(sys.argv) not in [2,3,4]) or (sys.argv[1] == '-h')):
     print 'Usage::'
     print '   Option 1: python gas_temp.py [simulation name] '\
@@ -112,7 +108,7 @@ write_dir = os.getenv('HOME')+'/data/simplots/'+simulation+'/'
 length_unit = pyGadget.units.Length_kpc
 pps = 1000 # 'pixels' per side
 hsml_factor = 1.7
-boxsize = 1e2/.71
+boxsize = 140
 
 
 try:
