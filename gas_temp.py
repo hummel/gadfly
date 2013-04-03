@@ -7,6 +7,7 @@ import sys
 import glob
 import numpy
 import Queue
+import threading
 import multiprocessing as mp
 from matplotlib import pyplot
 import pyGadget
@@ -57,6 +58,7 @@ def plot_temp(snapshot,wpath):
 
 #===============================================================================
 def multitask(path,write_dir,start,stop):
+    threadLock = threading.Lock()
     maxprocs = mp.cpu_count()
     file_queue = Queue.Queue()
     data_queue = Queue.Queue(2)
@@ -86,8 +88,10 @@ def multitask(path,write_dir,start,stop):
                     if proc.is_alive():
                         running_procs +=1
                 if running_procs < maxprocs:
+                    threadLock.acquire()
                     print 'Plotting', snapshot.filename
                     p.start()
+                    threadLock.release()
                     break
 
 #===============================================================================
