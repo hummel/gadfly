@@ -49,9 +49,9 @@ def plot_dens(snap, write_dir, boxsize, length_unit, pps, hsml_factor):
         #set colorbar limits
         zmax = z.max()
         zmin = z.min()
-        if zmax < 1.5: zmax = 1.5
+        if zmax < 1: zmax = 1
         if zmin > -1.5: zmin = -1.5
-        if zmax > 3: zmax = 3
+        if zmax > 2: zmax = 2
         
         print 'Plotting '+view+'...'
         fig = pyplot.figure(1,(16,12))
