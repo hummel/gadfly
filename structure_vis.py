@@ -21,8 +21,8 @@ def load_dens(fname,length_unit):
     snapshot = pyGadget.snapshot.File(fname)
     snapshot.gas.load_masses()
     snapshot.gas.load_number_density()
-    snapshot.gas.load_coords(length_unit)
-    smL = snapshot.gas.get_smoothing_length(length_unit)
+    snapshot.gas.load_coords(length_unit,comoving=True)
+    smL = snapshot.gas.get_smoothing_length(length_unit,comoving=True)
     sinkval = snapshot.gas.get_sinks()
 
     ### Sinks!
@@ -41,9 +41,8 @@ def plot_dens(snap, write_dir, boxsize, length_unit, pps, hsml_factor):
     for suffix in ['-box-xy.png']:
         wpath = write_dir + '{:0>4}'.format(snap.number) + suffix
         view = suffix[-6:-4]
-        boxsize = boxsize/snap.header.Redshift
         x,y,z = pyGadget.visualize.structure(snap, view, boxsize, .5, 
-                                           length_unit, t0, pps, hsml_factor)
+                                             length_unit, t0, pps, hsml_factor)
         z = numpy.log10(z)
 
         #set colorbar limits
