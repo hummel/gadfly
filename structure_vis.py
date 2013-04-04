@@ -114,7 +114,7 @@ write_dir = os.getenv('HOME')+'/data/simplots/'+simulation+'/'
 length_unit = pyGadget.units.Length_kpc
 pps = 1000 # 'pixels' per side
 hsml_factor = 1.7
-boxsize = 140
+boxsize = 99/.71
 
 
 try:
