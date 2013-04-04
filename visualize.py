@@ -16,7 +16,6 @@ def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
     zi = numpy.zeros(zshape)
     nzi = numpy.zeros_like(zi)
     N_gas = scalar_field.size
-
     code = \
         r"""
         int procs, nthreads;
@@ -105,7 +104,8 @@ def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
                  headers=['<stdio.h>','<math.h>','<omp.h>'],
                  extra_compile_args=['-fopenmp ' ],
                  libraries=['gomp'], type_converters=converters.blitz)
-    return zi,nzi
+    zi = numpy.where(nzi > 0, zi/nzi, zi)
+    return zi
 
 #===============================================================================
 def py_scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
@@ -133,7 +133,8 @@ def py_scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
                                 W_x = 2.0 * (1.0 - r)**3
                             zi[i][j] += weight[n] * scalar_field[n] * W_x
                             nzi[i][j] += weight[n] * W_x
-    return zi,nzi
+    zi = numpy.where(nzi > 0, zi/nzi, zi)
+    return zi
 
 #===============================================================================
 def density(snapshot, view, width, thickness, length_unit, t0,
@@ -225,8 +226,7 @@ def density(snapshot, view, width, thickness, length_unit, t0,
     hsml = numpy.fmax(hsml_factor * smL, width / pps / 2.0)
 
     print 'Calculating...'
-    zi,nzi = scalar_map(pps,width,x,y,dens,hsml,zshape)
-    zi = numpy.where(nzi > 0, zi/nzi, zi)
+    zi = scalar_map(pps,width,x,y,dens,hsml,zshape)
     print 'density:: min: %.3e max: %.3e' %(zi.min(),zi.max())
     return xi,yi,zi
 
@@ -297,7 +297,6 @@ def structure(snapshot, view, width, thickness, length_unit, t0,
     hsml = numpy.fmax(hsml_factor * smL, width / pps / 2.0)
 
     print 'Calculating...'
-    zi,nzi = scalar_map(pps,width,x,y,dens,hsml,zshape)
-    zi = numpy.where(nzi > 0, zi/nzi, zi)
+    zi = scalar_map(pps,width,x,y,dens,hsml,zshape)
     print 'density:: min: %.3e max: %.3e' %(zi.min(),zi.max())
     return xi,yi,zi
