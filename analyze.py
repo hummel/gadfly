@@ -2,9 +2,11 @@
 # Jacob Hummel
 import numpy
 from . import units
+from . import constants
 
 #===============================================================================
-def halo_properties(snapshot, r_start=3.08568e18, r_multiplier=1.01):
+def halo_properties(snapshot, 
+                    r_start=3.08568e18, r_multiplier=1.01, verbose=True):
     h = snapshot.header.HubbleParam
     a = snapshot.header.ScaleFactor
     redshift = snapshot.header.Redshift
@@ -29,7 +31,7 @@ def halo_properties(snapshot, r_start=3.08568e18, r_multiplier=1.01):
     z = numpy.concatenate((gasz,dmz))
 
     center = gas_pos[dens.argmax()]
-    print 'Center:', center
+    if verbose: print 'Center:', center
     x = x - center[0]
     y = y - center[1]
     z = z - center[2]
@@ -45,23 +47,25 @@ def halo_properties(snapshot, r_start=3.08568e18, r_multiplier=1.01):
         if n > old_n:
             properties = []
             rpc = rmax/3.08568e18
-            print 'R = %.2e pc' %rpc,
+            if verbose: print 'R = %.2e pc' %rpc,
             Mtot = mass[inR].sum()
             solar_masses = Mtot/1.989e33
-            print 'Mass enclosed: %.2e' %solar_masses,
+            if verbose: print 'Mass enclosed: %.2e' %solar_masses,
             density = 3 * Mtot / (4*numpy.pi * rmax**3)
             delta = density/background_density
-            print 'delta: %.3f' %delta,
-            print 'n:', n
+            if verbose: print 'delta: %.3f' %delta,
+            if verbose: print 'n:', n
+            energy = constants.G * Mtot**2 / rmax
 
             properties.append(rpc)
             properties.append(delta)
             properties.append(solar_masses)
             properties.append(density)
+            properties.append(energy)
             properties.append(n)
             halo_properties.append(properties)
             old_n = n
         rmax *= r_multiplier
     
-    return halo_properties
+    return numpy.asarray(halo_properties)
 
