@@ -45,7 +45,6 @@ def halo_properties(snapshot,
         inR = numpy.where(r <= rmax)[0]
         n = inR.size
         if n > old_n:
-            properties = []
             rpc = rmax/3.08568e18
             if verbose: print 'R = %.2e pc' %rpc,
             Mtot = mass[inR].sum()
@@ -57,13 +56,7 @@ def halo_properties(snapshot,
             if verbose: print 'n:', n
             energy = constants.G * Mtot**2 / rmax
 
-            properties.append(rpc)
-            properties.append(delta)
-            properties.append(solar_masses)
-            properties.append(density)
-            properties.append(energy)
-            properties.append(n)
-            halo_properties.append(properties)
+            halo_properties.append((rpc,delta,solar_masses,density,energy,n))
             old_n = n
         rmax *= r_multiplier
     
