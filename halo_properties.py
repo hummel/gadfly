@@ -22,13 +22,17 @@ def load_data(fname,length_unit,mass_unit):
     return snapshot
 
 #===============================================================================
+def analyze_queue(snapshot,haloq):
+    halo_props = pyGadget.analyze.halo_properties(snapshot,verbose=False)
+    haloq.put((snapshot.header.Redshift,halo_props))
+
 #===============================================================================
 def multitask(path,write_dir,start,stop,length_unit,mass_unit):
     maxprocs = mp.cpu_count()
     file_queue = Queue.Queue()
-    data_in = Queue.Queue(2)
-    data_out = Queue.Queue()
-    pyGadget.snapshot.Loader(load_data, file_queue, data_in).start()
+    data_queue = Queue.Queue()
+    halo_queue = Queue.Queue()
+    pyGadget.snapshot.Loader(load_data, file_queue, data_queue).start()
     for snap in xrange(start,stop+1):
         fname = path + '{:0>3}'.format(snap)+'.hdf5'
         file_queue.put((fname, length_unit, mass_unit))
@@ -36,15 +40,13 @@ def multitask(path,write_dir,start,stop,length_unit,mass_unit):
     procs = []
     done = False
     while not done:
-        snapshot = data_in.get()
+        snapshot = data_queue.get()
         if snapshot is None:
             done = True
             for process in procs:
                 process.join()
         else:
-            p = mp.Process(target=pyGadget.analyze.halo_properties,
-                           args=(snapshot,))
-                                              
+            p = mp.Process(target=analyze_queue, args=(snapshot,halo_queue))
                                               
             procs.append(p)
             while True:
@@ -53,9 +55,14 @@ def multitask(path,write_dir,start,stop,length_unit,mass_unit):
                     if proc.is_alive():
                         running_procs +=1
                 if running_procs < maxprocs:
-                    print 'Plotting', snapshot.filename
                     p.start()
                     break
+
+    halo_properties = []
+    while halo_queue.empty() is not True:
+        halo_properties.append(halo_queue.get())
+    halo_properties.sort()
+    return halo_queue
 
 #===============================================================================
 if __name__ == '__main__':
@@ -87,8 +94,8 @@ if len(sys.argv) == 3:
         
 elif len(sys.argv) == 4:
     start = int(sys.argv[2])
-    stop = int(sys.argv[3])+1
-    multitask(path,write_dir,start,stop)
+    stop = int(sys.argv[3])
+    hprops = multitask(path,write_dir,start,stop,length_unit,mass_unit)
     
 else:
     files0 = glob.glob(path+'???.hdf5')
@@ -98,7 +105,7 @@ else:
     files = files0 + files1
     start = int(files[0][-8:-5])
     stop = int(files[-1][-8:-5])
-    multitask(path,write_dir,start,stop)
+    hprops = multitask(path,write_dir,start,stop,length_unit,mass_unit)
 
 
 
