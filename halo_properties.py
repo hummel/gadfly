@@ -27,27 +27,33 @@ def analyze_queue(snapshot,haloq):
     haloq.put((snapshot.header.Redshift,halo_props))
 
 #===============================================================================
+def save_result(data,fname):
+    data = numpy.asarray(data)
+    numpy.save(fname,data)
+#===============================================================================
 def multitask(path,write_dir,start,stop,length_unit,mass_unit):
     maxprocs = mp.cpu_count()
     file_queue = Queue.Queue()
     data_queue = Queue.Queue()
-    halo_queue = Queue.Queue()
+    halo_queue = mp.Queue()
     pyGadget.snapshot.Loader(load_data, file_queue, data_queue).start()
     for snap in xrange(start,stop+1):
         fname = path + '{:0>3}'.format(snap)+'.hdf5'
         file_queue.put((fname, length_unit, mass_unit))
     file_queue.put(None)
+
     procs = []
+    halo_properties = []
     done = False
     while not done:
         snapshot = data_queue.get()
         if snapshot is None:
             done = True
             for process in procs:
+                halo_properties.append(halo_queue.get())
                 process.join()
         else:
             p = mp.Process(target=analyze_queue, args=(snapshot,halo_queue))
-                                              
             procs.append(p)
             while True:
                 running_procs = 0
@@ -57,12 +63,7 @@ def multitask(path,write_dir,start,stop,length_unit,mass_unit):
                 if running_procs < maxprocs:
                     p.start()
                     break
-
-    halo_properties = []
-    while halo_queue.empty() is not True:
-        halo_properties.append(halo_queue.get())
-    halo_properties.sort()
-    return halo_queue
+    return halo_properties
 
 #===============================================================================
 if __name__ == '__main__':
@@ -96,6 +97,7 @@ elif len(sys.argv) == 4:
     start = int(sys.argv[2])
     stop = int(sys.argv[3])
     hprops = multitask(path,write_dir,start,stop,length_unit,mass_unit)
+    save_result(hprops,write_dir+'halo_properties_partial.npy')
     
 else:
     files0 = glob.glob(path+'???.hdf5')
@@ -106,6 +108,7 @@ else:
     start = int(files[0][-8:-5])
     stop = int(files[-1][-8:-5])
     hprops = multitask(path,write_dir,start,stop,length_unit,mass_unit)
+    save_result(hprops,write_dir+'halo_properties.npy')
 
 
 
