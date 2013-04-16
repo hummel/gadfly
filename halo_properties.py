@@ -19,6 +19,14 @@ def load_data(fname,length_unit,mass_unit):
     snapshot.gas.load_masses(mass_unit)
     snapshot.gas.load_coords(length_unit)
     snapshot.gas.load_number_density()
+    # Refine
+    minimum = numpy.amin(masses)
+    refined = numpy.where(masses <= minimum)[0]
+    snapshot.dm.masses = snapshot.dm.masses[refined]
+    snapshot.dm.coordinates = snapshot.dm.coordinates[refined]
+    snapshot.gas.masses = snapshot.gas.masses[refined]
+    snapshot.gas.coordinates = snapshot.gas.coordinates[refined]
+    snapshot.gas.ndensity = snapshot.gas.ndensity[refined]
     return snapshot
 
 #===============================================================================
