@@ -56,7 +56,7 @@ def save_result(data,fname):
 
 #===============================================================================
 def multitask(path,write_dir,start,stop,length_unit,mass_unit):
-    maxprocs = mp.cpu_count()
+    maxjobs = mp.cpu_count()
     file_queue = Queue.Queue()
     data_queue = Queue.Queue()
     halo_queue = mp.Queue()
@@ -66,25 +66,25 @@ def multitask(path,write_dir,start,stop,length_unit,mass_unit):
         file_queue.put((fname, length_unit, mass_unit))
     file_queue.put(None)
 
-    procs = []
+    jobs = []
     halo_properties = []
     done = False
     while not done:
         snapshot = data_queue.get()
         if snapshot is None:
             done = True
-            for process in procs:
+            for process in jobs:
                 halo_properties.append(halo_queue.get())
                 process.join()
         else:
             p = mp.Process(target=analyze_queue, args=(snapshot,halo_queue))
-            procs.append(p)
+            jobs.append(p)
             while True:
-                running_procs = 0
-                for proc in procs:
+                running_jobs = 0
+                for proc in jobs:
                     if proc.is_alive():
-                        running_procs +=1
-                if running_procs < maxprocs:
+                        running_jobs +=1
+                if running_jobs < maxjobs:
                     p.start()
                     break
     return halo_properties
