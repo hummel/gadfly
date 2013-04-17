@@ -44,8 +44,16 @@ def analyze_queue(snapshot,haloq):
 
 #===============================================================================
 def save_result(data,fname):
-    data = numpy.asarray(data)
-    numpy.save(fname,data)
+    array_lengths = [x.shape[0] for x in data]
+    maxL = max(array_lengths)
+    total = len(data)
+    for i in range(total):
+        data[i].resize([maxL,7], refcheck=False)
+    datarray = numpy.concatenate([x for x in data])
+    datarray = datarray.reshape(total,maxL,7)
+    numpy.save(fname,datarray)
+    return datarray
+
 #===============================================================================
 def multitask(path,write_dir,start,stop,length_unit,mass_unit):
     maxprocs = mp.cpu_count()
@@ -113,7 +121,7 @@ elif len(sys.argv) == 4:
     start = int(sys.argv[2])
     stop = int(sys.argv[3])
     hprops = multitask(path,write_dir,start,stop,length_unit,mass_unit)
-    save_result(hprops,write_dir+'halo_properties_partial.npy')
+    data = save_result(hprops,write_dir+'halo_properties_partial.npy')
     
 else:
     files0 = glob.glob(path+'???.hdf5')
@@ -124,7 +132,7 @@ else:
     start = int(files[0][-8:-5])
     stop = int(files[-1][-8:-5])
     hprops = multitask(path,write_dir,start,stop,length_unit,mass_unit)
-    save_result(hprops,write_dir+'halo_properties.npy')
+    data = save_result(hprops,write_dir+'halo_properties.npy')
 
 
 
