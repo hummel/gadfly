@@ -34,6 +34,13 @@ def load_data(fname,length_unit,mass_unit):
 #===============================================================================
 def analyze_queue(snapshot,haloq):
     haloq.put(pyGadget.analyze.halo_properties(snapshot,verbose=False))
+    del snapshot.dm.masses
+    del snapshot.dm.coordinates
+    del snapshot.gas.masses
+    del snapshot.gas.coordinates
+    del snapshot.gas.ndensity
+    snapshot.close()
+    del snapshot
 
 #===============================================================================
 def save_result(data,fname):
