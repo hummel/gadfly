@@ -20,10 +20,12 @@ def load_data(fname,length_unit,mass_unit):
     snapshot.gas.load_coords(length_unit)
     snapshot.gas.load_number_density()
     # Refine
-    minimum = numpy.amin(masses)
-    refined = numpy.where(masses <= minimum)[0]
+    minimum = numpy.amin(snapshot.dm.masses)
+    refined = numpy.where(snapshot.dm.masses <= minimum)[0]
     snapshot.dm.masses = snapshot.dm.masses[refined]
     snapshot.dm.coordinates = snapshot.dm.coordinates[refined]
+    minimum = numpy.amin(snapshot.gas.masses)
+    refined = numpy.where(snapshot.gas.masses <= minimum)[0]
     snapshot.gas.masses = snapshot.gas.masses[refined]
     snapshot.gas.coordinates = snapshot.gas.coordinates[refined]
     snapshot.gas.ndensity = snapshot.gas.ndensity[refined]
@@ -31,8 +33,7 @@ def load_data(fname,length_unit,mass_unit):
 
 #===============================================================================
 def analyze_queue(snapshot,haloq):
-    halo_props = pyGadget.analyze.halo_properties(snapshot,verbose=False)
-    haloq.put((snapshot.header.Redshift,halo_props))
+    haloq.put(pyGadget.analyze.halo_properties(snapshot,verbose=False))
 
 #===============================================================================
 def save_result(data,fname):
