@@ -56,7 +56,7 @@ def halo_properties(snapshot,
             if verbose: print 'n:', n
             energy = constants.G * Mtot**2 / rmax
 
-            halo_properties.append((rpc,delta,solar_masses,density,energy,n))
+            halo_properties.append((redshift,rpc,delta,solar_masses,density,energy,n))
             old_n = n
         rmax *= r_multiplier
     
