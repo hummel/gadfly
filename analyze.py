@@ -24,18 +24,28 @@ def halo_properties(snapshot,
     dmx = dm_pos[:,0]
     dmy = dm_pos[:,1]
     dmz = dm_pos[:,2]
+    del dm_pos
 
     mass = numpy.concatenate((gas_mass, dm_mass))
+    del gas_mass
+    del dm_mass
     x = numpy.concatenate((gasx,dmx))
     y = numpy.concatenate((gasy,dmy))
     z = numpy.concatenate((gasz,dmz))
+    del gasx,gasy,gasz
+    del dmx,dmy,dmz
 
     center = gas_pos[dens.argmax()]
     if verbose: print 'Center:', center
+    del dens
+    del gas_pos
     x = x - center[0]
     y = y - center[1]
     z = z - center[2]
     r = numpy.sqrt(numpy.square(x) + numpy.square(y) + numpy.square(z))
+    del x
+    del y
+    del z
     
     halo_properties = []
     n = old_n = density = 0
@@ -60,5 +70,6 @@ def halo_properties(snapshot,
             old_n = n
         rmax *= r_multiplier
     
+    del r
     return numpy.asarray(halo_properties)
 
