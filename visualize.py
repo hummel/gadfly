@@ -176,7 +176,7 @@ def set_viewpoint(pos, viewpoint, centering='halo',
 #===============================================================================
 def density_projection(snapshot, view, width, thickness, length_unit, t0,
                        centering='halo', dens_limit=1e11, nparticles=100,
-                       pps=1000, hsml_factor=1.7):
+                       pps=500, hsml_factor=1.7):
     # Read relevant attributes
     h = snapshot.header.HubbleParam
     a = snapshot.header.ScaleFactor
