@@ -57,7 +57,7 @@ def compile_halos(data):
 def multitask(path,write_dir,start,stop,length_unit,mass_unit):
     maxjobs = mp.cpu_count()
     file_queue = Queue.Queue()
-    data_queue = Queue.Queue()
+    data_queue = Queue.Queue(5)
     halo_queue = mp.Queue()
     pyGadget.snapshot.Loader(load_data, file_queue, data_queue).start()
     for snap in xrange(start,stop+1):
