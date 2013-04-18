@@ -137,8 +137,46 @@ def py_scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
     return zi
 
 #===============================================================================
-def density(snapshot, view, width, thickness, length_unit, t0,
-            pps=1000, hsml_factor=1.7):
+def set_viewpoint(pos, viewpoint, centering='halo', 
+                  dens_limit=1e11, nparticles=100):
+    if viewpoint == 'xy':
+        x = pos[:,0]
+        y = pos[:,1]
+        z = pos[:,2]
+    elif viewpoint == 'xz':
+        x = pos[:,0]
+        y = pos[:,2]
+        z = pos[:,1]
+    elif viewpoint == 'yz':
+        x = pos[:,1]
+        y = pos[:,2]
+        z = pos[:,0]
+    else:
+        raise KeyError
+
+    if centering == 'halo':
+        hidens = numpy.where(dens >= dens_limit)[0]
+        while hidens.size < nparticles:
+            dens_limit /= 2
+            hidens = numpy.where(dens >= dens_limit)[0]
+        print 'Center averaged over all particles with density greater than ',
+        print '%.2e particles/cc' %dens_limit
+        #Center on highest density clump, rejecting outliers:
+        x = x - numpy.average(statistics.reject_outliers(x[hidens]))
+        y = y - numpy.average(statistics.reject_outliers(y[hidens]))
+        z = z - numpy.average(statistics.reject_outliers(z[hidens]))        
+    elif centering == 'box':
+        x = x - (x.max() + x.min())/2
+        y = y - (y.max() + y.min())/2
+        z = z - (z.max() + z.min())/2
+    else:
+        raise KeyError
+    return x,y,z
+
+#===============================================================================
+def density_projection(snapshot, view, width, thickness, length_unit, t0,
+                       centering='halo', dens_limit=1e11, nparticles=100,
+                       pps=1000, hsml_factor=1.7):
     # Read relevant attributes
     h = snapshot.header.HubbleParam
     a = snapshot.header.ScaleFactor
@@ -149,39 +187,13 @@ def density(snapshot, view, width, thickness, length_unit, t0,
     smL = snapshot.gas.get_smoothing_length(length_unit)
     sinkval = snapshot.gas.get_sinks()
 
-    # Initialization Complete --- Begin Analysis
-    print 'Analyzing...'
-    dens_limit = 1e11
-    hidens = numpy.where(dens >= dens_limit)[0]
-    while hidens.size < 100:
-        dens_limit /= 2
-        hidens = numpy.where(dens >= dens_limit)[0]
-    print 'Center averaged over all particles with density greater than ',
-    print '%.2e particles/cc' %dens_limit
-    if view == 'xy':
-        x = pos[:,0]
-        y = pos[:,1]
-        z = pos[:,2]
-    elif view == 'xz':
-        x = pos[:,0]
-        y = pos[:,2]
-        z = pos[:,1]
-    elif view == 'yz':
-        x = pos[:,1]
-        y = pos[:,2]
-        z = pos[:,0]
-    else:
-        raise KeyError
-    #Center on highest density clump, rejecting outliers:
-    x = x - numpy.average(statistics.reject_outliers(x[hidens]))
-    y = y - numpy.average(statistics.reject_outliers(y[hidens]))
-    z = z - numpy.average(statistics.reject_outliers(z[hidens]))
+    x,y,z = set_viewpoint(pos,view,centering)
+
     # Save sink particle positions for overplotting
     snapshot.sinks = []
     for sink_id in snapshot.sink_ids:
         snapshot.sinks.append((x[sink_id],y[sink_id],z[sink_id],
                                particle_mass[sink_id]))
-
     try: 
         assert dens.max() <= 1e12
     except AssertionError: 
@@ -206,79 +218,6 @@ def density(snapshot, view, width, thickness, length_unit, t0,
     dens = dens[slice_]
     smL = smL[slice_]
     sinkval = sinkval[slice_]
-    x = x[slice_]
-    y = y[slice_]
-    z = z[slice_]
-    print ' x:: max: %.3e min: %.3e' %(x.max(),x.min())
-    print ' y:: max: %.3e min: %.3e' %(y.max(),y.min())
-    print ' density:: max: %.3e min: %.3e' %(dens.max(),dens.min())
-    print ' sink values:: max: %.3e min: %.3e' %(sinkval.max(),sinkval.min())
-    print ' smoothing length:: max: %.3e min: %.3e' %(smL.max(),smL.min())
-    print ' Array size:', dens.size
-
-    xres = yres = width/pps
-    xvals = numpy.arange(-width/2,width/2,xres)
-    yvals = numpy.arange(-width/2,width/2,yres)
-    xi,yi = numpy.meshgrid(xvals,yvals)
-    zi = numpy.zeros_like(xi)
-    nzi = numpy.zeros_like(zi)
-    zshape = zi.shape
-    hsml = numpy.fmax(hsml_factor * smL, width / pps / 2.0)
-
-    print 'Calculating...'
-    zi = scalar_map(pps,width,x,y,dens,hsml,zshape)
-    print 'density:: min: %.3e max: %.3e' %(zi.min(),zi.max())
-    return xi,yi,zi
-
-#===============================================================================
-def structure(snapshot, view, width, thickness, length_unit, t0,
-            pps=1000, hsml_factor=1.7):
-    # Read relevant attributes
-    h = snapshot.header.HubbleParam
-    a = snapshot.header.ScaleFactor
-    redshift = snapshot.header.Redshift
-    particle_mass = snapshot.gas.get_masses()
-    dens = snapshot.gas.get_number_density()
-    pos = snapshot.gas.get_coords(length_unit)
-    smL = snapshot.gas.get_smoothing_length(length_unit)
-
-    # Initialization Complete --- Begin Analysis
-    print 'Analyzing...'
-    if view == 'xy':
-        x = pos[:,0]
-        y = pos[:,1]
-        z = pos[:,2]
-    elif view == 'xz':
-        x = pos[:,0]
-        y = pos[:,2]
-        z = pos[:,1]
-    elif view == 'yz':
-        x = pos[:,1]
-        y = pos[:,2]
-        z = pos[:,0]
-    else:
-        raise KeyError
-
-    x = x - (x.max() + x.min())/2
-    y = y - (y.max() + y.min())/2
-    z = z - (z.max() + z.min())/2
-
-    depth= width*thickness
-    slice_ = numpy.where(numpy.abs(z) < depth/2)[0]
-    dens = dens[slice_]
-    smL = smL[slice_]
-    x = x[slice_]
-    y = y[slice_]
-    z = z[slice_]
-    slice_ = numpy.where(numpy.abs(x) < width/2)[0]
-    dens = dens[slice_]
-    smL = smL[slice_]
-    x = x[slice_]
-    y = y[slice_]
-    z = z[slice_]
-    slice_ = numpy.where(numpy.abs(y) < width/2)[0]
-    dens = dens[slice_]
-    smL = smL[slice_]
     x = x[slice_]
     y = y[slice_]
     z = z[slice_]
