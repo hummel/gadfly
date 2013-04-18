@@ -137,8 +137,7 @@ def py_scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
     return zi
 
 #===============================================================================
-def set_viewpoint(pos, viewpoint, centering='halo', 
-                  dens_limit=1e11, nparticles=100):
+def set_viewpoint(pos, dens, viewpoint, centering, dens_limit, nparticles):
     if viewpoint == 'xy':
         x = pos[:,0]
         y = pos[:,1]
@@ -174,9 +173,8 @@ def set_viewpoint(pos, viewpoint, centering='halo',
     return x,y,z
 
 #===============================================================================
-def density_projection(snapshot, view, width, thickness, length_unit, t0,
-                       centering='halo', dens_limit=1e11, nparticles=100,
-                       pps=500, hsml_factor=1.7):
+def density_projection(snapshot, view, width, thickness, length_unit,
+                       c='halo', dlim=1e11, np=100, pps=500, sm=1.7):
     # Read relevant attributes
     h = snapshot.header.HubbleParam
     a = snapshot.header.ScaleFactor
@@ -187,7 +185,7 @@ def density_projection(snapshot, view, width, thickness, length_unit, t0,
     smL = snapshot.gas.get_smoothing_length(length_unit)
     sinkval = snapshot.gas.get_sinks()
 
-    x,y,z = set_viewpoint(pos,view,centering)
+    x,y,z = set_viewpoint(pos,dens,view,c,dlim,np)
 
     # Save sink particle positions for overplotting
     snapshot.sinks = []
@@ -233,7 +231,7 @@ def density_projection(snapshot, view, width, thickness, length_unit, t0,
     zi = numpy.zeros_like(xi)
     nzi = numpy.zeros_like(zi)
     zshape = zi.shape
-    hsml = numpy.fmax(hsml_factor * smL, width / pps / 2.0)
+    hsml = numpy.fmax(sm * smL, width / pps / 2.0)
 
     print 'Calculating...'
     zi = scalar_map(pps,width,x,y,dens,hsml,zshape)
