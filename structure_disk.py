@@ -9,11 +9,8 @@ import numpy
 import Queue
 from matplotlib import pyplot
 from matplotlib import cm
-from matplotlib.mlab import griddata
 
 import pyGadget
-import statistics
-
 global t0
 #===============================================================================
 def load_dens(fname,length_unit):
@@ -36,13 +33,14 @@ def load_dens(fname,length_unit):
 
     return snapshot
 
-def plot_dens(snap, write_dir, boxsize, length_unit, pps, hsml_factor):
+def project(snap, write_dir, boxsize, length_unit, dlim, np, pps, sm):
     global t0
     for suffix in ['-dens-xy.png','-dens-xz.png','-dens-yz.png']:
         wpath = write_dir + '{:0>4}'.format(snap.number) + suffix
         view = suffix[-6:-4]
-        x,y,z = pyGadget.visualize.density(snap, view, boxsize, 1., 
-                                           length_unit, t0, pps, hsml_factor)
+        x,y,z = pyGadget.visualize.density_projection(snap, view, boxsize, 1., 
+                                                      length_unit, 'halo', dlim,
+                                                      np, pps, sm)
         z = numpy.log10(z)
         zmin,zmax = (1e9,1e12)
         
@@ -71,8 +69,8 @@ def plot_dens(snap, write_dir, boxsize, length_unit, pps, hsml_factor):
                        bbox_inches='tight')
     snap.close()
 
-def multitask(path, write_dir, start, stop,
-              boxsize,length_unit,pps,hsml_factor):
+def multitask(path, write_dir, start, stop, boxsize,length_unit,
+              dlim, np, pps, sm):
     global t0
     file_queue = Queue.Queue()
     data_queue = Queue.Queue(3)
@@ -88,11 +86,10 @@ def multitask(path, write_dir, start, stop,
         snapshot = data_queue.get()
         if snapshot is None:
             break # reached end of queue!
-        plot_dens(snapshot,write_dir,boxsize,length_unit,pps,hsml_factor)
+        project(snapshot,write_dir,boxsize,length_unit,dlim,np,pps,sm)
     print 'Done.'
     
 #===============================================================================
-pyplot.ioff()
 if ((len(sys.argv) not in [2,3,4]) or (sys.argv[1] == '-h')):
     print 'Usage::'
     print '   Option 1: python gas_temp.py [simulation name] '\
@@ -110,8 +107,10 @@ write_dir = os.getenv('HOME')+'/data/simplots/'+simulation+'/'
 
 length_unit = pyGadget.units.Length_AU
 pps = 500 # 'pixels' per side
-hsml_factor = 1.7
+sm = 1.7
 boxsize = 2e3
+dlim = 1e11
+np = 100
 
 
 try:
@@ -125,13 +124,12 @@ if len(sys.argv) == 3:
     fname = path + '{:0>3}'.format(snap)+'.hdf5'
     print 'loading', fname
     snapshot = load_dens(fname,length_unit)
-    plot_dens(snapshot,write_dir,boxsize,length_unit,pps,hsml_factor)
+    project(snapshot,write_dir,boxsize,length_unit,dlim,np,pps,sm)
 
 elif len(sys.argv) == 4:
     start = int(sys.argv[2])
-    stop = int(sys.argv[3])+1
-    multitask(path,write_dir,start,stop,
-              boxsize,length_unit,pps,hsml_factor)
+    stop = int(sys.argv[3])
+    multitask(path,write_dir,start,stop,boxsize,length_unit,dlim,np,pps,sm)
 
 else:
     files0 = glob.glob(path+'???.hdf5')
@@ -143,5 +141,4 @@ else:
     if files1:
         stop = int(files1[-1][-9:-5])
         
-    multitask(path,write_dir,start,stop,
-              boxsize,length_unit,pps,hsml_factor)
+    multitask(path,write_dir,start,stop,boxsize,length_unit,dlim,np,pps,sm)
