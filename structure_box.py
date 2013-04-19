@@ -35,7 +35,7 @@ def load_dens(fname,length_unit):
 
 def project(snap, write_dir, boxsize, length_unit, pps, sm):
     global t0
-    for suffix in ['-box-xy.png']:
+    for suffix in ['-box.png']:
         wpath = write_dir + '{:0>4}'.format(snap.number) + suffix
         view = suffix[-6:-4]
         x,y,z = pyGadget.visualize.density_projection(snap, view, boxsize, .5, 
