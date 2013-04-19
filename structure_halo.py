@@ -33,7 +33,7 @@ def load_dens(fname,length_unit):
 
     return snapshot
 
-def project(snap, write_dir, scale, cscale, dlim, np, pps, sm):
+def project(snap, write_dir, scale, cscale, *args, **kwargs):
     global t0
     boxsize = int("".join(ch if ch.isdigit() else "" for ch in scale))
     unit = "".join(ch if not ch.isdigit() else "" for ch in scale)
@@ -44,9 +44,9 @@ def project(snap, write_dir, scale, cscale, dlim, np, pps, sm):
     for suffix in ['-halo500-xy.png']:
         wpath = write_dir + '{:0>4}'.format(snap.number) + suffix
         view = suffix[-6:-4]
-        x,y,z = pyGadget.visualize.density_projection(snap, view, boxsize, 1., 
-                                                      length_unit, 'halo',
-                                                      dlim, np, pps, sm)
+        x,y,z = pyGadget.visualize.density_projection(snap, boxsize, 1., 
+                                                      length_unit, view, 'halo',
+                                                      *args,**kwargs)
         z = numpy.log10(z)
         print 'Plotting '+view+'...'
         fig = pyplot.figure(1,(16,12))
@@ -71,9 +71,9 @@ def project(snap, write_dir, scale, cscale, dlim, np, pps, sm):
                        bbox_inches='tight')
     snap.close()
 
-def multitask(path, write_dir, start, stop, scale, cscale, dlim, np, pps, sm):
+def multitask(path, start, stop, *args,**kwargs):
     global t0
-    unit = "".join(ch if not ch.isdigit() else "" for ch in scale)
+    unit = "".join(ch if not ch.isdigit() else "" for ch in args[1])
     length_unit = pyGadget.units.Lengths[unit]
 
     file_queue = Queue.Queue()
@@ -90,7 +90,7 @@ def multitask(path, write_dir, start, stop, scale, cscale, dlim, np, pps, sm):
         snapshot = data_queue.get()
         if snapshot is None:
             break # reached end of queue!
-        project(snapshot,write_dir,scale,cscale,dlim,np,pps,sm)
+        project(snapshot,*args,**kwargs)
     print 'Done.'
     
 #===============================================================================
@@ -108,15 +108,18 @@ simulation = sys.argv[1]
 path = os.getenv('HOME')+'/sim/'+simulation+'/snapshot_'
 sinkpath = os.getenv('HOME')+'/data/sinks/'+simulation+'/'
 write_dir = os.getenv('HOME')+'/data/simplots/'+simulation+'/'
-
 colors = {'1kpc': (-2.5,3), '1000pc':(-2.5,3), '500pc':(-2.5,3), 
           '100pc':(-1,3.5), '10pc':(1,6), '1pc':(3.5,9)}
 scaling = sys.argv[2]
 cscaling = colors[scaling]
-pps = 500   # 'pixels' per side
-sm = 1.7    # smoothing factor
-dlim = 1e6  # density limit for finding halo center
-np = 1000   # number of particles to require for finding halo center
+
+### Optional arguments (If you want to override defaults.)
+pps = 500  # 'pixels' per side
+sm = 1.7   # smoothing factor
+dlim = 1e6 # density limit for finding halo center
+np = 1000  # number of particles to require for finding halo center
+kwargs = {'pps':pps, 'sm':sm, 'dens_limit':dlim, 'nparticles':np}
+
 try:
     sink = pyGadget.sinks.SingleSink(sinkpath)
     t0 = sink.time[0]
@@ -130,12 +133,12 @@ if len(sys.argv) == 4:
     unit = "".join(ch if not ch.isdigit() else "" for ch in scaling)
     length_unit = pyGadget.units.Lengths[unit]
     snapshot = load_dens(fname,length_unit)
-    project(snapshot,write_dir,scaling,cscaling,dlim,np,pps,sm)
+    project(snapshot,write_dir,scaling,cscaling,**kwargs)
 
 elif len(sys.argv) == 5:
     start = int(sys.argv[3])
     stop = int(sys.argv[4])
-    multitask(path,write_dir,start,stop,scaling,cscaling,dlim,np,pps,sm)
+    multitask(path,start,stop,write_dir,scaling,cscaling,**kwargs)
 
 else:
     files0 = glob.glob(path+'???.hdf5')
@@ -146,4 +149,4 @@ else:
     stop = int(files0[-1][-8:-5])
     if files1:
         stop = int(files1[-1][-9:-5])
-    multitask(path,write_dir,start,stop,scaling,cscaling,dlim,np,pps,sm)
+    multitask(path,start,stop,write_dir,scaling,cscaling,**kwargs)
