@@ -30,3 +30,5 @@ Time_yr = Time_s / 3.15569e7
 Time_myr = Time_yr / 1e6
 Time_gyr = Time_yr / 1e9
 
+### Unit Selection Dictionaries
+Lengths = {'cm':Length_cm, 'AU':Length_AU, 'pc':Length_pc, 'kpc':Length_kpc}
