@@ -137,7 +137,8 @@ def py_scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
     return zi
 
 #===============================================================================
-def set_viewpoint(pos, dens, viewpoint, centering, dens_limit, nparticles):
+def set_viewpoint(pos, dens, viewpoint, centering, 
+                  dens_limit=1e11, nparticles=100):
     if viewpoint == 'xy':
         x = pos[:,0]
         y = pos[:,1]
@@ -173,8 +174,9 @@ def set_viewpoint(pos, dens, viewpoint, centering, dens_limit, nparticles):
     return x,y,z
 
 #===============================================================================
-def density_projection(snapshot, view, width, thickness, length_unit,
-                       c='halo', dlim=1e11, np=100, pps=500, sm=1.7):
+def density_projection(snapshot, width, thickness, length_unit, *args,**kwargs):
+    pps = kwargs.pop('pps', 500)
+    sm = kwargs.pop('sm', 1.7)
     # Read relevant attributes
     h = snapshot.header.HubbleParam
     a = snapshot.header.ScaleFactor
@@ -185,7 +187,7 @@ def density_projection(snapshot, view, width, thickness, length_unit,
     smL = snapshot.gas.get_smoothing_length(length_unit)
     sinkval = snapshot.gas.get_sinks()
 
-    x,y,z = set_viewpoint(pos,dens,view,c,dlim,np)
+    x,y,z = set_viewpoint(pos,dens,*args,**kwargs)
 
     # Save sink particle positions for overplotting
     snapshot.sinks = []
