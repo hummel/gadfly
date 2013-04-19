@@ -45,13 +45,8 @@ def project(snap, write_dir, boxsize, length_unit, dlim, np, pps, sm):
         #set colorbar limits
         zmax = z.max()
         zmin = z.min()
-        '''
-        if zmax < 1: zmax = 1
-        if zmin > -1.5: zmin = -1.5
-        if zmax > 2: zmax = 2
-        '''
-        zmax = 3
-        zmin = -2.5
+        zmax = 3.5
+        zmin = -1
         print 'Plotting '+view+'...'
         fig = pyplot.figure(1,(16,12))
         fig.clf()
