@@ -19,6 +19,7 @@ def load_data(fname,length_unit,mass_unit):
     snapshot.gas.load_masses(mass_unit)
     snapshot.gas.load_coords(length_unit)
     snapshot.gas.load_number_density()
+    snapshot.close()
     # Refine
     minimum = numpy.amin(snapshot.dm.masses)
     refined = numpy.where(snapshot.dm.masses <= minimum)[0]
@@ -32,18 +33,28 @@ def load_data(fname,length_unit,mass_unit):
     return snapshot
 
 #===============================================================================
-def analyze_queue(snapshot,haloq):
-    haloq.put(pyGadget.analyze.halo_properties(snapshot,verbose=False))
+def analyze_halo(snapshot, write_dir):
+    halo = pyGadget.analyze.halo_properties(snapshot,verbose=False)
+    numpy.save(write_dir+'/haloz/'+str(snapshot.number)+'.npy',halo)
     del snapshot.dm.masses
     del snapshot.dm.coordinates
     del snapshot.gas.masses
     del snapshot.gas.coordinates
     del snapshot.gas.ndensity
-    snapshot.close()
-    del snapshot
 
 #===============================================================================
-def compile_halos(data):
+def compile_halos(directory):
+    files0 = glob.glob(directory+'???.npy')
+    files1 = glob.glob(directory+'1???.npy')
+    files0.sort()
+    files1.sort()
+    files = files0 + files1
+    data = []
+    for f in files:
+        halo = numpy.load(f)
+        if halo.size > 0:
+            data.append(halo)
+
     array_lengths = [x.shape[0] for x in data]
     maxL = max(array_lengths)
     total = len(data)
@@ -56,7 +67,7 @@ def compile_halos(data):
 #===============================================================================
 def multitask_serial(path,write_dir,start,stop,length_unit,mass_unit):
     file_queue = Queue.Queue()
-    data_queue = Queue.Queue(5)
+    data_queue = Queue.Queue(3)
     pyGadget.snapshot.Loader(load_data, file_queue, data_queue).start()
     for snap in xrange(start,stop+1):
         fname = path + '{:0>3}'.format(snap)+'.hdf5'
@@ -79,8 +90,7 @@ def multitask_serial(path,write_dir,start,stop,length_unit,mass_unit):
 def multitask_parallel(path,write_dir,start,stop,length_unit,mass_unit):
     maxjobs = mp.cpu_count()
     file_queue = Queue.Queue()
-    data_queue = Queue.Queue(5)
-    halo_queue = mp.Queue()
+    data_queue = Queue.Queue(3)
     pyGadget.snapshot.Loader(load_data, file_queue, data_queue).start()
     for snap in xrange(start,stop+1):
         fname = path + '{:0>3}'.format(snap)+'.hdf5'
@@ -88,27 +98,17 @@ def multitask_parallel(path,write_dir,start,stop,length_unit,mass_unit):
     file_queue.put(None)
 
     jobs = []
-    halo_properties = []
     done = False
     while not done:
         snapshot = data_queue.get()
         if snapshot is None:
             done = True
-            for process in jobs:
-                halo_properties.append(halo_queue.get())
-                process.join()
         else:
-            p = mp.Process(target=analyze_queue, args=(snapshot,halo_queue))
+            p = mp.Process(target=analyze_halo, args=(snapshot,write_dir))
             jobs.append(p)
-            while True:
-                running_jobs = 0
-                for proc in jobs:
-                    if proc.is_alive():
-                        running_jobs +=1
-                if running_jobs < maxjobs:
-                    p.start()
-                    break
-    return halo_properties
+            p.start()
+    for process in jobs:
+        process.join()
 
 #===============================================================================
 if __name__ == '__main__':
@@ -141,9 +141,9 @@ if len(sys.argv) == 3:
 elif len(sys.argv) == 4:
     start = int(sys.argv[2])
     stop = int(sys.argv[3])
-    hprops = multitask_serial(path,write_dir,start,stop,length_unit,mass_unit)
-    data = compile_halos(hprops)
-    numpy.save(write_dir+'halo_properties_partial.npy',data)
+    multitask_parallel(path,write_dir,start,stop,length_unit,mass_unit)
+    data = compile_halos(write_dir)
+    numpy.save(write_dir+'halo_properties.npy',data)
     
 else:
     files0 = glob.glob(path+'???.hdf5')
@@ -153,6 +153,6 @@ else:
     files = files0 + files1
     start = int(files[0][-8:-5])
     stop = int(files[-1][-8:-5])
-    hprops = multitask_serial(path,write_dir,start,stop,length_unit,mass_unit)
-    data = compile_halos(hprops)
+    multitask_parallel(path,write_dir,start,stop,length_unit,mass_unit)
+    data = compile_halos(write_dir)
     numpy.save(write_dir+'halo_properties.npy',data)
