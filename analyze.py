@@ -51,7 +51,7 @@ def halo_properties(snapshot,
     n = old_n = density = 0
     background_density = .27 * 9.31e-30 * (1+redshift)**3 #Omega_m * rho_crit(z)
     rmax = r_start
-    while (density > 180 * background_density or n < 100):
+    while (density > 180 * background_density or n < 50):
         inR = numpy.where(r <= rmax)[0]
         n = inR.size
         if n > old_n:
@@ -65,11 +65,13 @@ def halo_properties(snapshot,
             if verbose: print 'delta: %.3f' %delta,
             if verbose: print 'n:', n
             energy = constants.G * Mtot**2 / rmax
-
-            halo_properties.append((redshift,rpc,delta,solar_masses,density,energy,n))
+            if delta >= 178.0:
+                halo_properties.append((redshift,rpc,delta,solar_masses,
+                                        density,energy,n))
             old_n = n
         rmax *= r_multiplier
     
     del r
+    print 'snapshot', snapshot.number, 'analyzed.'
     return numpy.asarray(halo_properties)
 
