@@ -7,6 +7,7 @@ import sys
 import glob
 import numpy
 import Queue
+import subprocess
 import multiprocessing as mp
 
 import pyGadget
@@ -43,25 +44,6 @@ def analyze_halo(snapshot, write_dir):
     del snapshot.gas.ndensity
 
 #===============================================================================
-def compile_halos(directory):
-    files = glob.glob(directory+'haloz/????.npy')
-    files.sort()
-    data = []
-    for f in files:
-        halo = numpy.load(f)
-        if halo.size > 0:
-            data.append(halo)
-
-    array_lengths = [x.shape[0] for x in data]
-    maxL = max(array_lengths)
-    total = len(data)
-    for i in range(total):
-        data[i].resize([maxL,7], refcheck=False)
-    datarray = numpy.concatenate([x for x in data])
-    datarray = datarray.reshape(total,maxL,7)
-    return datarray
-
-#===============================================================================
 def multitask_serial(path,write_dir,start,stop,length_unit,mass_unit):
     file_queue = Queue.Queue()
     data_queue = Queue.Queue(3)
@@ -85,9 +67,12 @@ def multitask_serial(path,write_dir,start,stop,length_unit,mass_unit):
 
 #===============================================================================
 def multitask_parallel(path,write_dir,start,stop,length_unit,mass_unit):
-    maxjobs = mp.cpu_count()
+    maxprocs = mp.cpu_count()
+    # Hack to take advantage of larger memory on r900 machines
+    if 'r900' not in subprocess.check_output(['uname','-n']):
+        maxprocs /= 2
     file_queue = Queue.Queue()
-    data_queue = Queue.Queue(maxjobs/4)
+    data_queue = Queue.Queue(maxprocs/4)
     pyGadget.snapshot.Loader(load_data, file_queue, data_queue).start()
     for snap in xrange(start,stop+1):
         fname = path + '{:0>3}'.format(snap)+'.hdf5'
@@ -97,10 +82,11 @@ def multitask_parallel(path,write_dir,start,stop,length_unit,mass_unit):
     done = False
     while not done:
         jobs = []
-        for i in xrange(maxjobs):
+        for i in xrange(maxprocs):
             snapshot = data_queue.get()
             if snapshot is None:
                 done = True
+                break
             else:
                 p = mp.Process(target=analyze_halo, args=(snapshot,write_dir))
                 jobs.append(p)
@@ -109,6 +95,8 @@ def multitask_parallel(path,write_dir,start,stop,length_unit,mass_unit):
         for process in jobs:
             process.join()
         print '\nQueue Cleared!\n'
+    for process in jobs:
+        process.join()
 
 #===============================================================================
 if __name__ == '__main__':
@@ -142,8 +130,8 @@ elif len(sys.argv) == 4:
     start = int(sys.argv[2])
     stop = int(sys.argv[3])
     multitask_parallel(path,write_dir,start,stop,length_unit,mass_unit)
-    data = compile_halos(write_dir)
-    numpy.save(write_dir+'halo_properties.npy',data)
+    #data = pyGadget.analyze.compile_halos(write_dir)
+    #numpy.save(write_dir+'halo_properties.npy',data)
     
 else:
     files0 = glob.glob(path+'???.hdf5')
@@ -154,5 +142,5 @@ else:
     start = int(files[0][-8:-5])
     stop = int(files[-1][-8:-5])
     multitask_parallel(path,write_dir,start,stop,length_unit,mass_unit)
-    data = compile_halos(write_dir)
+    data = pyGadget.analyze.compile_halos(write_dir)
     numpy.save(write_dir+'halo_properties.npy',data)

@@ -7,7 +7,7 @@ import sys
 import glob
 import numpy
 import Queue
-import threading
+import subprocess
 import multiprocessing as mp
 from matplotlib import pyplot
 import pyGadget
@@ -58,8 +58,10 @@ def plot_temp(snapshot,wpath):
 
 #===============================================================================
 def multitask(path,write_dir,start,stop):
-    threadLock = threading.Lock()
     maxprocs = mp.cpu_count()
+    # Hack to take advantage of larger memory on r900 machines
+    if 'r900' not in subprocess.check_output(['uname','-n']):
+        maxprocs /= 2
     file_queue = Queue.Queue()
     data_queue = Queue.Queue(maxprocs/4)
     pyGadget.snapshot.Loader(load_snapshot, file_queue, data_queue).start()
@@ -75,6 +77,7 @@ def multitask(path,write_dir,start,stop):
             snapshot = data_queue.get()
             if snapshot is None:
                 done = True
+                break
             else:
                 wd = write_dir+'{:0>4}'.format(snapshot.number)
                 p = mp.Process(target=plot_temp, args=(snapshot, wd))
@@ -84,6 +87,8 @@ def multitask(path,write_dir,start,stop):
         for process in jobs:
             process.join()
         print '\nQueue Cleared!\n'
+    for process in jobs:
+        process.join()
 
 #===============================================================================
 if __name__ == '__main__':
