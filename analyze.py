@@ -6,13 +6,14 @@ from . import units
 from . import constants
 
 #===============================================================================
-def find_center(x, y, z, dens, dens_limit=1e11, nparticles=100):
+def find_center(x, y, z, dens, verbose=True, dens_limit=1e11, nparticles=100):
         hidens = numpy.where(dens >= dens_limit)[0]
         while hidens.size < nparticles:
             dens_limit /= 2
             hidens = numpy.where(dens >= dens_limit)[0]
-        print 'Center averaged over all particles with density greater than ',
-        print '%.2e particles/cc' %dens_limit
+        if verbose:
+            print ('Center averaged over all particles with density greater '\
+                       'than %.2e particles/cc' %dens_limit)
         #Center on highest density clump, rejecting outliers:
         x = x - numpy.average(statistics.reject_outliers(x[hidens]))
         y = y - numpy.average(statistics.reject_outliers(y[hidens]))
@@ -50,7 +51,7 @@ def halo_properties(snapshot,
     del gasx,gasy,gasz
     del dmx,dmy,dmz
 
-    x,y,z = find_center(x,y,z,dens)
+    x,y,z = find_center(x,y,z,dens,verbose)
     del dens
     del gas_pos
     r = numpy.sqrt(numpy.square(x) + numpy.square(y) + numpy.square(z))
