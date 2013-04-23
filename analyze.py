@@ -1,8 +1,23 @@
 # analyze.py
 # Jacob Hummel
 import numpy
+import statistics
 from . import units
 from . import constants
+
+#===============================================================================
+def find_center(x, y, z, dens, dens_limit=1e11, nparticles=100):
+        hidens = numpy.where(dens >= dens_limit)[0]
+        while hidens.size < nparticles:
+            dens_limit /= 2
+            hidens = numpy.where(dens >= dens_limit)[0]
+        print 'Center averaged over all particles with density greater than ',
+        print '%.2e particles/cc' %dens_limit
+        #Center on highest density clump, rejecting outliers:
+        x = x - numpy.average(statistics.reject_outliers(x[hidens]))
+        y = y - numpy.average(statistics.reject_outliers(y[hidens]))
+        z = z - numpy.average(statistics.reject_outliers(z[hidens]))        
+        return x,y,z
 
 #===============================================================================
 def halo_properties(snapshot, 
@@ -35,13 +50,9 @@ def halo_properties(snapshot,
     del gasx,gasy,gasz
     del dmx,dmy,dmz
 
-    center = gas_pos[dens.argmax()]
-    if verbose: print 'Center:', center
+    x,y,z = find_center(x,y,z,dens)
     del dens
     del gas_pos
-    x = x - center[0]
-    y = y - center[1]
-    z = z - center[2]
     r = numpy.sqrt(numpy.square(x) + numpy.square(y) + numpy.square(z))
     del x
     del y

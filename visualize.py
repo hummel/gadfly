@@ -10,7 +10,7 @@ from scipy import weave
 from scipy.weave import converters
 from matplotlib import pyplot
 
-import statistics
+from . import analyze
 #===============================================================================
 def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
     zi = numpy.zeros(zshape)
@@ -137,8 +137,7 @@ def py_scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
     return zi
 
 #===============================================================================
-def set_viewpoint(pos, dens, viewpoint, centering, 
-                  dens_limit=1e11, nparticles=100):
+def set_viewpoint(pos, dens, viewpoint, centering, **kwargs):
     if viewpoint == 'xy':
         x = pos[:,0]
         y = pos[:,1]
@@ -155,16 +154,8 @@ def set_viewpoint(pos, dens, viewpoint, centering,
         raise KeyError
 
     if centering == 'halo':
-        hidens = numpy.where(dens >= dens_limit)[0]
-        while hidens.size < nparticles:
-            dens_limit /= 2
-            hidens = numpy.where(dens >= dens_limit)[0]
-        print 'Center averaged over all particles with density greater than ',
-        print '%.2e particles/cc' %dens_limit
-        #Center on highest density clump, rejecting outliers:
-        x = x - numpy.average(statistics.reject_outliers(x[hidens]))
-        y = y - numpy.average(statistics.reject_outliers(y[hidens]))
-        z = z - numpy.average(statistics.reject_outliers(z[hidens]))        
+        x,y,z = analyze.find_center(x,y,z,dens,**kwargs)
+
     elif centering == 'box':
         x = x - (x.max() + x.min())/2
         y = y - (y.max() + y.min())/2
