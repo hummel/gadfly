@@ -1,5 +1,6 @@
 # analyze.py
 # Jacob Hummel
+import glob
 import numpy
 import statistics
 from . import units
@@ -19,6 +20,30 @@ def find_center(x, y, z, dens, verbose=True, dens_limit=1e11, nparticles=100):
         y = y - numpy.average(statistics.reject_outliers(y[hidens]))
         z = z - numpy.average(statistics.reject_outliers(z[hidens]))        
         return x,y,z
+
+#===============================================================================
+def compile_halos(directory):
+    print directory+'haloz/????.npy'
+    files = glob.glob(directory+'haloz/????.npy')
+    files.sort()
+    print files
+    data = []
+    for f in files:
+        print f
+        halo = numpy.load(f)
+        print halo
+        print halo.size
+        if halo.size > 0:
+            data.append(halo)
+
+    array_lengths = [x.shape[0] for x in data]
+    maxL = max(array_lengths)
+    total = len(data)
+    for i in range(total):
+        data[i].resize([maxL,7], refcheck=False)
+    datarray = numpy.concatenate([x for x in data])
+    datarray = datarray.reshape(total,maxL,7)
+    return datarray
 
 #===============================================================================
 def halo_properties(snapshot, 
