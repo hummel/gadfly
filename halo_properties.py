@@ -44,8 +44,9 @@ def analyze_halo(snapshot, write_dir):
 
 #===============================================================================
 def compile_halos(directory):
-    files0 = glob.glob(directory+'???.npy')
-    files1 = glob.glob(directory+'1???.npy')
+    print directory
+    files0 = glob.glob(directory+'haloz/???.npy')
+    files1 = glob.glob(directory+'haloz/1???.npy')
     files0.sort()
     files1.sort()
     files = files0 + files1
