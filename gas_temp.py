@@ -61,38 +61,29 @@ def multitask(path,write_dir,start,stop):
     threadLock = threading.Lock()
     maxprocs = mp.cpu_count()
     file_queue = Queue.Queue()
-    data_queue = Queue.Queue(2)
+    data_queue = Queue.Queue(maxprocs/4)
     pyGadget.snapshot.Loader(load_snapshot, file_queue, data_queue).start()
     for snap in xrange(start,stop+1):
         fname = path + '{:0>3}'.format(snap)+'.hdf5'
         file_queue.put((fname,))
     file_queue.put(None)
-    procs = []
+
     done = False
     while not done:
-        snapshot = data_queue.get()
-        if snapshot is None:
-            done = True
-            for process in procs:
-                process.join()
-        else:
-            p = mp.Process(target=plot_temp, 
-                           args=(snapshot,
-                                 write_dir+'{:0>4}'.format(snapshot.number)))
-                                              
-                                              
-            procs.append(p)
-            while True:
-                running_procs = 0
-                for proc in procs:
-                    if proc.is_alive():
-                        running_procs +=1
-                if running_procs < maxprocs:
-                    threadLock.acquire()
-                    print 'Plotting', snapshot.filename
-                    p.start()
-                    threadLock.release()
-                    break
+        jobs = []
+        for i in xrange(maxprocs):
+            snapshot = data_queue.get()
+            if snapshot is None:
+                done = True
+            else:
+                wd = write_dir+'{:0>4}'.format(snapshot.number)
+                p = mp.Process(target=plot_temp, args=(snapshot, wd))
+                jobs.append(p)
+                p.start()
+        print '\nClearing Queue!\n'
+        for process in jobs:
+            process.join()
+        print '\nQueue Cleared!\n'
 
 #===============================================================================
 if __name__ == '__main__':

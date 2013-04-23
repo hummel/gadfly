@@ -35,7 +35,7 @@ def load_data(fname,length_unit,mass_unit):
 #===============================================================================
 def analyze_halo(snapshot, write_dir):
     halo = pyGadget.analyze.halo_properties(snapshot,verbose=False)
-    numpy.save(write_dir+'/haloz/'+str(snapshot.number)+'.npy',halo)
+    numpy.save(write_dir+'/haloz/'+'{:0>4}'.format(snapshot.number)+'.npy',halo)
     del snapshot.dm.masses
     del snapshot.dm.coordinates
     del snapshot.gas.masses
@@ -44,12 +44,8 @@ def analyze_halo(snapshot, write_dir):
 
 #===============================================================================
 def compile_halos(directory):
-    print directory
-    files0 = glob.glob(directory+'haloz/???.npy')
-    files1 = glob.glob(directory+'haloz/1???.npy')
-    files0.sort()
-    files1.sort()
-    files = files0 + files1
+    files = glob.glob(directory+'haloz/????.npy')
+    files.sort()
     data = []
     for f in files:
         halo = numpy.load(f)
@@ -91,25 +87,28 @@ def multitask_serial(path,write_dir,start,stop,length_unit,mass_unit):
 def multitask_parallel(path,write_dir,start,stop,length_unit,mass_unit):
     maxjobs = mp.cpu_count()
     file_queue = Queue.Queue()
-    data_queue = Queue.Queue(3)
+    data_queue = Queue.Queue(maxjobs/4)
     pyGadget.snapshot.Loader(load_data, file_queue, data_queue).start()
     for snap in xrange(start,stop+1):
         fname = path + '{:0>3}'.format(snap)+'.hdf5'
         file_queue.put((fname, length_unit, mass_unit))
     file_queue.put(None)
 
-    jobs = []
     done = False
     while not done:
-        snapshot = data_queue.get()
-        if snapshot is None:
-            done = True
-        else:
-            p = mp.Process(target=analyze_halo, args=(snapshot,write_dir))
-            jobs.append(p)
-            p.start()
-    for process in jobs:
-        process.join()
+        jobs = []
+        for i in xrange(maxjobs):
+            snapshot = data_queue.get()
+            if snapshot is None:
+                done = True
+            else:
+                p = mp.Process(target=analyze_halo, args=(snapshot,write_dir))
+                jobs.append(p)
+                p.start()
+        print '\nClearing Queue!\n'
+        for process in jobs:
+            process.join()
+        print '\nQueue Cleared!\n'
 
 #===============================================================================
 if __name__ == '__main__':
