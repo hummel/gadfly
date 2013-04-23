@@ -7,18 +7,25 @@ from . import units
 from . import constants
 
 #===============================================================================
-def find_center(x, y, z, dens, verbose=True, dens_limit=1e11, nparticles=100):
-        hidens = numpy.where(dens >= dens_limit)[0]
-        while hidens.size < nparticles:
-            dens_limit /= 2
-            hidens = numpy.where(dens >= dens_limit)[0]
-        if verbose:
-            print ('Center averaged over all particles with density greater '\
-                       'than %.2e particles/cc' %dens_limit)
-        #Center on highest density clump, rejecting outliers:
-        x = x - numpy.average(statistics.reject_outliers(x[hidens]))
-        y = y - numpy.average(statistics.reject_outliers(y[hidens]))
-        z = z - numpy.average(statistics.reject_outliers(z[hidens]))        
+def find_center(x, y, z, dens, centering='avg', dens_limit=1e11, nparticles=100,
+		verbose=True):
+	if centering == 'avg':
+		hidens = numpy.where(dens >= dens_limit)[0]
+		while hidens.size < nparticles:
+		    dens_limit /= 2
+		    hidens = numpy.where(dens >= dens_limit)[0]
+		if verbose:
+		    print ('Center averaged over all particles with density '\
+			       'greater than %.2e particles/cc' %dens_limit)
+		#Center on highest density clump, rejecting outliers:
+		x = x - numpy.average(statistics.reject_outliers(x[hidens]))
+		y = y - numpy.average(statistics.reject_outliers(y[hidens]))
+		z = z - numpy.average(statistics.reject_outliers(z[hidens]))
+	elif centering == 'max':
+		center = dens.argmax()
+		x = x - x[center]
+		y = y - y[center]
+		z = z - z[center]
         return x,y,z
 
 #===============================================================================
@@ -76,7 +83,7 @@ def halo_properties(snapshot,
     del gasx,gasy,gasz
     del dmx,dmy,dmz
 
-    x,y,z = find_center(x,y,z,dens,verbose)
+    x,y,z = find_center(x,y,z,dens,'max',verbose=verbose)
     del dens
     del gas_pos
     r = numpy.sqrt(numpy.square(x) + numpy.square(y) + numpy.square(z))
