@@ -47,7 +47,7 @@ def compile_halos(directory):
     maxL = max(array_lengths)
     total = len(data)
     for i in range(total):
-        data[i].resize([maxL,9], refcheck=False)
+        data[i].resize([maxL,13], refcheck=False)
     datarray = numpy.concatenate([x for x in data])
     datarray = datarray.reshape(total,maxL,7)
     return datarray
@@ -116,17 +116,16 @@ def halo_properties(snapshot,
 	    cs = numpy.sqrt(constants.k_B * tavg / constants.m_H)
 	    Lj = cs*tff
 	    Mj = density * (4*numpy.pi/3) * Lj**3 / 1.989e33
-	    #eShell = -constants.GRAVITY * Mtot * Mshell * (rmax-old_r) / old_r
-	    energy = -constants.GRAVITY * Mtot * Mtot / rmax
+	    energy += constants.GRAVITY * Mtot * Mshell / rmax
             if verbose: 
                 print 'R = %.2e pc' %rpc,
 		print 'Mass enclosed: %.2e' %solar_masses,
-                print 'delta: %.3f' %delta,
-                #print 'delta E: %.3e' %eShell,
-                print 'Energy: %.3e' %energy
+		ms = Mshell/1.989e33
+                print 'Energy: %.3e' %energy,
+                print 'delta: %.3f' %delta
             if delta >= 178.0:
                 halo_properties.append((redshift,rpc,delta,solar_masses,density,
-                                        tavg,tshell,tff,cs,Lj,Mj,energy,n))
+                                        tavg,tshell,tff,cs,Lj,Mj,-energy,n))
             old_n = n
 	    old_r = rmax
         rmax *= r_multiplier
