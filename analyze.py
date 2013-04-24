@@ -54,7 +54,7 @@ def compile_halos(directory):
 
 #===============================================================================
 def halo_properties(snapshot, 
-                    r_start=3.08568e18, r_multiplier=1.01, verbose=True):
+                    r_start=3.08568e17, r_multiplier=1.01, verbose=True):
     h = snapshot.header.HubbleParam
     a = snapshot.header.ScaleFactor
     redshift = snapshot.header.Redshift
@@ -116,13 +116,13 @@ def halo_properties(snapshot,
 	    cs = numpy.sqrt(constants.k_B * tavg / constants.m_H)
 	    Lj = cs*tff
 	    Mj = density * (4*numpy.pi/3) * Lj**3 / 1.989e33
-	    eShell = -constants.GRAVITY * Mtot * Mshell * (rmax-old_r) / old_r
-	    energy += eShell
+	    #eShell = -constants.GRAVITY * Mtot * Mshell * (rmax-old_r) / old_r
+	    energy = -constants.GRAVITY * Mtot * Mtot / rmax
             if verbose: 
                 print 'R = %.2e pc' %rpc,
 		print 'Mass enclosed: %.2e' %solar_masses,
                 print 'delta: %.3f' %delta,
-                print 'delta E: %.3e' %eShell,
+                #print 'delta E: %.3e' %eShell,
                 print 'Energy: %.3e' %energy
             if delta >= 178.0:
                 halo_properties.append((redshift,rpc,delta,solar_masses,density,
