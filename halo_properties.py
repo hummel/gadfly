@@ -19,7 +19,8 @@ def load_data(fname,length_unit,mass_unit):
     snapshot.dm.load_coords(length_unit)
     snapshot.gas.load_masses(mass_unit)
     snapshot.gas.load_coords(length_unit)
-    snapshot.gas.load_number_density()
+    snapshot.gas.load_density()
+    snapshot.gas.calculate_temperature()
     snapshot.close()
     # Refine
     minimum = numpy.amin(snapshot.dm.masses)
@@ -30,7 +31,13 @@ def load_data(fname,length_unit,mass_unit):
     refined = numpy.where(snapshot.gas.masses <= minimum)[0]
     snapshot.gas.masses = snapshot.gas.masses[refined]
     snapshot.gas.coordinates = snapshot.gas.coordinates[refined]
-    snapshot.gas.ndensity = snapshot.gas.ndensity[refined]
+    snapshot.gas.density = snapshot.gas.density[refined]
+    snapshot.gas.temp = snapshot.gas.temp[refined]
+    # Cleanup to save memory
+    del snapshot.gas.abundances
+    del snapshot.gas.energy
+    del snapshot.gas.h2frac
+    del snapshot.gas.gamma
     return snapshot
 
 #===============================================================================
@@ -41,7 +48,7 @@ def analyze_halo(snapshot, write_dir):
     del snapshot.dm.coordinates
     del snapshot.gas.masses
     del snapshot.gas.coordinates
-    del snapshot.gas.ndensity
+    del snapshot.gas.density
 
 #===============================================================================
 def multitask_serial(path,write_dir,start,stop,length_unit,mass_unit):
@@ -130,8 +137,8 @@ elif len(sys.argv) == 4:
     start = int(sys.argv[2])
     stop = int(sys.argv[3])
     multitask_parallel(path,write_dir,start,stop,length_unit,mass_unit)
-    #data = pyGadget.analyze.compile_halos(write_dir)
-    #numpy.save(write_dir+'halo_properties.npy',data)
+    data = pyGadget.analyze.compile_halos(write_dir)
+    numpy.save(write_dir+'halo_properties.npy',data)
     
 else:
     files0 = glob.glob(path+'???.hdf5')
