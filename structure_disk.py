@@ -33,14 +33,15 @@ def load_dens(fname,length_unit):
 
     return snapshot
 
-def project(snap, write_dir, boxsize, length_unit, dlim, np, pps, sm):
+def project(snap, write_dir, boxsize, length_unit, *args, **kwargs):
     global t0
     for suffix in ['-dens-xy.png','-dens-xz.png','-dens-yz.png']:
         wpath = write_dir + '{:0>4}'.format(snap.number) + suffix
         view = suffix[-6:-4]
-        x,y,z = pyGadget.visualize.density_projection(snap, view, boxsize, 1., 
-                                                      length_unit, 'halo', dlim,
-                                                      np, pps, sm)
+        x,y,z = pyGadget.visualize.density_projection(snap, boxsize, 1., 
+                                                      length_unit, view, 'halo',
+                                                      *args, **kwargs)
+                                                      
         z = numpy.log10(z)
         zmin,zmax = (1e9,1e12)
         
@@ -106,12 +107,13 @@ sinkpath = os.getenv('HOME')+'/data/sinks/'+simulation+'/'
 write_dir = os.getenv('HOME')+'/data/simplots/'+simulation+'/'
 
 length_unit = pyGadget.units.Length_AU
-pps = 500 # 'pixels' per side
-sm = 1.7
 boxsize = 2e3
-dlim = 1e11
-np = 100
-
+### Optional arguments (If you want to override defaults.)
+pps = 500  # 'pixels' per side
+sm = 1.7   # smoothing factor
+dlim = 1e6 # density limit for finding halo center
+np = 1000  # number of particles to require for finding halo center
+kwargs = {'pps':pps, 'sm':sm, 'dens_limit':dlim, 'nparticles':np}
 
 try:
     sink = pyGadget.sinks.SingleSink(sinkpath)
@@ -124,12 +126,12 @@ if len(sys.argv) == 3:
     fname = path + '{:0>3}'.format(snap)+'.hdf5'
     print 'loading', fname
     snapshot = load_dens(fname,length_unit)
-    project(snapshot,write_dir,boxsize,length_unit,dlim,np,pps,sm)
+    project(snapshot,write_dir,boxsize,length_unit,**kwargs)
 
 elif len(sys.argv) == 4:
     start = int(sys.argv[2])
     stop = int(sys.argv[3])
-    multitask(path,write_dir,start,stop,boxsize,length_unit,dlim,np,pps,sm)
+    multitask(path,write_dir,start,stop,boxsize,length_unit,**kwargs)
 
 else:
     files0 = glob.glob(path+'???.hdf5')
@@ -141,4 +143,4 @@ else:
     if files1:
         stop = int(files1[-1][-9:-5])
         
-    multitask(path,write_dir,start,stop,boxsize,length_unit,dlim,np,pps,sm)
+    multitask(path,write_dir,start,stop,boxsize,length_unit,**kwargs)
