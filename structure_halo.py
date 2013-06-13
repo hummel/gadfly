@@ -41,7 +41,7 @@ def project(snap, write_dir, scale, cscale, *args, **kwargs):
 
     #(Scaling boxsize to physical size at redshift 25.)
     boxsize = 25 * boxsize / (1 + snap.header.Redshift)
-    for suffix in ['-halo500-xy.png']:
+    for suffix in ['-halo_'+scale+'-xy.png']:
         wpath = write_dir + '{:0>4}'.format(snap.number) + suffix
         view = suffix[-6:-4]
         x,y,z = pyGadget.visualize.density_projection(snap, boxsize, 1., 
