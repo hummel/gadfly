@@ -70,8 +70,7 @@ def project(snap, write_dir, boxsize, length_unit, *args, **kwargs):
                        bbox_inches='tight')
     snap.close()
 
-def multitask(path, write_dir, start, stop, boxsize,length_unit,
-              dlim, np, pps, sm):
+def multitask(path, write_dir, start, stop, boxsize,length_unit,**kwargs):
     global t0
     file_queue = Queue.Queue()
     data_queue = Queue.Queue(3)
@@ -87,7 +86,7 @@ def multitask(path, write_dir, start, stop, boxsize,length_unit,
         snapshot = data_queue.get()
         if snapshot is None:
             break # reached end of queue!
-        project(snapshot,write_dir,boxsize,length_unit,dlim,np,pps,sm)
+        project(snapshot,write_dir,boxsize,length_unit,**kwargs)
     print 'Done.'
     
 #===============================================================================
