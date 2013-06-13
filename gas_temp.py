@@ -116,7 +116,7 @@ if __name__ == '__main__':
         
     elif len(sys.argv) == 4:
         start = int(sys.argv[2])
-        stop = int(sys.argv[3])+1
+        stop = int(sys.argv[3])
         multitask(path,write_dir,start,stop)
 
     else:
