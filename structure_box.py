@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# density_vis.py
+# structure_box.py
 # Jacob Hummel
 
 import os
