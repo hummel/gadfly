@@ -120,7 +120,6 @@ def halo_properties(snapshot,
             if verbose: 
                 print 'R = %.2e pc' %rpc,
 		print 'Mass enclosed: %.2e' %solar_masses,
-		ms = Mshell/1.989e33
                 print 'Energy: %.3e' %energy,
                 print 'delta: %.3f' %delta
             if delta >= 178.0:
