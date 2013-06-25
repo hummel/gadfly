@@ -110,8 +110,8 @@ boxsize = 2e3
 ### Optional arguments (If you want to override defaults.)
 pps = 500  # 'pixels' per side
 sm = 1.7   # smoothing factor
-dlim = 1e6 # density limit for finding halo center
-np = 1000  # number of particles to require for finding halo center
+dlim = 1e11 # density limit for finding halo center
+np = 100  # number of particles to require for finding halo center
 kwargs = {'pps':pps, 'sm':sm, 'dens_limit':dlim, 'nparticles':np}
 
 try:
