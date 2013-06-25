@@ -15,6 +15,7 @@ def find_center(x, y, z, dens, centering='avg', dens_limit=1e11, nparticles=100,
 		    dens_limit /= 2
 		    hidens = numpy.where(dens >= dens_limit)[0]
 		if verbose:
+		    print ('Center averaged over %d particles' %nparticles)
 		    print ('Center averaged over all particles with density '\
 			       'greater than %.2e particles/cc' %dens_limit)
 		#Center on highest density clump, rejecting outliers:
