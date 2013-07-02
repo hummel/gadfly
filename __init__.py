@@ -11,4 +11,5 @@ import snapshot
 import visualize
 import analyze
 import sinks
+import colormap
 import xdmf
