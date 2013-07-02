@@ -8,7 +8,6 @@ import glob
 import numpy
 import Queue
 from matplotlib import pyplot
-from matplotlib import cm
 
 import pyGadget
 global t0
@@ -43,13 +42,14 @@ def project(snap, write_dir, boxsize, length_unit, *args, **kwargs):
                                                       *args, **kwargs)
                                                       
         z = numpy.log10(z)
-        zmin,zmax = (1e9,1e12)
+        zmin,zmax = (1e8,1e12)
         
         print 'Plotting '+view+'...'
         fig = pyplot.figure(1,(12,12))
         fig.clf()
         pyplot.imshow(z, extent=[x.min(),x.max(),y.min(),y.max()],
-                      cmap=cm.jet)
+                      cmap=pyGadget.colormap.get_cmap('no_p','./colormap'))
+        numpy.save(view+'.npy',z)
         pyplot.clim(numpy.log10(zmin),numpy.log10(zmax))
         ax = pyplot.gca()
         for sink in snap.sinks:
@@ -106,7 +106,7 @@ sinkpath = os.getenv('HOME')+'/data/sinks/'+simulation+'/'
 write_dir = os.getenv('HOME')+'/data/simplots/'+simulation+'/'
 
 length_unit = pyGadget.units.Length_AU
-boxsize = 2e3
+boxsize = 2.5e3
 ### Optional arguments (If you want to override defaults.)
 pps = 500  # 'pixels' per side
 sm = 1.7   # smoothing factor
