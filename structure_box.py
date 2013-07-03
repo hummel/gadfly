@@ -28,8 +28,6 @@ def load_dens(fname,length_unit):
         print snapshot.sink_ids.size,'sinks found.'
         if t0 is None:
             t0 = snapshot.header.Time*pyGadget.units.Time_yr
-        # If sink smooting length is too inflated, artificially shrink it.
-        snapshot.gas.smoothing_length[ids] *= 1e-6
 
     return snapshot
 
