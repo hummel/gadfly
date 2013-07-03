@@ -34,9 +34,10 @@ def load_dens(fname,length_unit):
 
 def project(snap, write_dir, boxsize, length_unit, *args, **kwargs):
     global t0
-    for suffix in ['-disk-xy.png','-disk-xz.png','-disk-yz.png']:
-        wpath = write_dir + '{:0>4}'.format(snap.number) + suffix
-        view = suffix[-6:-4]
+    folder = 'disk/'
+    suffix = '.png'
+    for view in ['xy', 'xz', 'yz']:
+        wpath = write_dir + folder + view + '/{:0>4}.png'.format(snap.number)
         x,y,z = pyGadget.visualize.density_projection(snap, boxsize, 1., 
                                                       length_unit, view, 'halo',
                                                       *args, **kwargs)
@@ -49,7 +50,6 @@ def project(snap, write_dir, boxsize, length_unit, *args, **kwargs):
         fig.clf()
         pyplot.imshow(z, extent=[x.min(),x.max(),y.min(),y.max()],
                       cmap=pyGadget.colormap.get_cmap('no_p','./colormap'))
-        numpy.save(view+'.npy',z)
         pyplot.clim(numpy.log10(zmin),numpy.log10(zmax))
         ax = pyplot.gca()
         for sink in snap.sinks:
