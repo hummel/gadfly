@@ -35,7 +35,6 @@ def load_dens(fname,length_unit):
 def project(snap, write_dir, boxsize, length_unit, *args, **kwargs):
     global t0
     folder = 'disk/'
-    suffix = '.png'
     for view in ['xy', 'xz', 'yz']:
         wpath = write_dir + folder + view + '/{:0>4}.png'.format(snap.number)
         x,y,z = pyGadget.visualize.density_projection(snap, boxsize, 1., 
@@ -59,11 +58,11 @@ def project(snap, write_dir, boxsize, length_unit, *args, **kwargs):
         ax.set_ylim(y.min(),y.max())
         ax.set_xlabel('AU')
         ax.set_ylabel('AU')
-        ax.text(-950,925,'z: %.2f' %snap.header.Redshift,
+        ax.text(-boxsize*.475,boxsize*.4625,'z: %.2f' %snap.header.Redshift,
                 color='white',fontsize=18)
         if t0:
             t_acc = snap.header.Time*pyGadget.units.Time_yr - t0
-            ax.text(550,925,'t$_{form}$: %.1f yr' %t_acc,
+            ax.text(boxsize*.275,boxsize*.4625,'t$_{form}$: %.1f yr' %t_acc,
                     color='white',fontsize=18)
         pyplot.draw()
         pyplot.savefig(wpath, 
@@ -106,7 +105,7 @@ sinkpath = os.getenv('HOME')+'/data/sinks/'+simulation+'/'
 write_dir = os.getenv('HOME')+'/data/simplots/'+simulation+'/'
 
 length_unit = pyGadget.units.Length_AU
-boxsize = 2.5e3
+boxsize = 5e3
 ### Optional arguments (If you want to override defaults.)
 pps = 500  # 'pixels' per side
 sm = 1.7   # smoothing factor
