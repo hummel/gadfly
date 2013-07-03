@@ -31,7 +31,7 @@ def load_dens(fname,length_unit):
 
     return snapshot
 
-def project(snap, write_dir, scale, cscale, *args, **kwargs):
+def project(snap, write_dir, view, scale, cscale, *args, **kwargs):
     global t0
     boxsize = int("".join(ch if ch.isdigit() else "" for ch in scale))
     unit = "".join(ch if not ch.isdigit() else "" for ch in scale)
@@ -39,34 +39,34 @@ def project(snap, write_dir, scale, cscale, *args, **kwargs):
 
     #(Scaling boxsize to physical size at redshift 25.)
     boxsize = 25 * boxsize / (1 + snap.header.Redshift)
-    for suffix in ['-halo_'+scale+'-xy.png']:
-        wpath = write_dir + '{:0>4}'.format(snap.number) + suffix
-        view = suffix[-6:-4]
-        x,y,z = pyGadget.visualize.density_projection(snap, boxsize, 1., 
-                                                      length_unit, view, 'halo',
-                                                      *args,**kwargs)
-        z = numpy.log10(z)
-        print 'Plotting '+view+'...'
-        fig = pyplot.figure(1,(16,12))
-        fig.clf()
-        pyplot.imshow(z, extent=[x.min(),x.max(),y.min(),y.max()], cmap=cm.jet)
-        pyplot.clim(cscale[0],cscale[1])
-        pyplot.colorbar()
-        ax = pyplot.gca()
-        ax.set_xlim(x.min(),x.max())
-        ax.set_ylim(y.min(),y.max())
-        ax.set_xlabel('Physical Distance ['+unit+']')
-        ax.set_ylabel('Physical Distance ['+unit+']')
-        ax.text(-950,925,'z: %.2f' %snap.header.Redshift,
+    folder = 'halo/'+scale+'/'
+    suffix = '-halo-'+scale+'.png'
+    wpath = write_dir + folder + '{:0>4}'.format(snap.number) + suffix
+    x,y,z = pyGadget.visualize.density_projection(snap, boxsize, 1., 
+                                                  length_unit, view, 'halo',
+                                                  *args,**kwargs)
+    z = numpy.log10(z)
+    print 'Plotting '+view+'...'
+    fig = pyplot.figure(1,(16,12))
+    fig.clf()
+    pyplot.imshow(z, extent=[x.min(),x.max(),y.min(),y.max()], cmap=cm.jet)
+    pyplot.clim(cscale[0],cscale[1])
+    pyplot.colorbar()
+    ax = pyplot.gca()
+    ax.set_xlim(x.min(),x.max())
+    ax.set_ylim(y.min(),y.max())
+    ax.set_xlabel('Physical Distance ['+unit+']')
+    ax.set_ylabel('Physical Distance ['+unit+']')
+    ax.text(-950,925,'z: %.2f' %snap.header.Redshift,
+            color='white',fontsize=18)
+    if t0:
+        t_acc = snap.header.Time*pyGadget.units.Time_yr - t0
+        ax.text(550,925,'t$_{form}$: %.1f yr' %t_acc,
                 color='white',fontsize=18)
-        if t0:
-            t_acc = snap.header.Time*pyGadget.units.Time_yr - t0
-            ax.text(550,925,'t$_{form}$: %.1f yr' %t_acc,
-                    color='white',fontsize=18)
-        pyplot.title('z: %.2f' %snap.header.Redshift)
-        pyplot.draw()
-        pyplot.savefig(wpath, 
-                       bbox_inches='tight')
+    pyplot.title('z: %.2f' %snap.header.Redshift)
+    pyplot.draw()
+    pyplot.savefig(wpath, 
+                   bbox_inches='tight')
     snap.close()
 
 def multitask(path, start, stop, *args,**kwargs):
@@ -106,10 +106,12 @@ simulation = sys.argv[1]
 path = os.getenv('HOME')+'/sim/'+simulation+'/snapshot_'
 sinkpath = os.getenv('HOME')+'/data/sinks/'+simulation+'/'
 write_dir = os.getenv('HOME')+'/data/simplots/'+simulation+'/'
-colors = {'1kpc': (-2.5,3), '1000pc':(-2.5,3), '500pc':(-2.5,3), 
+colors = {'1kpc': (-2.5,3), '500pc':(-2.5,3), 
           '100pc':(-1,3.5), '10pc':(1,6), '1pc':(3.5,9)}
 scaling = sys.argv[2]
+if scaling == '1000pc': scaling = '1kpc'
 cscaling = colors[scaling]
+view = 'xy'
 
 ### Optional arguments (If you want to override defaults.)
 pps = 500  # 'pixels' per side
@@ -131,12 +133,12 @@ if len(sys.argv) == 4:
     unit = "".join(ch if not ch.isdigit() else "" for ch in scaling)
     length_unit = pyGadget.units.Lengths[unit]
     snapshot = load_dens(fname,length_unit)
-    project(snapshot,write_dir,scaling,cscaling,**kwargs)
+    project(snapshot,write_dir,view,scaling,cscaling,**kwargs)
 
 elif len(sys.argv) == 5:
     start = int(sys.argv[3])
     stop = int(sys.argv[4])
-    multitask(path,start,stop,write_dir,scaling,cscaling,**kwargs)
+    multitask(path,start,stop,write_dir,view,scaling,cscaling,**kwargs)
 
 else:
     files0 = glob.glob(path+'???.hdf5')
@@ -147,4 +149,4 @@ else:
     stop = int(files0[-1][-8:-5])
     if files1:
         stop = int(files1[-1][-9:-5])
-    multitask(path,start,stop,write_dir,scaling,cscaling,**kwargs)
+    multitask(path,start,stop,write_dir,view,scaling,cscaling,**kwargs)

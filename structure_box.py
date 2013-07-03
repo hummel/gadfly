@@ -31,46 +31,46 @@ def load_dens(fname,length_unit):
 
     return snapshot
 
-def project(snap, write_dir, boxsize, length_unit, pps, sm):
+def project(snap, write_dir, view, boxsize, length_unit, pps, sm):
     global t0
-    for suffix in ['-box.png']:
-        wpath = write_dir + '{:0>4}'.format(snap.number) + suffix
-        view = suffix[-6:-4]
-        x,y,z = pyGadget.visualize.density_projection(snap, view, boxsize, .5, 
-                                                      length_unit,'box',
-                                                      pps=pps,sm=sm)
-        z = numpy.log10(z)
+    folder = 'box/'
+    suffix = '-box.png'
+    wpath = write_dir + folder + '{:0>4}'.format(snap.number) + suffix
+    x,y,z = pyGadget.visualize.density_projection(snap, view, boxsize, .5, 
+                                                  length_unit,'box',
+                                                  pps=pps,sm=sm)
+    z = numpy.log10(z)
 
-        #set colorbar limits
-        zmax = z.max()
-        zmin = z.min()
-        if zmax < 1: zmax = 1
-        if zmin > -1.5: zmin = -1.5
-        if zmax > 2: zmax = 2
-        
-        print 'Plotting '+view+'...'
-        fig = pyplot.figure(1,(16,12))
-        fig.clf()
-        pyplot.imshow(z, extent=[x.min(),x.max(),y.min(),y.max()], cmap=cm.jet)
-        pyplot.clim(zmin,zmax)
-        pyplot.colorbar()
-        ax = pyplot.gca()
-        ax.set_xlim(x.min(),x.max())
-        ax.set_ylim(y.min(),y.max())
-        ax.set_xlabel('comoving kpc')
-        ax.set_ylabel('comoving kpc')
-        ax.text(-950,925,'z: %.2f' %snap.header.Redshift,
+    #set colorbar limits
+    zmax = z.max()
+    zmin = z.min()
+    if zmax < 1: zmax = 1
+    if zmin > -1.5: zmin = -1.5
+    if zmax > 2: zmax = 2
+
+    print 'Plotting '+view+'...'
+    fig = pyplot.figure(1,(16,12))
+    fig.clf()
+    pyplot.imshow(z, extent=[x.min(),x.max(),y.min(),y.max()], cmap=cm.jet)
+    pyplot.clim(zmin,zmax)
+    pyplot.colorbar()
+    ax = pyplot.gca()
+    ax.set_xlim(x.min(),x.max())
+    ax.set_ylim(y.min(),y.max())
+    ax.set_xlabel('comoving kpc')
+    ax.set_ylabel('comoving kpc')
+    ax.text(-950,925,'z: %.2f' %snap.header.Redshift,
+            color='white',fontsize=18)
+    if t0:
+        t_acc = snap.header.Time*pyGadget.units.Time_yr - t0
+        ax.text(550,925,'t$_{form}$: %.1f yr' %t_acc,
                 color='white',fontsize=18)
-        if t0:
-            t_acc = snap.header.Time*pyGadget.units.Time_yr - t0
-            ax.text(550,925,'t$_{form}$: %.1f yr' %t_acc,
-                    color='white',fontsize=18)
-        pyplot.draw()
-        pyplot.savefig(wpath, 
-                       bbox_inches='tight')
+    pyplot.draw()
+    pyplot.savefig(wpath, 
+                   bbox_inches='tight')
     snap.close()
 
-def multitask(path, write_dir, start, stop, boxsize, length_unit, pps, sm):
+def multitask(path, write_dir, start, stop, view, boxsize, length_unit, pps,sm):
     global t0
     file_queue = Queue.Queue()
     data_queue = Queue.Queue(3)
@@ -86,7 +86,7 @@ def multitask(path, write_dir, start, stop, boxsize, length_unit, pps, sm):
         snapshot = data_queue.get()
         if snapshot is None:
             break # reached end of queue!
-        project(snapshot,write_dir,boxsize,length_unit,pps,sm)
+        project(snapshot,write_dir,view,boxsize,length_unit,pps,sm)
     print 'Done.'
     
 #===============================================================================
@@ -109,6 +109,7 @@ length_unit = pyGadget.units.Length_kpc
 pps = 500 # 'pixels' per side
 hsml_factor = 1.7
 boxsize = 99/.71
+view = 'xy'
 
 
 try:
@@ -122,12 +123,12 @@ if len(sys.argv) == 3:
     fname = path + '{:0>3}'.format(snap)+'.hdf5'
     print 'loading', fname
     snapshot = load_dens(fname,length_unit)
-    project(snapshot,write_dir,boxsize,length_unit,pps,hsml_factor)
+    project(snapshot,write_dir,view,boxsize,length_unit,pps,hsml_factor)
 
 elif len(sys.argv) == 4:
     start = int(sys.argv[2])
     stop = int(sys.argv[3])
-    multitask(path,write_dir,start,stop,boxsize,length_unit,pps,hsml_factor)
+    multitask(path,write_dir,start,stop,view,boxsize,length_unit,pps,hsml_factor)
 
 else:
     files0 = glob.glob(path+'???.hdf5')
@@ -139,4 +140,4 @@ else:
     if files1:
         stop = int(files1[-1][-9:-5])
         
-    multitask(path,write_dir,start,stop,boxsize,length_unit,pps,hsml_factor)
+    multitask(path,write_dir,start,stop,view,boxsize,length_unit,pps,hsml_factor)
