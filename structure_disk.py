@@ -36,7 +36,8 @@ def project(snap, write_dir, boxsize, length_unit, *args, **kwargs):
     global t0
     folder = 'disk/'
     for view in ['xy', 'xz', 'yz']:
-        wpath = write_dir + folder + view + '/{:0>4}.png'.format(snap.number)
+        wpath = write_dir + folder + view 
+        wpath += '/{:0>4}-disk-'.format(snap.number) + view + '.png'
         x,y,z = pyGadget.visualize.density_projection(snap, boxsize, 1., 
                                                       length_unit, view, 'halo',
                                                       *args, **kwargs)
