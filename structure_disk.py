@@ -46,11 +46,12 @@ def project(snap, write_dir, boxsize, length_unit, *args, **kwargs):
         zmin,zmax = (1e8,1e12)
         
         print 'Plotting '+view+'...'
-        fig = pyplot.figure(1,(12,12))
+        fig = pyplot.figure(1,(16,12))
         fig.clf()
         pyplot.imshow(z, extent=[x.min(),x.max(),y.min(),y.max()],
                       cmap=pyGadget.colormap.get_cmap('smooth','./colormap'))
         pyplot.clim(numpy.log10(zmin),numpy.log10(zmax))
+        cb = pyplot.colorbar()
         ax = pyplot.gca()
         for sink in snap.sinks:
             ax.plot(sink[1], -sink[0], 'k+', ms=7, mew=1.5) #90-degree rotation
@@ -59,6 +60,9 @@ def project(snap, write_dir, boxsize, length_unit, *args, **kwargs):
         ax.set_ylim(y.min(),y.max())
         ax.set_xlabel('AU')
         ax.set_ylabel('AU')
+        cb.set_label('Log Number Density [cm$^{-3}$]')
+        density_labels = (8,9,10,11,12)
+        cb.set_ticks(density_labels)
         ax.text(-boxsize*.475,boxsize*.4625,'z: %.2f' %snap.header.Redshift,
                 color='white',fontsize=18)
         if t0:
