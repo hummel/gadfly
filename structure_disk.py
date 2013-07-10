@@ -56,7 +56,7 @@ def project(snap, write_dir, boxsize, length_unit, *args, **kwargs):
         cb = pyplot.colorbar()
         ax = pyplot.gca()
         for sink in snap.sinks:
-            ax.plot(sink[1], -sink[0], 'k+', ms=7, mew=1.5) #90-degree rotation
+            ax.plot(sink[1], -sink[0], 'k+', ms=5, mew=1.25) #90-degree rotation
             ax.text(sink[1]+10, -sink[0]+5, '%.1f' %sink[3])
         ax.set_xlim(x.min(),x.max())
         ax.set_ylim(y.min(),y.max())
