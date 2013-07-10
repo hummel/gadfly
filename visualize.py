@@ -8,7 +8,6 @@ import numpy
 
 from scipy import weave
 from scipy.weave import converters
-from matplotlib import pyplot
 
 from . import analyze
 #===============================================================================
