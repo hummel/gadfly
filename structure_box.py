@@ -35,7 +35,10 @@ def project(snap, write_dir, view, boxsize, length_unit, pps, sm):
     global t0
     folder = 'box/'
     suffix = '-box.png'
-    wpath = write_dir + folder + '{:0>4}'.format(snap.number) + suffix
+    wpath = write_dir + folder 
+    if not os.path.exists(wpath):
+        os.makedirs(wpath)
+    wpath += '{:0>4}'.format(snap.number) + suffix
     x,y,z = pyGadget.visualize.density_projection(snap, view, boxsize, .5, 
                                                   length_unit,'box',
                                                   pps=pps,sm=sm)

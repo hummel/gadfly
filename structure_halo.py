@@ -41,7 +41,10 @@ def project(snap, write_dir, view, scale, cscale, *args, **kwargs):
     boxsize = 25 * boxsize / (1 + snap.header.Redshift)
     folder = 'halo/'+scale+'/'
     suffix = '-halo-'+scale+'.png'
-    wpath = write_dir + folder + '{:0>4}'.format(snap.number) + suffix
+    wpath = write_dir + folder 
+    if not os.path.exists(wpath):
+        os.makedirs(wpath)
+    wpath += '{:0>4}'.format(snap.number) + suffix
     x,y,z = pyGadget.visualize.density_projection(snap, boxsize, 1., 
                                                   length_unit, view, 'halo',
                                                   *args,**kwargs)
