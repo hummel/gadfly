@@ -189,14 +189,15 @@ def density_projection(snapshot, width, thickness, length_unit, *args,**kwargs):
     except AssertionError: 
         print 'Warning: Maximum density exceeds 1e12 particles/cc!'
         print 'Max Density: %.5e' %dens.max()
-    depth= width*thickness
-    slice_ = numpy.where(numpy.abs(z) < depth/2)[0]
-    dens = dens[slice_]
-    smL = smL[slice_]
-    sinkval = sinkval[slice_]
-    x = x[slice_]
-    y = y[slice_]
-    z = z[slice_]
+    if thickness:
+        depth= width*thickness
+        slice_ = numpy.where(numpy.abs(z) < depth/2)[0]
+        dens = dens[slice_]
+        smL = smL[slice_]
+        sinkval = sinkval[slice_]
+        x = x[slice_]
+        y = y[slice_]
+        z = z[slice_]
     slice_ = numpy.where(numpy.abs(x) < width/2)[0]
     dens = dens[slice_]
     smL = smL[slice_]
