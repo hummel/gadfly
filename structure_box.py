@@ -39,7 +39,7 @@ def project(snap, write_dir, view, boxsize, length_unit, *args, **kwargs):
     if not os.path.exists(wpath):
         os.makedirs(wpath)
     wpath += '{:0>4}'.format(snap.number) + suffix
-    x,y,z = pyGadget.visualize.density_projection(snap, boxsize, .5, 
+    x,y,z = pyGadget.visualize.density_projection(snap, boxsize, None, 
                                                   length_unit,view,'halo',
                                                   *args,**kwargs)
     z = numpy.log10(z)
