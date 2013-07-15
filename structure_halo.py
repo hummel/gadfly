@@ -8,7 +8,6 @@ import glob
 import numpy
 import Queue
 from matplotlib import pyplot
-from matplotlib import cm
 
 import pyGadget
 global t0
@@ -52,14 +51,18 @@ def project(snap, write_dir, view, scale, cscale, *args, **kwargs):
     print 'Plotting '+view+'...'
     fig = pyplot.figure(1,(16,12))
     fig.clf()
-    pyplot.imshow(z, extent=[x.min(),x.max(),y.min(),y.max()], cmap=cm.jet)
+    pyplot.imshow(z, extent=[x.min(),x.max(),y.min(),y.max()], 
+                  cmap=pyGadget.colormap.get_cmap('smooth','./colormap'))
     pyplot.clim(cscale[0],cscale[1])
-    pyplot.colorbar()
+    cb = pyplot.colorbar()
     ax = pyplot.gca()
     ax.set_xlim(x.min(),x.max())
     ax.set_ylim(y.min(),y.max())
     ax.set_xlabel('Physical Distance ['+unit+']')
     ax.set_ylabel('Physical Distance ['+unit+']')
+    cb.set_label('Log Number Density [cm$^{-3}$]')
+    density_labels = range(int(cscale[0]),int(cscale[1])+1)
+    cb.set_ticks(density_labels)
     ax.text(-950,925,'z: %.2f' %snap.header.Redshift,
             color='white',fontsize=18)
     if t0:

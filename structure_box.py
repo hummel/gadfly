@@ -31,7 +31,7 @@ def load_dens(fname,length_unit):
 
     return snapshot
 
-def project(snap, write_dir, view, boxsize, length_unit, pps, sm):
+def project(snap, write_dir, view, boxsize, length_unit, *args, **kwargs):
     global t0
     folder = 'box/'
     suffix = '-box.png'
@@ -39,9 +39,9 @@ def project(snap, write_dir, view, boxsize, length_unit, pps, sm):
     if not os.path.exists(wpath):
         os.makedirs(wpath)
     wpath += '{:0>4}'.format(snap.number) + suffix
-    x,y,z = pyGadget.visualize.density_projection(snap, view, boxsize, .5, 
-                                                  length_unit,'box',
-                                                  pps=pps,sm=sm)
+    x,y,z = pyGadget.visualize.density_projection(snap, boxsize, .5, 
+                                                  length_unit,view,'halo',
+                                                  *args,**kwargs)
     z = numpy.log10(z)
 
     #set colorbar limits
@@ -54,14 +54,18 @@ def project(snap, write_dir, view, boxsize, length_unit, pps, sm):
     print 'Plotting '+view+'...'
     fig = pyplot.figure(1,(16,12))
     fig.clf()
-    pyplot.imshow(z, extent=[x.min(),x.max(),y.min(),y.max()], cmap=cm.jet)
+    pyplot.imshow(z, extent=[x.min(),x.max(),y.min(),y.max()],
+                  cmap=pyGadget.colormap.get_cmap('smooth','./colormap'))
     pyplot.clim(zmin,zmax)
-    pyplot.colorbar()
+    cb = pyplot.colorbar()
     ax = pyplot.gca()
     ax.set_xlim(x.min(),x.max())
     ax.set_ylim(y.min(),y.max())
     ax.set_xlabel('comoving kpc')
     ax.set_ylabel('comoving kpc')
+    cb.set_label('Log Number Density [cm$^{-3}$]')
+    density_labels = range(int(zmin),int(zmax)+1)
+    cb.set_ticks(density_labels)
     ax.text(-950,925,'z: %.2f' %snap.header.Redshift,
             color='white',fontsize=18)
     if t0:
@@ -73,7 +77,7 @@ def project(snap, write_dir, view, boxsize, length_unit, pps, sm):
                    bbox_inches='tight')
     snap.close()
 
-def multitask(path, write_dir, start, stop, view, boxsize, length_unit, pps,sm):
+def multitask(path, start, stop, *args, **kwargs):
     global t0
     file_queue = Queue.Queue()
     data_queue = Queue.Queue(3)
@@ -89,7 +93,7 @@ def multitask(path, write_dir, start, stop, view, boxsize, length_unit, pps,sm):
         snapshot = data_queue.get()
         if snapshot is None:
             break # reached end of queue!
-        project(snapshot,write_dir,view,boxsize,length_unit,pps,sm)
+        project(snapshot,*args,**kwargs)
     print 'Done.'
     
 #===============================================================================
@@ -108,11 +112,16 @@ path = os.getenv('HOME')+'/sim/'+simulation+'/snapshot_'
 sinkpath = os.getenv('HOME')+'/data/sinks/'+simulation+'/'
 write_dir = os.getenv('HOME')+'/data/simplots/'+simulation+'/'
 
-length_unit = pyGadget.units.Length_kpc
-pps = 500 # 'pixels' per side
-hsml_factor = 1.7
 boxsize = 99/.71
 view = 'xy'
+length_unit = pyGadget.units.Length_kpc
+### Optional arguments (If you want to override defaults.)
+pps = 500  # 'pixels' per side
+sm = 1.7   # smoothing factor
+dlim = 1e6 # density limit for finding halo center
+np = 1000  # number of particles to require for finding halo center
+kwargs = {'pps':pps, 'sm':sm, 'dens_limit':dlim, 'nparticles':np}
+
 
 
 try:
@@ -126,12 +135,12 @@ if len(sys.argv) == 3:
     fname = path + '{:0>3}'.format(snap)+'.hdf5'
     print 'loading', fname
     snapshot = load_dens(fname,length_unit)
-    project(snapshot,write_dir,view,boxsize,length_unit,pps,hsml_factor)
+    project(snapshot,write_dir,view,boxsize,length_unit,**kwargs)
 
 elif len(sys.argv) == 4:
     start = int(sys.argv[2])
     stop = int(sys.argv[3])
-    multitask(path,write_dir,start,stop,view,boxsize,length_unit,pps,hsml_factor)
+    multitask(path,start,stop,write_dir,view,boxsize,length_unit,**kwargs)
 
 else:
     files0 = glob.glob(path+'???.hdf5')
@@ -143,4 +152,4 @@ else:
     if files1:
         stop = int(files1[-1][-9:-5])
         
-    multitask(path,write_dir,start,stop,view,boxsize,length_unit,pps,hsml_factor)
+    multitask(path,write_dir,start,stop,view,boxsize,length_unit,**kwargs)
