@@ -22,6 +22,7 @@ def load_snapshot(path,key):
     snapshot.gas.calculate_temperature()
     if key == 'frac':
         snapshot.gas.load_electron_fraction()
+        snapshot.gas.load_HD_fraction()
     snapshot.close()
 
     # Refine
@@ -30,17 +31,17 @@ def load_snapshot(path,key):
     snapshot.gas.ndensity = snapshot.gas.ndensity[refined]
     snapshot.gas.temp = snapshot.gas.temp[refined]
     if key == 'frac':
-            snapshot.gas.gamma = snapshot.gas.gamma[refined]
             snapshot.gas.h2frac = snapshot.gas.h2frac[refined]
+            snapshot.gas.HDfrac = snapshot.gas.HDfrac[refined]
             snapshot.gas.electron_frac = snapshot.gas.electron_frac[refined]
 
     # Cleanup to save memory
     del snapshot.gas.masses
     del snapshot.gas.abundances
+    del snapshot.gas.gamma
     if key == 'temp':
         del snapshot.gas.energy
         del snapshot.gas.h2frac
-        del snapshot.gas.gamma
 
     return snapshot
 
@@ -74,7 +75,7 @@ def plot_gas_fraction(snapshot,wpath):
     temp = snapshot.gas.get_temperature()
     electronfrac = snapshot.gas.get_electron_fraction()
     h2frac = snapshot.gas.get_H2_fraction()
-    gamma = snapshot.gas.get_gamma()
+    HDfrac = snapshot.gas.get_HD_fraction()
     ### Create Plot!
     ### All plots vs density
     fig = prep_plot()
@@ -114,15 +115,16 @@ def plot_gas_fraction(snapshot,wpath):
     ax3.set_xlabel('n [cm$^{-3}$]')
     ax3.set_ylabel('f$_{H_2}$')
 
-    # Adiabatic exponent
-    ax4.hexbin(dens, gamma,gridsize=500,bins='log',xscale='log',yscale='log',
+    # HD fraction
+    ax4.hexbin(dens,HDfrac,gridsize=500,bins='log',xscale='log',yscale='log',
                mincnt=1)
     ax4.set_xscale('log')
+    ax4.set_yscale('log')
     ax4.set_xlim(1e-2, 1e12)
-    ax4.set_ylim(1,2)
+    ax4.set_ylim(1e-7,1e-4)
     ax4.set_xticks(density_labels)
     ax4.set_xlabel('n [cm$^{-3}$]')
-    ax4.set_ylabel('$\gamma_{ad}$')
+    ax4.set_ylabel('f$_{HD}$')
 
     fig.subplots_adjust(top=0.94, left=0.085, right=.915)
     save_plot(snapshot, fig, wpath+'-gprops.png')
