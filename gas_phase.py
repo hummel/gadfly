@@ -140,7 +140,7 @@ def multitask(key,path,write_dir,start,stop):
     pyGadget.snapshot.Loader(load_snapshot, file_queue, data_queue).start()
     for snap in xrange(start,stop+1):
         fname = path + '{:0>3}'.format(snap)+'.hdf5'
-        file_queue.put((fname,))
+        file_queue.put((fname,key))
     file_queue.put(None)
     if key == 'temp':
         plot_func = plot_temp
@@ -212,5 +212,5 @@ if __name__ == '__main__':
         files = files0 + files1
         start = int(files[0][-8:-5])
         stop = int(files[-1][-8:-5])
-        multitask(path,write_dir,start,stop)
+        multitask(key,path,write_dir,start,stop)
 
