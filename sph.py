@@ -225,6 +225,24 @@ class PartTypeSPH(hdf5.PartTypeX):
             self.load_H2_fraction()
             return self.h2frac
 
+    def load_HD_fraction(self):
+        """
+        Load the molecular HD fraction.
+        """
+        # Chemical Abundances--> 0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
+        abundances = self.get_abundances()
+        self.HDfrac = 2*abundances[:,3]
+
+    def get_HD_fraction(self):
+        """
+        Return the molecular HD fraction.
+        """
+        try:
+            return self.HDfrac
+        except AttributeError:
+            self.load_HD_fraction()
+            return self.HDfrac
+
     def calculate_temperature(self):
         """
         Calculate Particle Temperatures in degrees Kelvin.
