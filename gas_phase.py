@@ -127,7 +127,7 @@ def plot_gas_fraction(snapshot,wpath):
     ax4.set_ylabel('f$_{HD}$')
 
     fig.subplots_adjust(top=0.94, left=0.085, right=.915)
-    save_plot(snapshot, fig, wpath+'-gprops.png')
+    save_plot(snapshot, fig, wpath+'-frac.png')
 
 #===============================================================================
 def multitask(key,path,write_dir,start,stop):
