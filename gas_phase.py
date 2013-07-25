@@ -45,21 +45,19 @@ def load_snapshot(path,key):
 
     return snapshot
 
-def prep_plot():
+def prep_figure():
     fig = pyplot.figure(figsize=(12,8))
     fig.clf()
     return fig
 
-def save_plot(snapshot, fig, wpath):
+def save_figure(fig, snapshot, wpath):
     redshift = snapshot.header.Redshift
     fig.suptitle('Redshift: %.2f' %(redshift,))
     fig.savefig(wpath,bbox_inches='tight')
 
-def plot_temp(snapshot,wpath):
+def plot_temp(ax,snapshot):
     dens = snapshot.gas.get_number_density()
     temp = snapshot.gas.get_temperature()
-    fig = prep_plot()
-    ax = fig.add_subplot(111)
     ax.hexbin(dens,temp,gridsize=500,bins='log',xscale='log',yscale='log',
               mincnt=1)
     ax.set_xscale('log')
@@ -68,66 +66,76 @@ def plot_temp(snapshot,wpath):
     ax.set_ylim(10, 2e4)
     ax.set_xlabel('n [cm^-3]')
     ax.set_ylabel('Temperature [K]')
-    save_plot(snapshot, fig, wpath+'-temp.png')
+    return ax
 
-def plot_gas_fraction(snapshot,wpath):
+def plot_electron_frac(ax, snapshot):
     dens = snapshot.gas.get_number_density()
-    temp = snapshot.gas.get_temperature()
-    electronfrac = snapshot.gas.get_electron_fraction()
+    efrac = snapshot.gas.get_electron_fraction()
+    ax.hexbin(dens,efrac,gridsize=500,bins='log',xscale='log',
+               yscale='log',mincnt=1)
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.set_xlim(1e-2, 1e12)
+    ax.set_ylim(1e-12, 1e-2)
+    ax.set_xlabel('n [cm$^{-3}$]')
+    ax.set_ylabel('f$_{e^-}$')
+    return ax
+
+def plot_h2frac(ax, snapshot):
+    dens = snapshot.gas.get_number_density()
     h2frac = snapshot.gas.get_H2_fraction()
+    ax.hexbin(dens, h2frac,gridsize=500,bins='log',xscale='log',yscale='log',
+               mincnt=1)
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.set_xlim(1e-2, 1e12)
+    ax.set_ylim(1e-7,2)
+    ax.set_xlabel('n [cm$^{-3}$]')
+    ax.set_ylabel('f$_{H_2}$')
+    return ax
+
+def plot_HDfrac(ax, snapshot):
+    dens = snapshot.gas.get_number_density()
     HDfrac = snapshot.gas.get_HD_fraction()
+    ax.hexbin(dens,HDfrac,gridsize=500,bins='log',xscale='log',yscale='log',
+               mincnt=1)
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.set_xlim(1e-2, 1e12)
+    ax.set_ylim(1e-7,1e-4)
+    ax.set_xlabel('n [cm$^{-3}$]')
+    ax.set_ylabel('f$_{HD}$')
+
+def figure_temp(snapshot,wpath):
+    fig = prep_figure()
+    ax = fig.add_subplot(111)
+    ax = plot_temp(ax, snapshot)
+    save_figure(fig, snapshot, wpath+'-temp.png')
+
+def figure_gas_fraction(snapshot,wpath):
     ### Create Plot!
     ### All plots vs density
-    fig = prep_plot()
+    fig = prep_figure()
     ax1 = fig.add_subplot(221)
     ax2 = fig.add_subplot(222)
     ax3 = fig.add_subplot(223)
     ax4 = fig.add_subplot(224)
-    density_labels = (1e-2,1e0,1e2,1e4,1e6,1e8,1e10,1e12)
+    axes = [ax1,ax2,ax3,ax4]
+
     # Temperature
-    ax1.hexbin(dens,temp,gridsize=500,bins='log',xscale='log',yscale='log',
-               mincnt=1)
-    ax1.set_xscale('log')
-    ax1.set_yscale('log')
-    ax1.set_xlim(1e-2, 1e12)
-    ax1.set_ylim(7, 1e4)
-    ax1.set_xticks(density_labels)
-    ax1.set_xlabel('n [cm$^{-3}$]')
-    ax1.set_ylabel('Temperature [K]')
+    ax1 = plot_temp(ax1,snapshot)
     # Free electron fraction
-    ax2.hexbin(dens,electronfrac,gridsize=500,bins='log',xscale='log',
-               yscale='log',mincnt=1)
-    ax2.set_xscale('log')
-    ax2.set_yscale('log')
-    ax2.set_xlim(1e-2, 1e12)
-    ax2.set_ylim(1e-12, 1e-2)
-    ax2.set_xticks(density_labels)
-    ax2.set_xlabel('n [cm$^{-3}$]')
-    ax2.set_ylabel('f$_{e^-}$')
+    ax2 = plot_electron_frac(ax2,snapshot)
     # Molecular Hydrogen Fraction
-    ax3.hexbin(dens, h2frac,gridsize=500,bins='log',xscale='log',yscale='log',
-               mincnt=1)
-    ax3.set_xscale('log')
-    ax3.set_yscale('log')
-    ax3.set_xlim(1e-2, 1e12)
-    ax3.set_ylim(1e-7,2)
-    ax3.set_xticks(density_labels)
-    ax3.set_xlabel('n [cm$^{-3}$]')
-    ax3.set_ylabel('f$_{H_2}$')
-
+    ax3 = plot_h2frac(ax3,snapshot)
     # HD fraction
-    ax4.hexbin(dens,HDfrac,gridsize=500,bins='log',xscale='log',yscale='log',
-               mincnt=1)
-    ax4.set_xscale('log')
-    ax4.set_yscale('log')
-    ax4.set_xlim(1e-2, 1e12)
-    ax4.set_ylim(1e-7,1e-4)
-    ax4.set_xticks(density_labels)
-    ax4.set_xlabel('n [cm$^{-3}$]')
-    ax4.set_ylabel('f$_{HD}$')
-
+    ax4 = plot_HDfrac(ax4,snapshot)
+    
+    density_labels = (1e-2,1e0,1e2,1e4,1e6,1e8,1e10,1e12)
+    for ax in axes:
+        ax.set_xticks(density_labels)
     fig.subplots_adjust(top=0.94, left=0.085, right=.915)
-    save_plot(snapshot, fig, wpath+'-frac.png')
+    save_figure(fig, snapshot, wpath+'-frac.png')
 
 #===============================================================================
 def multitask(key,path,write_dir,start,stop):
@@ -143,9 +151,9 @@ def multitask(key,path,write_dir,start,stop):
         file_queue.put((fname,key))
     file_queue.put(None)
     if key == 'temp':
-        plot_func = plot_temp
+        plot_func = figure_temp
     elif key == 'frac':
-        plot_func = plot_gas_fraction
+        plot_func = figure_gas_fraction
 
     done = False
     while not done:
@@ -195,9 +203,9 @@ if __name__ == '__main__':
         print 'loading', fname
         snapshot = load_snapshot(fname,key)
         if key == 'temp':
-            plot_temp(snapshot,write_dir+'{:0>4}'.format(snap))
+            figure_temp(snapshot,write_dir+'{:0>4}'.format(snap))
         elif key == 'frac':
-            plot_gas_fraction(snapshot,write_dir+'{:0>4}'.format(snap))
+            figure_gas_fraction(snapshot,write_dir+'{:0>4}'.format(snap))
         
     elif len(sys.argv) == 5:
         start = int(sys.argv[3])
