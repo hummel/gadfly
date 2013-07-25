@@ -102,7 +102,7 @@ def plot_HDfrac(ax, snapshot):
     ax.set_xscale('log')
     ax.set_yscale('log')
     ax.set_xlim(1e-2, 1e12)
-    ax.set_ylim(1e-7,1e-4)
+    ax.set_ylim(1e-11,1e-4)
     ax.set_xlabel('n [cm$^{-3}$]')
     ax.set_ylabel('f$_{HD}$')
 
