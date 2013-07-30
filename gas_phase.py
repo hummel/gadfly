@@ -52,8 +52,8 @@ def prep_figure():
 
 def save_figure(fig, snapshot, wpath):
     redshift = snapshot.header.Redshift
-    fig.suptitle('Redshift: %.2f' %(redshift,))
-    fig.savefig(wpath,bbox_inches='tight')
+    title = fig.suptitle('Redshift: %.2f' %(redshift,))
+    fig.savefig(wpath,bbox_extra_artists=(title,),bbox_inches='tight')
 
 def plot_temp(ax,snapshot):
     dens = snapshot.gas.get_number_density()
