@@ -129,18 +129,28 @@ class PartTypeSPH(hdf5.PartTypeX):
         self.abundances = self._ChemicalAbundances.value
 
 
-    def get_abundances(self):
+    def get_abundances(self, species=None):
         """
         Return chemical abundances array.
 
         There are six abundances tracked for each particle.
         0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
         """
+        abundance_dict = {'H2':0, 'HII':1, 'DII':2, 'HD':3, 'HeII':4, 'HeIII':5}
         try:
-            return self.abundances
+            abundances =  self.abundances
         except AttributeError:
             self.load_abundances()
-            return self.abundances
+            abundances = self.abundances
+        if species is None:
+            return abundances
+        elif isinstance(species, basestring):
+            return abundances[:,abundance_dict[species]]
+        elif isinstance(species, list):
+            abunds = []
+            for sp in species:
+                abunds.append(abundances[:,abundance_dict[sp]])
+            return abunds
 
     def load_sinks(self):
         """
