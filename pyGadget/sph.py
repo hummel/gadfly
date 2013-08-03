@@ -16,6 +16,27 @@ class PartTypeSPH(hdf5.PartTypeX):
     def __init__(self, file_id):
         super(PartTypeSPH,self).__init__(file_id,0)
 
+        sph_loaders = {'density':self.load_density,
+                       'ndensity':self.load_number_density,
+                       'energy':self.load_internal_energy,
+                       'gamma':self.load_gamma,
+                       'abundances':self.load_abundances,
+                       'sinks':self.load_sinks,
+                       'smoothing_length':self.load_smoothing_length,
+                       'electron_frac':self.load_electron_fraction,
+                       'h2frac':self.load_H2_fraction,
+                       'HDfrac':self.load_HD_fraction}
+        self._load_dict.update(sph_loaders)
+        self.loadable_keys = self._load_dict.keys()
+
+        sph_derived = {'temperature':self.calculate_temperature,
+                       'sound_speed':self.calculate_sound_speed,
+                       'freefall_time':self.calculate_freefall_time,
+                       'jeans_length':self.calculate_jeans_length,
+                       'optical_depth':self.calculate_optical_depth}
+        self._calc_dict.update(sph_derived)
+        self.derivable_keys = self._calc_dict.keys()
+
     def load_density(self, conv=units.Density_cgs, no_h=True, comoving=False):
         """
         Load Particle Densities in cgs units (default)

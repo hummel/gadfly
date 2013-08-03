@@ -48,6 +48,22 @@ class PartTypeX(HDF5Group):
             key = '_'+item[0].replace(' ', '_')
             vars(self)[key] = item[1]
 
+        self._load_dict = {'masses':self.load_masses,
+                           'coordinates':self.load_coords,
+                           'velocities':self.load_velocities,
+                           'particleIDs':self.load_PIDs}
+        self.loadable_keys = self._load_dict.keys()
+        self._calc_dict = {}
+        self.derivable_keys = self._calc_dict.keys()
+
+    def load_quantity(self, *keys):
+        for key in keys:
+            load_func = self._load_dict[key]
+            load_func()
+
+    def load_all(self):
+        self.load_quantity(*self.loadable_keys)
+
     def load_masses(self, conv=units.Mass_sun, no_h=True):
         """
         Load Particle Masses in units of M_sun (default)
@@ -134,8 +150,3 @@ class PartTypeX(HDF5Group):
             self.load_PIDs()
             return self.particleIDs
 
-    def load_all(self, no_h=True, comoving=False):
-        self.load_masses(no_h=no_h)
-        self.load_coords(no_h=no_h, comoving=comoving)
-        self.load_velocities()
-        self.load_PIDs()
