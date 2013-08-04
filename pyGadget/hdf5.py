@@ -3,6 +3,7 @@
 """
 This module contains classes for reading Gadget2 HDF5 snapshot data.
 """
+import numpy
 import units
 import constants
 
@@ -55,14 +56,6 @@ class PartTypeX(HDF5Group):
         self.loadable_keys = self._load_dict.keys()
         self._calc_dict = {}
         self.derivable_keys = self._calc_dict.keys()
-
-    def load_quantity(self, *keys):
-        for key in keys:
-            load_func = self._load_dict[key]
-            load_func()
-
-    def load_all(self):
-        self.load_quantity(*self.loadable_keys)
 
     def load_masses(self, conv=units.Mass_sun, no_h=True):
         """
@@ -150,3 +143,39 @@ class PartTypeX(HDF5Group):
             self.load_PIDs()
             return self.particleIDs
 
+    def load_quantity(self, *keys):
+        """
+        Load key(s) from the list of loadable/derivable keys.
+        keys: arbitrary number of keys from the list.
+        """
+        for key in keys:
+            load_func = self._load_dict[key]
+            load_func()
+
+    def load_all(self):
+        """
+        Loads all defined keys in self.loadable_keys
+        """
+        self.load_quantity(*self.loadable_keys)
+
+    def load_data(self, *properties, **kwargs):
+        """
+        Load a selection of keys and refine to highest resolution particles.
+        properties: arbitrary number of keys from the list.
+        cleanup: keys to delete after loading derivable keys, if desired.
+        sinks (boolean): if true, load sink properties.
+        """
+        self.load_quantity(*properties)
+        mass = self.get_masses()
+
+        # Refine
+        minimum = numpy.amin(mass)
+        refined = numpy.where(mass <= minimum)[0]
+        for prop in properties:
+            vars(self)[prop] = vars(self)[prop][refined]
+
+        # Cleanup to save memory
+        cleanup = kwargs.pop('cleanup', None)
+        if cleanup:
+            for prop in cleanup:
+                del vars(self)[prop]
