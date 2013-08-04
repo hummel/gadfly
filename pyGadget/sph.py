@@ -21,7 +21,7 @@ class PartTypeSPH(hdf5.PartTypeX):
                        'energy':self.load_internal_energy,
                        'gamma':self.load_gamma,
                        'abundances':self.load_abundances,
-                       'sinks':self.load_sinks,
+                       'sink_value':self.load_sinks,
                        'smoothing_length':self.load_smoothing_length,
                        'electron_frac':self.load_electron_fraction,
                        'h2frac':self.load_H2_fraction,
@@ -29,11 +29,11 @@ class PartTypeSPH(hdf5.PartTypeX):
         self._load_dict.update(sph_loaders)
         self.loadable_keys = self._load_dict.keys()
 
-        sph_derived = {'temperature':self.calculate_temperature,
-                       'sound_speed':self.calculate_sound_speed,
-                       'freefall_time':self.calculate_freefall_time,
+        sph_derived = {'temp':self.calculate_temperature,
+                       'c_s':self.calculate_sound_speed,
+                       't_ff':self.calculate_freefall_time,
                        'jeans_length':self.calculate_jeans_length,
-                       'optical_depth':self.calculate_optical_depth}
+                       'tau':self.calculate_optical_depth}
         self._calc_dict.update(sph_derived)
         self.derivable_keys = self._calc_dict.keys()
 
