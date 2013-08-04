@@ -156,11 +156,13 @@ class PartTypeX(HDF5Group):
         """
         self.load_quantity(*self.loadable_keys)
 
-    def load_data(self, *properties, **kwargs):
+    def load_data(self, *properties):
         """
         Load a selection of keys and refine to highest resolution particles.
+        Cleans up unrequested properties loaded for calculation of other 
+        requested properties when finished.
+
         properties: arbitrary number of keys from the list.
-        cleanup: keys to delete after loading derivable keys, if desired.
         sinks (boolean): if true, load sink properties.
         """
         self.load_quantity(*properties)
@@ -173,7 +175,8 @@ class PartTypeX(HDF5Group):
             vars(self)[prop] = vars(self)[prop][refined]
 
         # Cleanup to save memory
-        cleanup = kwargs.pop('cleanup', None)
-        if cleanup:
-            for prop in cleanup:
-                del vars(self)[prop]
+        keys = vars(self).keys()
+        for key in keys:
+            if key in self.loadable_keys:
+                if key not in properties:
+                    del vars(self)[key]
