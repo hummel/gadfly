@@ -26,16 +26,14 @@ class PartTypeSPH(hdf5.PartTypeX):
                        'electron_frac':self.load_electron_fraction,
                        'h2frac':self.load_H2_fraction,
                        'HDfrac':self.load_HD_fraction}
-        self._load_dict.update(sph_loaders)
-        self.loadable_keys = self._load_dict.keys()
-
         sph_derived = {'temp':self.calculate_temperature,
                        'c_s':self.calculate_sound_speed,
                        't_ff':self.calculate_freefall_time,
                        'jeans_length':self.calculate_jeans_length,
                        'tau':self.calculate_optical_depth}
-        self._calc_dict.update(sph_derived)
-        self.derivable_keys = self._calc_dict.keys()
+        self._load_dict.update(sph_loaders)
+        self._load_dict.update(sph_derived)
+        self.loadable_keys = self._load_dict.keys()
 
     def load_density(self, conv=units.Density_cgs, no_h=True, comoving=False):
         """

@@ -54,8 +54,6 @@ class PartTypeX(HDF5Group):
                            'velocities':self.load_velocities,
                            'particleIDs':self.load_PIDs}
         self.loadable_keys = self._load_dict.keys()
-        self._calc_dict = {}
-        self.derivable_keys = self._calc_dict.keys()
 
     def load_masses(self, conv=units.Mass_sun, no_h=True):
         """
