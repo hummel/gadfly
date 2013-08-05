@@ -34,6 +34,7 @@ class PartTypeSPH(hdf5.PartTypeX):
         self._load_dict.update(sph_loaders)
         self._load_dict.update(sph_derived)
         self.loadable_keys = self._load_dict.keys()
+        self._calculated.append(sph_derived.keys())
 
     def load_density(self, conv=units.Density_cgs, no_h=True, comoving=False):
         """

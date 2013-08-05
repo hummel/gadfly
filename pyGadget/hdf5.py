@@ -54,6 +54,7 @@ class PartTypeX(HDF5Group):
                            'velocities':self.load_velocities,
                            'particleIDs':self.load_PIDs}
         self.loadable_keys = self._load_dict.keys()
+        self._calculated = []
 
     def load_masses(self, conv=units.Mass_sun, no_h=True):
         """
@@ -156,23 +157,35 @@ class PartTypeX(HDF5Group):
         """
         self.load_quantity(*self.loadable_keys)
 
-    def load_data(self, *properties):
+    def load_data(self, *properties, **kwargs):
         """
         Load a selection of keys and refine to highest resolution particles.
         Cleans up unrequested properties loaded for calculation of other 
         requested properties when finished.
 
         properties: arbitrary number of keys from the list.
-        sinks (boolean): if true, load sink properties.
+        refine (default True): refine to highest resolution particles only.
+        sinks (default False): if true, load sink properties.
         """
-        self.load_quantity(*properties)
-        mass = self.get_masses()
+        #load primary quantities first.
+        for p in properties:
+            if p not in self._calculated:
+                self.load_quantity(p)
+        # load calculated quantities second.
+        for p in properties:
+            if p in self._calculated:
+                self.load_quantity(p)
 
-        # Refine
-        minimum = numpy.amin(mass)
-        refined = numpy.where(mass <= minimum)[0]
-        for prop in properties:
-            vars(self)[prop] = vars(self)[prop][refined]
+        # Refine if necessary
+        rf = kwargs.pop('refine', True)
+        if rf:
+            # make sure to load masses for refinement
+            self.load_quantity(*properties)
+            mass = self.get_masses()
+            minimum = numpy.amin(mass)
+            refined = numpy.where(mass <= minimum)[0]
+            for prop in properties:
+                vars(self)[prop] = vars(self)[prop][refined]
 
         # Cleanup to save memory
         keys = vars(self).keys()
