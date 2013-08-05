@@ -165,7 +165,6 @@ class PartTypeX(HDF5Group):
 
         properties: arbitrary number of keys from the list.
         refine (default True): refine to highest resolution particles only.
-        sinks (default False): if true, load sink properties.
         """
         #load primary quantities first.
         for p in properties:

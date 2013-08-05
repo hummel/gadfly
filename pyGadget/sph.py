@@ -36,6 +36,26 @@ class PartTypeSPH(hdf5.PartTypeX):
         self.loadable_keys = self._load_dict.keys()
         self._calculated.append(sph_derived.keys())
 
+    def load_data(self, *properties, **kwargs):
+        """
+        Load a selection of keys and refine to highest resolution particles.
+        Cleans up unrequested properties loaded for calculation of other 
+        requested properties when finished.
+
+        properties: arbitrary number of keys from the list.
+        refine (default True): refine to highest resolution particles only.
+        sinks (default False): if true, load sink properties.
+        """
+        super(PartTypeSPH,self).load_data(*properties, **kwargs)
+        if kwargs.pop('sinks', False):
+            sinkval = self.get_sinks()
+            ids = self.sink_ids = numpy.where(sinkval != 0)[0] 
+            if self.sink_ids.size > 0:
+                print self.sink_ids.size,'sinks found.'
+            if 'sink_value' not in properties:
+                del self.sink_value
+
+
     def load_density(self, conv=units.Density_cgs, no_h=True, comoving=False):
         """
         Load Particle Densities in cgs units (default)
