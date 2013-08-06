@@ -51,7 +51,7 @@ def project(snap, write_dir, boxsize, length_unit, *args, **kwargs):
         fig = pyplot.figure(1,(16,12))
         fig.clf()
         pyplot.imshow(z, extent=[x.min(),x.max(),y.min(),y.max()],
-                      cmap=pyGadget.colormap.get_cmap('smooth','./colormap'))
+                      cmap=pyplot.cm.RdGy_r)
         pyplot.clim(numpy.log10(zmin),numpy.log10(zmax))
         cb = pyplot.colorbar()
         ax = pyplot.gca()
