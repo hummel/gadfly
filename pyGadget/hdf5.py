@@ -157,6 +157,17 @@ class PartTypeX(HDF5Group):
         """
         self.load_quantity(*self.loadable_keys)
 
+    def cleanup(self, *exclude):
+        """
+        Clean up loaded data to save memory.
+        exclude: properties to leave loaded.
+        """
+        keys = vars(self).keys()
+        for key in keys:
+            if key in self.loadable_keys:
+                if key not in exclude:
+                    del vars(self)[key]
+
     def load_data(self, *properties, **kwargs):
         """
         Load a selection of keys and refine to highest resolution particles.
@@ -187,8 +198,4 @@ class PartTypeX(HDF5Group):
                 vars(self)[prop] = vars(self)[prop][refined]
 
         # Cleanup to save memory
-        keys = vars(self).keys()
-        for key in keys:
-            if key in self.loadable_keys:
-                if key not in properties:
-                    del vars(self)[key]
+        self.cleanup(*properties)
