@@ -14,128 +14,26 @@ import pyGadget
 
 #===============================================================================
 def load_snapshot(path,key):
-    if key not in ['temp', 'frac']:
-        raise KeyError
     snapshot = pyGadget.snapshot.File(path)
-    masses = snapshot.gas.get_masses()
-    snapshot.gas.load_number_density()
-    snapshot.gas.calculate_temperature()
-    if key == 'frac':
-        snapshot.gas.load_electron_fraction()
-        snapshot.gas.load_HD_fraction()
-    snapshot.close()
-
-    # Refine
-    minimum = numpy.amin(masses)
-    refined = numpy.where(masses <= minimum)[0]
-    snapshot.gas.ndensity = snapshot.gas.ndensity[refined]
-    snapshot.gas.temp = snapshot.gas.temp[refined]
-    if key == 'frac':
-            snapshot.gas.h2frac = snapshot.gas.h2frac[refined]
-            snapshot.gas.HDfrac = snapshot.gas.HDfrac[refined]
-            snapshot.gas.electron_frac = snapshot.gas.electron_frac[refined]
-
-    # Cleanup to save memory
-    del snapshot.gas.masses
-    del snapshot.gas.abundances
-    del snapshot.gas.gamma
     if key == 'temp':
-        del snapshot.gas.energy
-        del snapshot.gas.h2frac
-
+        snapshot.gas.load_data('ndensity','temp')
+    elif key == 'frac':
+        snapshot.gas.load_data('ndensity','temp','electron_frac',
+                               'h2frac','HDfrac')
+    else:
+        raise KeyError
+    snapshot.close()
     return snapshot
 
-def prep_figure():
-    fig = pyplot.figure(figsize=(12,8))
-    fig.clf()
-    return fig
-
-def save_figure(fig, snapshot, wpath):
-    redshift = snapshot.header.Redshift
-    title = fig.suptitle('Redshift: %.2f' %(redshift,))
-    fig.savefig(wpath,bbox_extra_artists=(title,),bbox_inches='tight')
-
-def plot_temp(ax,snapshot):
-    dens = snapshot.gas.get_number_density()
-    temp = snapshot.gas.get_temperature()
-    ax.hexbin(dens,temp,gridsize=500,bins='log',xscale='log',yscale='log',
-              mincnt=1)
-    ax.set_xscale('log')
-    ax.set_yscale('log')
-    ax.set_xlim(2e-3, 1e12)
-    ax.set_ylim(10, 2e4)
-    ax.set_xlabel('n [cm^-3]')
-    ax.set_ylabel('Temperature [K]')
-    return ax
-
-def plot_electron_frac(ax, snapshot):
-    dens = snapshot.gas.get_number_density()
-    efrac = snapshot.gas.get_electron_fraction()
-    ax.hexbin(dens,efrac,gridsize=500,bins='log',xscale='log',
-               yscale='log',mincnt=1)
-    ax.set_xscale('log')
-    ax.set_yscale('log')
-    ax.set_xlim(1e-2, 1e12)
-    ax.set_ylim(1e-12, 1e-2)
-    ax.set_xlabel('n [cm$^{-3}$]')
-    ax.set_ylabel('f$_{e^-}$')
-    return ax
-
-def plot_h2frac(ax, snapshot):
-    dens = snapshot.gas.get_number_density()
-    h2frac = snapshot.gas.get_H2_fraction()
-    ax.hexbin(dens, h2frac,gridsize=500,bins='log',xscale='log',yscale='log',
-               mincnt=1)
-    ax.set_xscale('log')
-    ax.set_yscale('log')
-    ax.set_xlim(1e-2, 1e12)
-    ax.set_ylim(1e-7,2)
-    ax.set_xlabel('n [cm$^{-3}$]')
-    ax.set_ylabel('f$_{H_2}$')
-    return ax
-
-def plot_HDfrac(ax, snapshot):
-    dens = snapshot.gas.get_number_density()
-    HDfrac = snapshot.gas.get_HD_fraction()
-    ax.hexbin(dens,HDfrac,gridsize=500,bins='log',xscale='log',yscale='log',
-               mincnt=1)
-    ax.set_xscale('log')
-    ax.set_yscale('log')
-    ax.set_xlim(1e-2, 1e12)
-    ax.set_ylim(1e-11,1e-4)
-    ax.set_xlabel('n [cm$^{-3}$]')
-    ax.set_ylabel('f$_{HD}$')
-
 def figure_temp(snapshot,wpath):
-    fig = prep_figure()
-    ax = fig.add_subplot(111)
-    ax = plot_temp(ax, snapshot)
-    save_figure(fig, snapshot, wpath+'-temp.png')
+    fig = pyGadget.plotting.Phase(snapshot)
+    fig.plot('temp')
+    fig.save(wpath+'-temp.png')
 
 def figure_gas_fraction(snapshot,wpath):
-    ### Create Plot!
-    ### All plots vs density
-    fig = prep_figure()
-    ax1 = fig.add_subplot(221)
-    ax2 = fig.add_subplot(222)
-    ax3 = fig.add_subplot(223)
-    ax4 = fig.add_subplot(224)
-    axes = [ax1,ax2,ax3,ax4]
-
-    # Temperature
-    ax1 = plot_temp(ax1,snapshot)
-    # Free electron fraction
-    ax2 = plot_electron_frac(ax2,snapshot)
-    # Molecular Hydrogen Fraction
-    ax3 = plot_h2frac(ax3,snapshot)
-    # HD fraction
-    ax4 = plot_HDfrac(ax4,snapshot)
-    
-    density_labels = (1e-2,1e0,1e2,1e4,1e6,1e8,1e10,1e12)
-    for ax in axes:
-        ax.set_xticks(density_labels)
-    fig.subplots_adjust(top=0.94, left=0.085, right=.915)
-    save_figure(fig, snapshot, wpath+'-frac.png')
+    fig = pyGadget.plotting.Quad(snapshot)
+    fig.plot('temp','electron_frac','h2frac','HDfrac')
+    fig.save(wpath+'-frac.png')
 
 #===============================================================================
 def multitask(key,path,write_dir,start,stop):
