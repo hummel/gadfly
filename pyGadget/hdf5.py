@@ -176,6 +176,7 @@ class PartTypeX(HDF5Group):
 
         properties: arbitrary number of keys from the list.
         refine (default True): refine to highest resolution particles only.
+        stride: If set, take every stride'th particle.
         """
         #load primary quantities first.
         for p in properties:
@@ -186,7 +187,7 @@ class PartTypeX(HDF5Group):
             if p in self._calculated:
                 self.load_quantity(p)
 
-        # Refine if necessary
+        # Refine if desired
         rf = kwargs.pop('refine', True)
         if rf:
             # make sure to load masses for refinement
@@ -196,6 +197,10 @@ class PartTypeX(HDF5Group):
             refined = numpy.where(mass <= minimum)[0]
             for prop in properties:
                 vars(self)[prop] = vars(self)[prop][refined]
+        stride = kwargs.pop('stride', None)
+        if stride:
+            for prop in properties:
+                vars(self)[prop] = vars(self)[prop][::stride]
 
         # Cleanup to save memory
         self.cleanup(*properties)
