@@ -16,21 +16,21 @@ class PartTypeSPH(hdf5.PartTypeX):
     def __init__(self, file_id):
         super(PartTypeSPH,self).__init__(file_id,0)
 
-        sph_loaders = {'density':self.load_density,
-                       'ndensity':self.load_number_density,
-                       'energy':self.load_internal_energy,
-                       'gamma':self.load_gamma,
-                       'abundances':self.load_abundances,
-                       'sink_value':self.load_sinks,
-                       'smoothing_length':self.load_smoothing_length,
-                       'electron_frac':self.load_electron_fraction,
-                       'h2frac':self.load_H2_fraction,
-                       'HDfrac':self.load_HD_fraction}
-        sph_derived = {'temp':self.calculate_temperature,
-                       'c_s':self.calculate_sound_speed,
-                       't_ff':self.calculate_freefall_time,
-                       'jeans_length':self.calculate_jeans_length,
-                       'tau':self.calculate_optical_depth}
+        sph_loaders = {'density':self.get_density,
+                       'ndensity':self.get_number_density,
+                       'energy':self.get_internal_energy,
+                       'gamma':self.get_gamma,
+                       'abundances':self.get_abundances,
+                       'sink_value':self.get_sinks,
+                       'smoothing_length':self.get_smoothing_length,
+                       'electron_frac':self.get_electron_fraction,
+                       'h2frac':self.get_H2_fraction,
+                       'HDfrac':self.get_HD_fraction}
+        sph_derived = {'temp':self.get_temperature,
+                       'c_s':self.get_sound_speed,
+                       't_ff':self.get_freefall_time,
+                       'jeans_length':self.get_jeans_length,
+                       'tau':self.get_optical_depth}
         self._load_dict.update(sph_loaders)
         self._load_dict.update(sph_derived)
         self.loadable_keys = self._load_dict.keys()

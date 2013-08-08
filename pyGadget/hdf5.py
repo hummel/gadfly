@@ -49,10 +49,10 @@ class PartTypeX(HDF5Group):
             key = '_'+item[0].replace(' ', '_')
             vars(self)[key] = item[1]
 
-        self._load_dict = {'masses':self.load_masses,
-                           'coordinates':self.load_coords,
-                           'velocities':self.load_velocities,
-                           'particleIDs':self.load_PIDs}
+        self._load_dict = {'masses':self.get_masses,
+                           'coordinates':self.get_coords,
+                           'velocities':self.get_velocities,
+                           'particleIDs':self.get_PIDs}
         self.loadable_keys = self._load_dict.keys()
         self._calculated = []
 
