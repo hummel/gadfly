@@ -6,9 +6,11 @@ This module contains classes for reading Gadget2 HDF5 snapshot files.
 import string
 import threading
 import h5py
+
 import hdf5
 import nbody
 import sph
+import plotting
 
 class File:
     """
@@ -47,14 +49,26 @@ class Loader(threading.Thread):
                 break # reached end of queue
             fname = args[0]
             lock.acquire()
-            print 'loading ' + fname
+            print 'loading snapshot', fname
             lock.release()
             try:
                 snapshot = self.load_function(*args)
                 self.data_queue.put(snapshot)
             except IOError:
                 lock.acquire()
-                print 'Warning: '+fname+' not found!'
+                print 'Warning: snapshot '+str(fname)+' not found!'
                 lock.release()
                 pass
 
+#===============================================================================
+def plot_temp(snapshot,wpath=None):
+    fig = plotting.Phase(snapshot)
+    fig.plot('temp')
+    if wpath:
+        fig.save(wpath+'/gas/temp/{:0>4}-temp.png'.format(snapshot.number))
+
+def plot_gas_fraction(snapshot,wpath=None):
+    fig = plotting.Quad(snapshot)
+    fig.plot('temp','electron_frac','h2frac','HDfrac')
+    if wpath:
+        fig.save(wpath+'/gas/frac/{:0>4}-frac.png'.format(snapshot.number))

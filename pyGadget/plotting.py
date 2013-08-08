@@ -6,7 +6,6 @@ This module contains classes for various types of plots.
 import multiprocessing
 from matplotlib import pyplot 
 
-
 class Plot(object):
     """
     Base class for plots.
@@ -134,9 +133,8 @@ class Quad(Phase, Radial):
             raise KeyError("Quad.plot requires exactly 4 keys!")
         for key in keys:
             if key not in self._phase_plots.keys():
-                raise KeyError("Unrecognized plot request!")
+                raise KeyError("Unrecognized plot request!: "+key)
 
-        self.snapshot.gas.load_data('ndensity',*keys)
         if kwargs.get('parallel', False):
             jobs = []
             for i,key in enumerate(keys):

@@ -11,7 +11,7 @@ import subprocess
 import multiprocessing as mp
 from matplotlib import pyplot
 import pyGadget
-
+'''
 #===============================================================================
 def load_snapshot(path,key):
     snapshot = pyGadget.snapshot.File(path)
@@ -25,15 +25,17 @@ def load_snapshot(path,key):
     snapshot.close()
     return snapshot
 
-def figure_temp(snapshot,wpath):
+def plot_temp(snapshot,wpath=None):
     fig = pyGadget.plotting.Phase(snapshot)
     fig.plot('temp')
-    fig.save(wpath+'-temp.png')
+    if wpath:
+        fig.save(wpath+'/gas/temp/{:0>4}-temp.png'.format(snapshot.number))
 
-def figure_gas_fraction(snapshot,wpath):
+def plot_gas_fraction(snapshot,wpath=None):
     fig = pyGadget.plotting.Quad(snapshot)
     fig.plot('temp','electron_frac','h2frac','HDfrac')
-    fig.save(wpath+'-frac.png')
+    if wpath:
+        fig.save(wpath+'/gas/frac/{:0>4}-frac.png'.format(snapshot.number))
 
 #===============================================================================
 def multitask(key,path,write_dir,start,stop):
@@ -49,9 +51,9 @@ def multitask(key,path,write_dir,start,stop):
         file_queue.put((fname,key))
     file_queue.put(None)
     if key == 'temp':
-        plot_func = figure_temp
+        plot_func = plot_temp
     elif key == 'frac':
-        plot_func = figure_gas_fraction
+        plot_func = plot_gas_fraction
 
     done = False
     while not done:
@@ -72,7 +74,7 @@ def multitask(key,path,write_dir,start,stop):
         print '\nQueue Cleared!\n'
     for process in jobs:
         process.join()
-
+'''
 #===============================================================================
 if __name__ == '__main__':
     pyplot.ioff()
@@ -87,36 +89,32 @@ if __name__ == '__main__':
         sys.exit()
 
     key = sys.argv[1]
-    if key not in ['temp','frac']:
+    if key == 'temp':
+        plot_func = pyGadget.snapshot.plot_temp
+        data = ['ndensity','temp']
+    elif key == 'frac':
+        plot_func = pyGadget.snapshot.plot_gas_fraction
+        data = ['ndensity','temp','electron_frac','h2frac','HDfrac']
+    else:
         raise KeyError
-    simulation = sys.argv[2]
-    path = os.getenv('HOME')+'/sim/'+simulation+'/snapshot_'
-    write_dir = os.getenv('HOME')+'/data/simplots/'+simulation+'/gas/'+key+'/'
-    if not os.path.exists(write_dir):
-        os.makedirs(write_dir)
+    simname = sys.argv[2]
+    sim = pyGadget.sim.Simulation(simname)
+#    if not os.path.exists(write_dir):
+#        os.makedirs(write_dir)
                  
     if len(sys.argv) == 4:
-        snap = sys.argv[3]
-        fname = path + '{:0>3}'.format(snap)+'.hdf5'
-        print 'loading', fname
-        snapshot = load_snapshot(fname,key)
-        if key == 'temp':
-            figure_temp(snapshot,write_dir+'{:0>4}'.format(snap))
-        elif key == 'frac':
-            figure_gas_fraction(snapshot,write_dir+'{:0>4}'.format(snap))
-        
+        snap = int(sys.argv[3])
+        snapshot = sim.load_snapshot(snap,*data)
+        plot_func(snapshot, sim.plotpath+sim.name)
+
     elif len(sys.argv) == 5:
         start = int(sys.argv[3])
         stop = int(sys.argv[4])
-        multitask(key,path,write_dir,start,stop)
+        snaps = range(start,stop+1)
+        sim.set_snapshots(*snaps)
+        sim.multitask(plot_func,*data)
 
     else:
-        files0 = glob.glob(path+'???.hdf5')
-        files1 = glob.glob(path+'1???.hdf5')
-        files0.sort()
-        files1.sort()
-        files = files0 + files1
-        start = int(files[0][-8:-5])
-        stop = int(files[-1][-8:-5])
-        multitask(key,path,write_dir,start,stop)
+        sim.multitask(plot_func,*data)
+
 

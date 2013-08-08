@@ -49,10 +49,10 @@ class PartTypeX(HDF5Group):
             key = '_'+item[0].replace(' ', '_')
             vars(self)[key] = item[1]
 
-        self._load_dict = {'masses':self.load_masses,
-                           'coordinates':self.load_coords,
-                           'velocities':self.load_velocities,
-                           'particleIDs':self.load_PIDs}
+        self._load_dict = {'masses':self.get_masses,
+                           'coordinates':self.get_coords,
+                           'velocities':self.get_velocities,
+                           'particleIDs':self.get_PIDs}
         self.loadable_keys = self._load_dict.keys()
         self._calculated = []
 
@@ -176,6 +176,7 @@ class PartTypeX(HDF5Group):
 
         properties: arbitrary number of keys from the list.
         refine (default True): refine to highest resolution particles only.
+        stride: If set, take every stride'th particle.
         """
         #load primary quantities first.
         for p in properties:
@@ -186,16 +187,20 @@ class PartTypeX(HDF5Group):
             if p in self._calculated:
                 self.load_quantity(p)
 
-        # Refine if necessary
+        # Refine if desired
         rf = kwargs.pop('refine', True)
         if rf:
-            # make sure to load masses for refinement
-            self.load_quantity(*properties)
             mass = self.get_masses()
             minimum = numpy.amin(mass)
             refined = numpy.where(mass <= minimum)[0]
             for prop in properties:
-                vars(self)[prop] = vars(self)[prop][refined]
+                # refine only if not already refined.
+                if vars(self)[prop].size == mass.size:
+                    vars(self)[prop] = vars(self)[prop][refined]
+        stride = kwargs.pop('stride', None)
+        if stride:
+            for prop in properties:
+                vars(self)[prop] = vars(self)[prop][::stride]
 
         # Cleanup to save memory
         self.cleanup(*properties)

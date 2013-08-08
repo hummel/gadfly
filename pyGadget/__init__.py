@@ -4,6 +4,7 @@ from a modified version of the SPH code Gadget2.
 """
 import units
 import constants
+import sim
 import hdf5
 import nbody
 import sph
