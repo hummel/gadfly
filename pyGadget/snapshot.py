@@ -49,14 +49,14 @@ class Loader(threading.Thread):
                 break # reached end of queue
             fname = args[0]
             lock.acquire()
-            print 'loading ' + fname
+            print 'loading snapshot', fname
             lock.release()
             try:
                 snapshot = self.load_function(*args)
                 self.data_queue.put(snapshot)
             except IOError:
                 lock.acquire()
-                print 'Warning: '+fname+' not found!'
+                print 'Warning: snapshot '+str(fname)+' not found!'
                 lock.release()
                 pass
 
