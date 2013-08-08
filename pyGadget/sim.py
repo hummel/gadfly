@@ -74,7 +74,6 @@ class Simulation(object):
         return self.current_snapshot
 
     def multitask(self,plot_func,*data):
-        dir(snapshot)
         maxprocs = mp.cpu_count()
         # Hack to take advantage of larger memory on r900 machines
         if 'r900' not in subprocess.check_output(['uname','-n']):
