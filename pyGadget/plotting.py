@@ -15,8 +15,6 @@ class Plot(object):
         self.snapshot = snapshot
         self.figure = pyplot.figure(**fig_args)
         self.figure.clf()
-        z = snapshot.header.Redshift
-        self.title = self.figure.suptitle('Redshift: %.2f' %(z,))
 
     def save(self,path):
         self.figure.savefig(path,
@@ -31,6 +29,8 @@ class Phase(Plot):
         super(Phase,self).__init__(snapshot,figsize=figsize,**fig_args)
         self.axes = self.figure.add_subplot(111)
         self._set_phase_dict()
+        z = snapshot.header.Redshift
+        self.title = self.figure.suptitle('Redshift: %.2f' %(z,))
 
     def _set_phase_dict(self):
         self._phase_plots = {'temp':self.temp,
@@ -116,9 +116,7 @@ class Radial(Plot):
 
 class Quad(Phase, Radial):
     def __init__(self, snapshot, figsize=(12,8), **fig_args):
-        self.snapshot = snapshot
-        self.figure = pyplot.figure(figsize=figsize, **fig_args)
-        self.figure.clf()
+        super(Quad,self).__init__(snapshot,figsize=figsize,**fig_args)
         z = snapshot.header.Redshift
         self.title = self.figure.suptitle('Redshift: %.2f' %(z,))
         ax1 = self.figure.add_subplot(221)
