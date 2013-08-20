@@ -13,4 +13,3 @@ import visualize
 import analyze
 import plotting
 import sinks
-import colormap
