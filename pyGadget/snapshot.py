@@ -65,10 +65,16 @@ def plot_temp(snapshot,wpath=None):
     fig = plotting.Phase(snapshot)
     fig.plot('temp')
     if wpath:
-        fig.save(wpath+'/gas/temp/{:0>4}-temp.png'.format(snapshot.number))
+        fpath = wpath + '/gas/temp/'
+        if not os.path.exists(fpath):
+            os.makedirs(fpath)
+        fig.save(fpath+'{:0>4}-temp.png'.format(snapshot.number))
 
 def plot_gas_fraction(snapshot,wpath=None):
     fig = plotting.Quad(snapshot)
     fig.plot('temp','electron_frac','h2frac','HDfrac')
     if wpath:
-        fig.save(wpath+'/gas/frac/{:0>4}-frac.png'.format(snapshot.number))
+        fpath = wpath + '/gas/frac/'
+        if not os.path.exists(fpath):
+            os.makedirs(fpath)
+        fig.save(fpath+'{:0>4}-frac.png'.format(snapshot.number))
