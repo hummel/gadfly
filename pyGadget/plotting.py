@@ -15,11 +15,14 @@ class Plot(object):
         self.snapshot = snapshot
         self.figure = pyplot.figure(**fig_args)
         self.figure.clf()
+        self.title = None
 
     def save(self,path):
-        self.figure.savefig(path,
-                            bbox_extra_artists=(self.title,),
-                            bbox_inches='tight')
+        if self.title:
+            self.figure.savefig(path, bbox_extra_artists=(self.title,),
+                                bbox_inches='tight')
+        else:
+            self.figure.savefig(path, bbox_inches='tight')
 
 class Phase(Plot):
     """
@@ -158,5 +161,3 @@ class Image(Plot):
     """
     def __init__(self, snapshot, **kwargs):
         super(Image,self).__init__(snapshot,**kwargs)
-
-
