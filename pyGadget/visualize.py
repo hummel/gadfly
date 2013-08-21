@@ -11,7 +11,7 @@ from scipy.weave import converters
 
 import analyze
 #===============================================================================
-def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
+def scalar_map(x,y,scalar_field,hsml,width,pps,zshape):
     zi = numpy.zeros(zshape)
     nzi = numpy.zeros_like(zi)
     N_gas = scalar_field.size
@@ -155,7 +155,6 @@ def set_viewpoint(pos, dens, viewpoint, **kwargs):
     centering = kwargs.pop('centering', 'halo')
     if centering == 'halo':
         x,y,z = analyze.find_center(x,y,z,dens,**kwargs)
-
     elif centering == 'box':
         x = x - (x.max() + x.min())/2
         y = y - (y.max() + y.min())/2
@@ -164,8 +163,40 @@ def set_viewpoint(pos, dens, viewpoint, **kwargs):
         raise KeyError
     return x,y,z
 
+def trim_view(width, x, y, z, *args, **kwargs):
+    depth = kwargs.pop('depth',None)
+    arrs = [i for i in args]
+    if depth:
+        depth *= width
+        slice_ = numpy.where(numpy.abs(z) < depth/2)[0]
+        x = x[slice_]
+        y = y[slice_]
+        z = z[slice_]
+        for i,arr in enumerate(arrs):
+            arrs[i] = arr[slice_]
+    slice_ = numpy.where(numpy.abs(x) < width/2)[0]
+    x = x[slice_]
+    y = y[slice_]
+    z = z[slice_]
+    for i,arr in enumerate(arrs):
+        arrs[i] = arr[slice_]
+    slice_ = numpy.where(numpy.abs(y) < width/2)[0]
+    x = x[slice_]
+    y = y[slice_]
+    z = z[slice_]
+    for i,arr in enumerate(arrs):
+        arrs[i] = arr[slice_]
+    print ' x:: max: %.3e min: %.3e' %(x.max(),x.min())
+    print ' y:: max: %.3e min: %.3e' %(y.max(),y.min())
+    return [x,y,z]+arrs
+
+def build_grid(width,pps):
+    xres = yres = width/pps
+    xvals = numpy.arange(-width/2,width/2,xres)
+    yvals = numpy.arange(-width/2,width/2,yres)
+    return numpy.meshgrid(xvals,yvals)
 #===============================================================================
-def density_projection(snapshot, width, thickness, length_unit, *args,**kwargs):
+def density_projection(snapshot, width, depth, length_unit, *args,**kwargs):
     pps = kwargs.pop('pps', 500)
     sm = kwargs.pop('sm', 1.7)
     # Read relevant attributes
@@ -190,44 +221,18 @@ def density_projection(snapshot, width, thickness, length_unit, *args,**kwargs):
     except AssertionError: 
         print 'Warning: Maximum density exceeds 1e12 particles/cc!'
         print 'Max Density: %.5e' %dens.max()
-    if thickness:
-        depth= width*thickness
-        slice_ = numpy.where(numpy.abs(z) < depth/2)[0]
-        dens = dens[slice_]
-        smL = smL[slice_]
-        sinkval = sinkval[slice_]
-        x = x[slice_]
-        y = y[slice_]
-        z = z[slice_]
-    slice_ = numpy.where(numpy.abs(x) < width/2)[0]
-    dens = dens[slice_]
-    smL = smL[slice_]
-    sinkval = sinkval[slice_]
-    x = x[slice_]
-    y = y[slice_]
-    z = z[slice_]
-    slice_ = numpy.where(numpy.abs(y) < width/2)[0]
-    dens = dens[slice_]
-    smL = smL[slice_]
-    sinkval = sinkval[slice_]
-    x = x[slice_]
-    y = y[slice_]
-    z = z[slice_]
-    print ' x:: max: %.3e min: %.3e' %(x.max(),x.min())
-    print ' y:: max: %.3e min: %.3e' %(y.max(),y.min())
+
+    x,y,z,dens,smL,sinkval = trim_view(width, x,y,z,dens,smL,sinkval,
+                                       depth=depth)
+
     print ' density:: max: %.3e min: %.3e' %(dens.max(),dens.min())
     print ' Array size:', dens.size
 
-    xres = yres = width/pps
-    xvals = numpy.arange(-width/2,width/2,xres)
-    yvals = numpy.arange(-width/2,width/2,yres)
-    xi,yi = numpy.meshgrid(xvals,yvals)
-    zi = numpy.zeros_like(xi)
-    nzi = numpy.zeros_like(zi)
-    zshape = zi.shape
+    xi,yi = build_grid(width,pps)
+    zshape = xi.shape
     hsml = numpy.fmax(sm * smL, width / pps / 2.0)
 
     print 'Calculating...'
-    zi = scalar_map(pps,width,x,y,dens,hsml,zshape)
+    zi = scalar_map(x,y,dens,hsml,width,pps,zshape)
     print 'density:: min: %.3e max: %.3e' %(zi.min(),zi.max())
     return xi,yi,zi
