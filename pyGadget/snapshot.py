@@ -16,7 +16,8 @@ class File:
     """
     Class for Gadget2 HDF5 snapshot files.
     """
-    def __init__(self, filename):
+    def __init__(self, sim, filename):
+        self.sim = sim
         self.filename = filename
         f = filename.replace('.hdf5','')
         self.number = int(f.split('_')[-1])

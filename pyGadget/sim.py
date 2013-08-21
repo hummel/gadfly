@@ -66,7 +66,7 @@ class Simulation(object):
             except KeyError:
                 raise IOError('Sim ' + self.name + ' snapshot '
                               + str(num) + ' not found!')
-        snap = snapshot.File(fname)
+        snap = snapshot.File(self, fname)
 
         if load_keys:
             snap.gas.load_data(*load_keys,**kwargs)
