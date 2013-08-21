@@ -30,7 +30,6 @@ class Simulation(object):
                       'mass':self.mass_unit,
                       'time':self.time_unit}
         self.snapfiles = self.find_snapshots()
-        self.current_snapshot = None
         try:
             self.sink0 = sinks.SingleSink(self.sinkpath)
             print "Found sinkfiles.  Loading sinkdata."
@@ -67,11 +66,11 @@ class Simulation(object):
             except KeyError:
                 raise IOError('Sim ' + self.name + ' snapshot '
                               + str(num) + ' not found!')
-        self.current_snapshot = snapshot.File(fname)
+        snap = snapshot.File(fname)
 
         if load_keys:
-            self.current_snapshot.gas.load_data(*load_keys,**kwargs)
-        return self.current_snapshot
+            snap.gas.load_data(*load_keys,**kwargs)
+        return snap
 
     def multitask(self,plot_func,*data):
         maxprocs = mp.cpu_count()
