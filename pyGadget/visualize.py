@@ -9,7 +9,7 @@ import numpy
 from scipy import weave
 from scipy.weave import converters
 
-from . import analyze
+import analyze
 #===============================================================================
 def scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
     zi = numpy.zeros(zshape)
@@ -136,7 +136,7 @@ def py_scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
     return zi
 
 #===============================================================================
-def set_viewpoint(pos, dens, viewpoint, centering, **kwargs):
+def set_viewpoint(pos, dens, viewpoint, **kwargs):
     if viewpoint == 'xy':
         x = pos[:,0]
         y = pos[:,1]
@@ -152,6 +152,7 @@ def set_viewpoint(pos, dens, viewpoint, centering, **kwargs):
     else:
         raise KeyError
 
+    centering = kwargs.pop('centering', 'halo')
     if centering == 'halo':
         x,y,z = analyze.find_center(x,y,z,dens,**kwargs)
 
