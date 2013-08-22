@@ -5,10 +5,10 @@
 import os
 import sys
 import numpy
-
 from scipy import weave
 from scipy.weave import converters
 
+import units
 import analyze
 #===============================================================================
 def scalar_map(x,y,scalar_field,hsml,width,pps,zshape):
@@ -195,6 +195,29 @@ def build_grid(width,pps):
     xvals = numpy.arange(-width/2,width/2,xres)
     yvals = numpy.arange(-width/2,width/2,yres)
     return numpy.meshgrid(xvals,yvals)
+
+def project(snapshot, loadable, scale, viewpoint, **kwargs):
+    pps = kwargs.pop('pps',500)
+    sm = kwargs.pop('sm',1.7)
+    boxsize = float("".join(ch if ch.isdigit() else "" for ch in scale))
+    unit = "".join(ch if not ch.isdigit() else "" for ch in scale)
+    length_unit = units.Lengths[unit]
+
+    scalar = snapshot.gas._load_dict[loadable]()
+    pos = snapshot.gas.get_coords(length_unit)
+    hsml = snapshot.gas.get_smoothing_length(length_unit)
+    print 'Calculating...'
+    x,y,z = set_viewpoint(pos,scalar,viewpoint,**kwargs)
+    x,y,z,scalar,hsml = trim_view(boxsize, x,y,z,scalar,hsml,**kwargs)
+    hsml = numpy.fmax(sm * hsml, boxsize/pps/2)
+    xi,yi = build_grid(boxsize,pps)
+    zi = scalar_map(x,y,scalar,hsml,boxsize,pps,xi.shape)
+    print '%s:: min: %.3e max: %.3e' %(loadable, zi.min(),zi.max())
+    imscale = kwargs.pop('imscale','log')
+    if imscale == 'log':
+        zi = numpy.log10(zi)
+    return xi,yi,zi
+
 #===============================================================================
 def density_projection(snapshot, width, depth, length_unit, *args,**kwargs):
     pps = kwargs.pop('pps', 500)
