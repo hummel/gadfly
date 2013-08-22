@@ -152,15 +152,12 @@ def set_viewpoint(pos, dens, viewpoint, **kwargs):
     else:
         raise KeyError
 
-    centering = kwargs.pop('centering', 'halo')
-    if centering == 'halo':
+    if kwargs.get('centering', True):
         x,y,z = analyze.find_center(x,y,z,dens,**kwargs)
-    elif centering == 'box':
+    else:
         x = x - (x.max() + x.min())/2
         y = y - (y.max() + y.min())/2
         z = z - (z.max() + z.min())/2
-    else:
-        raise KeyError
     return x,y,z
 
 def trim_view(width, x, y, z, *args, **kwargs):
