@@ -7,8 +7,11 @@ from . import units
 from . import constants
 
 #===============================================================================
-def find_center(x, y, z, dens, centering='avg', dens_limit=1e11, nparticles=100,
-		verbose=True):
+def find_center(x, y, z, dens, **kwargs)
+	centering = kwargs.pop('centering','avg')
+	dens_limit = kwargs.pop('dens_limit', 1e11)
+	nparticles = kwargs.pop('centering_npart', 100)
+	verbose = kwargs.pop('centering_verbose', True)
 	if centering == 'avg':
 		hidens = numpy.where(dens >= dens_limit)[0]
 		while hidens.size < nparticles:
