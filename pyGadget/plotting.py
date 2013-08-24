@@ -3,8 +3,13 @@
 """
 This module contains classes for various types of plots.
 """
+import numpy
 import multiprocessing
 from matplotlib import pyplot 
+
+import units
+import analyze
+import visualize
 
 class Plot(object):
     """
@@ -13,7 +18,7 @@ class Plot(object):
     def __init__(self, snapshot, **fig_args):
         super(Plot,self).__init__()
         self.snapshot = snapshot
-        self.figure = pyplot.figure(**fig_args)
+        self.figure = pyplot.figure(1,**fig_args)
         self.figure.clf()
         self.title = None
 
@@ -159,5 +164,36 @@ class Image(Plot):
     """
     Class for image-style plots.
     """
-    def __init__(self, snapshot, **kwargs):
-        super(Image,self).__init__(snapshot,**kwargs)
+    def __init__(self, snapshot, figsize=(12,9), **fig_args):
+        super(Image,self).__init__(snapshot,figsize=figsize,**fig_args)
+        self.axes = self.figure.add_subplot(111)
+        self.axes.set_axis_off()
+        self.cbar = None
+        self.plot_sinks = fig_args.pop('sinks',True)
+
+    def annotate_axes(self, scale=None, sinks=False):
+        self.axes.text(.01, .96, 'z: %.2f' %self.snapshot.header.Redshift,
+                        color='white', fontsize=18,
+                        transform=self.axes.transAxes)
+        if scale:
+            boxsize = "".join(ch if ch.isdigit() else "" for ch in scale)
+            unit = "".join(ch if not ch.isdigit() else "" for ch in scale)
+            self.axes.text(.01,.01, boxsize+' '+unit, color='white',
+                            fontsize=18, transform=self.axes.transAxes)
+
+    def density(self, scale, viewpoint, **kwargs):
+        x,y,z = visualize.project(self.snapshot, 'ndensity',
+                                  scale, viewpoint, **kwargs)
+        ax = kwargs.pop('axis',self.axes)
+        img = ax.imshow(z, extent=[x.min(),x.max(),y.min(),y.max()],
+                        cmap=pyplot.cm.RdGy_r,origin='lower')
+        if not self.cbar:
+            self.cbar = self.figure.colorbar(img)
+        clim = kwargs.pop('clim',None)
+        if clim:
+            img.set_clim(clim[0],clim[1])
+            self.cbar.set_clim(clim[0],clim[1])
+            self.cbar.set_ticks(range(clim[0], clim[1]+1))
+        self.cbar.set_label('Log Number Density [cm$^{-3}$]')
+        self.annotate_axes(scale)
+        pyplot.draw()
