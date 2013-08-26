@@ -191,8 +191,9 @@ class PartTypeX(HDF5Group):
         rf = kwargs.pop('refine', True)
         if rf:
             mass = self.get_masses()
+            sinks = self.get_sinks()
             minimum = numpy.amin(mass)
-            refined = numpy.where(mass <= minimum)[0]
+            refined = numpy.where((mass <= minimum) | (sinks != 0.))[0]
             for prop in properties:
                 # refine only if not already refined.
                 if vars(self)[prop].size == mass.size:
