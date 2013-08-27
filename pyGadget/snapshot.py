@@ -23,8 +23,8 @@ class File:
         self.number = int(f.split('_')[-1])
         self.file_id = h5py.File(filename, 'r')
         self.header = hdf5.Header(self.file_id)
-        self.dm = nbody.PartTypeDM(self.file_id)
-        self.gas = sph.PartTypeSPH(self.file_id)
+        self.dm = nbody.PartTypeDM(self.file_id, sim.units)
+        self.gas = sph.PartTypeSPH(self.file_id, sim.units)
         self.sink_ids = None
         self.sinks = []
         

@@ -11,6 +11,6 @@ class PartTypeDM(hdf5.PartTypeX):
     Class for Dark Matter particles.
     Available to extend class PartTypeX for Dark Matter specific applications.
     """
-    def __init__(self, file_id):
-        super(PartTypeDM,self).__init__(file_id,1)
+    def __init__(self, file_id, units):
+        super(PartTypeDM,self).__init__(file_id,1, units)
 

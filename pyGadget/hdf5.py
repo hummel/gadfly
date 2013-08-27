@@ -41,9 +41,10 @@ class PartTypeX(HDF5Group):
     """
     Class for generic particle info.
     """
-    def __init__(self, file_id, ptype):
+    def __init__(self, file_id, ptype, unit):
         super(PartTypeX,self).__init__()
         self._header = Header(file_id)
+        self.units = unit
         group = file_id['PartType'+str(ptype)]
         for item in group.items():
             key = '_'+item[0].replace(' ', '_')
@@ -108,14 +109,14 @@ class PartTypeX(HDF5Group):
             self.load_coords(conv, no_h, comoving)
             return self.coordinates
 
-    def load_velocities(self, conv=units.Velocity_km_s):
+    def load_velocities(self, conv=units.Velocity_kms):
         """
         Load Particle Velocities in units of km/s (default)
         conv: unit conversion from code units
         """
         self.velocities = self._Velocities.value*conv
 
-    def get_velocities(self, conv=units.Velocity_km_s):
+    def get_velocities(self, conv=units.Velocity_kms):
         """
         Return Particle Velocities in units of km/s (default)
         conv: unit conversion from code units

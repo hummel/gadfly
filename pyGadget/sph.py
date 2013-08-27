@@ -13,8 +13,8 @@ class PartTypeSPH(hdf5.PartTypeX):
     Class for SPH particles.
     Extends class PartTypeX to include gas physics stuff.
     """
-    def __init__(self, file_id):
-        super(PartTypeSPH,self).__init__(file_id,0)
+    def __init__(self, file_id, units):
+        super(PartTypeSPH,self).__init__(file_id,0, units)
 
         sph_loaders = {'density':self.get_density,
                        'ndensity':self.get_number_density,
