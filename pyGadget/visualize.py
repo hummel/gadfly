@@ -8,7 +8,6 @@ import numpy
 from scipy import weave
 from scipy.weave import converters
 
-import units
 import analyze
 #===============================================================================
 def scalar_map(x,y,scalar_field,hsml,width,pps,zshape):
@@ -205,10 +204,9 @@ def project(snapshot, loadable, scale, viewpoint, **kwargs):
     sm = kwargs.pop('sm',1.7)
     boxsize = float("".join(ch if ch.isdigit() else "" for ch in scale))
     unit = "".join(ch if not ch.isdigit() else "" for ch in scale)
-    length_unit = units.Lengths[unit]
     scalar = snapshot.gas._load_dict[loadable]()
-    pos = snapshot.gas.get_coords(length_unit)
-    hsml = snapshot.gas.get_smoothing_length(length_unit)
+    pos = snapshot.gas.get_coords(unit)
+    hsml = snapshot.gas.get_smoothing_length(unit)
 
     print 'Calculating...'
     x,y,z = set_viewpoint(pos, scalar, viewpoint, *snapshot.sinks, **kwargs)

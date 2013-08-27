@@ -56,90 +56,96 @@ class PartTypeSPH(hdf5.PartTypeX):
                 del self.sink_value
 
 
-    def load_density(self, conv=units.Density_cgs, no_h=True, comoving=False):
+    def load_density(self, unit=None):
         """
-        Load Particle Densities in cgs units (default)
-        conv: unit conversion from code units
-        no_h: if True, remove dependence on hubble parameter.
-        comoving: if False, remove dependence on scale factor.
+        Load Particle Densities in cgs units (default set in units class)
+        unit: unit conversion from code units
         """
         try:
             del self.ndensity
         except AttributeError:
             pass
-        self.density = self._Density.value*conv
-        if no_h:
+        if unit:
+            self.units.set_density(unit)
+        self.density = self._Density.value * self.units.density_conv
+        if self.units.remove_h:
             h = self._header.HubbleParam
             self.density = self.density * h*h
-        if not comoving:
+        if self.units.coordinate_system == 'physical':
             ainv = self._header.Redshift + 1 # 1/(scale factor)
             self.density = self.density * ainv**3
 
-    def get_density(self, conv=units.Density_cgs, no_h=True, comoving=False):
+    def get_density(self, unit=None):
         """
-        Return Particle Densities in cgs units (default)
-        conv: unit conversion from code units
-        no_h: if True, remove dependence on hubble parameter.
-        comoving: if False, remove dependence on scale factor.
+        Return Particle Densities in cgs units (default set in units class)
+        unit: unit conversion from code units
         """
+        if unit:
+            if unit != self.units.density_unit:
+                self.load_density(unit)
         try:
             return self.density
         except AttributeError:
-            self.load_density(conv, no_h, comoving)
+            self.load_density(unit)
             return self.density
 
-    def load_number_density(self, conv=units.Density_cgs, no_h=True, 
-                            comoving=False):
+    def load_number_density(self, unit=None):
         """
-        Load Particle Number Densities in cgs units (default)
-        conv: unit conversion from code units
-        no_h: if True, remove dependence on hubble parameter.
-        comoving: if False, remove dependence on scale factor.
+        Load Particle Number Densities in cgs units (default set in units class)
+        unit: unit conversion from code units
         """
         try:
             del self.density
         except AttributeError:
             pass
-        self.ndensity = self._Density.value*conv
+        if unit:
+            self.units.set_density(unit)
+        self.ndensity = self._Density.value * self.units.density_conv
         self.ndensity = self.ndensity * constants.X_h / constants.m_H
-        if no_h:
+        if self.units.remove_h:
             h = self._header.HubbleParam
             self.ndensity = self.ndensity * h*h
-        if not comoving:
+        if self.units.coordinate_system == 'physical':
             ainv = self._header.Redshift + 1 # 1/(scale factor)
             self.ndensity = self.ndensity * ainv**3
 
-    def get_number_density(self, conv=units.Density_cgs, no_h=True, 
-                           comoving=False):
+    def get_number_density(self, unit=None):
         """
-        Return Particle Densities in cgs units (default)
-        conv: unit conversion from code units
-        no_h: if True, remove dependence on hubble parameter.
-        comoving: if False, remove dependence on scale factor.
+        Return Particle Densities in cgs units (default set in units class)
+        unit: unit conversion from code units
         """
+        if unit:
+            if unit != self.units.density_unit:
+                self.load_number_density(unit)
         try:
             return self.ndensity
         except AttributeError:
-            self.load_number_density(conv, no_h, comoving)
+            self.load_number_density(unit)
             return self.ndensity
 
-    def load_internal_energy(self, conv=units.Energy_cgs/units.Mass_g):
+    def load_internal_energy(self, unit=None):
         """
-        Load internal particle energies per unit mass in cgs units (default)
-        conv: unit conversion from code units
+        Load internal particle energies per unit mass in cgs units 
+        (default set in units class)
+        unit: unit conversion from code units
         """
-        self.energy = self._InternalEnergy.value*conv
+        if unit:
+            self.units.set_energy(unit)
+        self.energy = self._InternalEnergy.value * self.units.energy_conv
 
 
-    def get_internal_energy(self, conv=units.Energy_cgs/units.Mass_g):
+    def get_internal_energy(self, unit=None):
         """
-        Return Particle Densities in cgs units (default)
-        conv: unit conversion from code units
+        Return Particle Densities in cgs units (default set in units class)
+        unit: unit conversion from code units
         """
+        if unit:
+            if unit != self.units.energy_unit:
+                self.load_internal_energy(unit)
         try:
             return self.energy
         except AttributeError:
-            self.load_internal_energy(conv)
+            self.load_internal_energy(unit)
             return self.energy
 
     def load_gamma(self):
@@ -178,7 +184,7 @@ class PartTypeSPH(hdf5.PartTypeX):
         """
         abundance_dict = {'H2':0, 'HII':1, 'DII':2, 'HD':3, 'HeII':4, 'HeIII':5}
         try:
-            abundances =  self.abundances
+            abundances = self.abundances
         except AttributeError:
             self.load_abundances()
             abundances = self.abundances
@@ -209,34 +215,36 @@ class PartTypeSPH(hdf5.PartTypeX):
             self.load_sinks()
             return self.sink_value
 
-    def load_smoothing_length(self, conv=units.Length_kpc, 
-                              no_h=True, comoving=False):
+    def load_smoothing_length(self, unit=None):
         """
-        Load Particle Smoothing Lengths in units of kpc (default)
-        conv: unit conversion from code units
-        no_h: if True, remove dependence on hubble parameter.
-        comoving: if False, remove dependence on scale factor.
+        Load Particle Smoothing Lengths in units of kpc.
+        (default set in units class)
+        unit: unit conversion from code units
         """
-        self.smoothing_length = self._SmoothingLength.value*conv
-        if no_h:
+        if unit:
+            self.units._set_smoothing_length(unit)
+        self.smoothing_length \
+            = self._SmoothingLength.value * self.units.length_conv
+        if self.units.remove_h:
             h = self._header.HubbleParam
-            self.smoothing_length = self.smoothing_length/h
-        if not comoving:
+            self.smoothing_length /= h
+        if self.units.coordinate_system == 'physical':
             a = self._header.ScaleFactor
-            self.smoothing_length = self.smoothing_length*a
+            self.smoothing_length *= a
 
-    def get_smoothing_length(self, conv=units.Length_kpc, 
-                             no_h=True, comoving=False):
+    def get_smoothing_length(self, unit=None):
         """
-        Return Particle Smoothing Lengths in units of kpc (default)
-        conv: unit conversion from code units
-        no_h: if True, remove dependence on hubble parameter.
-        comoving: if False, remove dependence on scale factor.
+        Return Particle Smoothing Lengths in units of kpc.
+        (default set in units class)
+        unit: unit conversion from code units
         """
+        if unit:
+            if unit != self.units._smoothing_unit:
+                self.load_smoothing_length(unit)
         try:
             return self.smoothing_length
         except AttributeError:
-            self.load_smoothing_length(conv, no_h, comoving)
+            self.load_smoothing_length(unit)
             return self.smoothing_length
 
     def load_electron_fraction(self):
@@ -298,7 +306,7 @@ class PartTypeSPH(hdf5.PartTypeX):
         Calculate Particle Temperatures in degrees Kelvin.
         """
         gamma = self.get_gamma()
-        energy = self.get_internal_energy()
+        energy = self.get_internal_energy('specific cgs')
         h2frac = self.get_H2_fraction()
         mu = (0.24/4.0) + ((1.0-h2frac)*0.76) + (h2frac*.76/2.0)
         mu = 1 / mu # mean molecular weight
@@ -341,7 +349,7 @@ class PartTypeSPH(hdf5.PartTypeX):
 
     def get_freefall_time(self):
         """
-        Return Jeans Length for gas in cm.
+        Return the freefall time of the gas in s.
         """
         try:
             return self.t_ff

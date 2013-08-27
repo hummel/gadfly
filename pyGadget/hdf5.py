@@ -57,74 +57,82 @@ class PartTypeX(HDF5Group):
         self.loadable_keys = self._load_dict.keys()
         self._calculated = []
 
-    def load_masses(self, conv=units.Mass_sun, no_h=True):
+    def load_masses(self, unit=None):
         """
-        Load Particle Masses in units of M_sun (default)
-        conv: unit conversion from code units
-        no_h: if True, remove dependence on hubble parameter.
+        Load Particle Masses in units of M_sun (default set in units class)
+        unit: unit conversion from code units
         """
-        if no_h:
+        if unit:
+            self.units.set_mass(unit)
+        self.masses = self._Masses.value * self.units.mass_conv
+        if self.units.remove_h:
             h = self._header.HubbleParam
-            self.masses = self._Masses.value*conv/h
-        else:
-            self.masses = self._Masses.value*conv
+            self.masses /= h
 
-    def get_masses(self, conv=units.Mass_sun, no_h=True):
+    def get_masses(self, unit=None):
         """
-        Return Particle Masses in units of M_sun (default)
-        conv: unit conversion from code units
-        no_h: if True, remove dependence on hubble parameter.
+        Return Particle Masses in units of M_sun (default set in units class)
+        unit: unit conversion from code units
         """
+        if unit:
+            if unit != self.units.mass_unit:
+                self.load_masses(unit)
         try:
             return self.masses
         except AttributeError:
-            self.load_masses(conv,no_h)
+            self.load_masses(unit)
             return self.masses
 
-    def load_coords(self, conv=units.Length_kpc, no_h=True, comoving=False):
+    def load_coords(self, unit=None):
         """
-        Load Particle Coordinates in units of kpc (default)
-        conv: unit conversion from code units
-        no_h: if True, remove dependence on hubble parameter.
-        comoving: if False, remove dependence on scale factor.
+        Load Particle Coordinates in units of kpc (default set in units class)
+        unit: unit conversion from code units
         """
-        self.coordinates = self._Coordinates.value*conv
-        if no_h:
+        if unit:
+            self.units._set_coord_length(unit)
+        self.coordinates = self._Coordinates.value * self.units.length_conv
+        if self.units.remove_h:
             h = self._header.HubbleParam
-            self.coordinates = self.coordinates/h
-        if not comoving:
+            self.coordinates /= h
+        if self.units.coordinate_system == 'physical':
             a = self._header.ScaleFactor
-            self.coordinates = self.coordinates*a
+            self.coordinates *= a
 
-    def get_coords(self, conv=units.Length_kpc, no_h=True, comoving=False):
+    def get_coords(self, unit=None):
         """
-        Return Particle Coordinates in units of kpc (default)
-        conv: unit conversion from code units
-        no_h: if True, remove dependence on hubble parameter.
-        comoving: if False, remove dependence on scale factor.
+        Return Particle Coordinates in units of kpc (default set in units class)
+        unit: unit conversion from code units
         """
+        if unit:
+            if unit != self.units._coord_unit:
+                self.load_coords(unit)
         try:
             return self.coordinates
         except AttributeError:
-            self.load_coords(conv, no_h, comoving)
+            self.load_coords(unit)
             return self.coordinates
 
-    def load_velocities(self, conv=units.Velocity_kms):
+    def load_velocities(self, unit=None):
         """
-        Load Particle Velocities in units of km/s (default)
-        conv: unit conversion from code units
+        Load Particle Velocities in units of km/s (default set in units class)
+        unit: unit conversion from code units
         """
-        self.velocities = self._Velocities.value*conv
+        if unit:
+            self.units.set_velocity(unit)
+        self.velocities = self._Velocities.value * self.units.velocity_conv
 
-    def get_velocities(self, conv=units.Velocity_kms):
+    def get_velocities(self, unit=None):
         """
-        Return Particle Velocities in units of km/s (default)
-        conv: unit conversion from code units
+        Return Particle Velocities in units of km/s (default set in units class)
+        unit: unit conversion from code units
         """
+        if unit:
+            if unit != self.units.velocity_unit:
+                self.load_velocities(unit)
         try:
             return self.velocities
         except AttributeError:
-            self.load_velocities(conv)
+            self.load_velocities(unit)
             return self.velocities
 
     def load_PIDs(self):
