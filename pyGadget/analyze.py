@@ -26,13 +26,16 @@ def find_center(x, y, z, dens, *sinks, **kwargs):
 		cx = numpy.average(statistics.reject_outliers(x[hidens]))
 		cy = numpy.average(statistics.reject_outliers(y[hidens]))
 		cz = numpy.average(statistics.reject_outliers(z[hidens]))
+		print 'Density averaged box center: %.3e %.3e %.3e' %(cx,cy,cz)
 	elif centering == 'max':
 		center = dens.argmax()
 		cx,cy,cx = x[center], y[center], z[center]
+		print 'Density maximum box center: %.3e %.3e %.3e' %(cx,cy,cz)
 	else:
 		cx = (x.max() + x.min())/2
 		cy = (y.max() + y.min())/2
 		cz = (z.max() + z.min())/2
+		print 'Simple box center: %.3e %.3e %.3e' %(cx,cy,cz)
 	x -= cx
 	y -= cy
 	z -= cz
