@@ -2,6 +2,7 @@
 # Jacob Hummel
 import os
 import glob
+import numpy
 import Queue
 import subprocess
 import multiprocessing as mp
@@ -33,9 +34,9 @@ class Simulation(object):
         try:
             self.sink0 = sinks.SingleSink(self.sinkpath)
             print "Found sinkfiles.  Loading sinkdata."
-            self.tform = self.sink0.time[0]
+            self.tsink = self.sink0.time[0]
         except IOError:
-            self.tform = None
+            self.tsink = None
 
     def find_snapshots(self, *nums):
         path = self.datapath + self.name
@@ -68,8 +69,26 @@ class Simulation(object):
                               + str(num) + ' not found!')
         snap = snapshot.File(self, fname)
 
+        track_sinks = kwargs.pop('track_sinks',True)
+        if track_sinks:
+            print 'Tracking sinks.'
+            snap.gas.load_data('masses','coordinates',
+                               'particleIDs','sink_value')
+            snap.sink_ids = numpy.where(snap.gas.sink_value != 0)[0]
+            if snap.sink_ids.size > 0:
+                if snap.sim.tsink is None:
+                    snap.sim.tsink = snap.header.Time * units.Time_yr
+                for index in snap.sink_ids:
+                    m = snap.gas.masses[index]
+                    pid = snap.gas.particleIDs[index]
+                    pos = snap.gas.coordinates[index]
+                    snap.sinks.append(sinks.Sink(m=m, pid=pid, pos=pos))
+            print snap.sink_ids.size,'sinks found.'
+
         if load_keys:
             snap.gas.load_data(*load_keys,**kwargs)
+        else:
+            snap.gas.cleanup()
         return snap
 
     def multitask(self,plot_func,*data):

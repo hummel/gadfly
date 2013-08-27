@@ -136,28 +136,35 @@ def py_scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
     return zi
 
 #===============================================================================
-def set_viewpoint(pos, dens, viewpoint, **kwargs):
+def set_viewpoint(pos, dens, viewpoint, *sinks, **kwargs):
     if viewpoint == 'xy':
         x = pos[:,0]
         y = pos[:,1]
         z = pos[:,2]
+        for sink in sinks:
+            sink.x = sink.pos[0]
+            sink.y = sink.pos[1]
+            sink.z = sink.pos[2]
     elif viewpoint == 'xz':
         x = pos[:,0]
         y = pos[:,2]
         z = pos[:,1]
+        for sink in sinks:
+            sink.x = sink.pos[0]
+            sink.y = sink.pos[2]
+            sink.z = sink.pos[1]
     elif viewpoint == 'yz':
         x = pos[:,1]
         y = pos[:,2]
         z = pos[:,0]
+        for sink in sinks:
+            sink.x = sink.pos[1]
+            sink.y = sink.pos[2]
+            sink.z = sink.pos[0]
     else:
         raise KeyError
 
-    if kwargs.get('centering', True):
-        x,y,z = analyze.find_center(x,y,z,dens,**kwargs)
-    else:
-        x = x - (x.max() + x.min())/2
-        y = y - (y.max() + y.min())/2
-        z = z - (z.max() + z.min())/2
+    x,y,z = analyze.find_center(x,y,z,dens,*sinks,**kwargs)
     return x,y,z
 
 def trim_view(width, x, y, z, *args, **kwargs):
@@ -199,15 +206,19 @@ def project(snapshot, loadable, scale, viewpoint, **kwargs):
     boxsize = float("".join(ch if ch.isdigit() else "" for ch in scale))
     unit = "".join(ch if not ch.isdigit() else "" for ch in scale)
     length_unit = units.Lengths[unit]
-
     scalar = snapshot.gas._load_dict[loadable]()
     pos = snapshot.gas.get_coords(length_unit)
     hsml = snapshot.gas.get_smoothing_length(length_unit)
+
     print 'Calculating...'
-    x,y,z = set_viewpoint(pos,scalar,viewpoint,**kwargs)
+    x,y,z = set_viewpoint(pos, scalar, viewpoint, *snapshot.sinks, **kwargs)
+    if snapshot.sink_ids is not None:
+        # Artificially shrink sink smoothing lengths.
+        hsml[snapshot.sink_ids] *= 1e-6
     x,y,z,scalar,hsml = trim_view(boxsize, x,y,z,scalar,hsml,**kwargs)
     hsml = numpy.fmax(sm * hsml, boxsize/pps/2)
     xi,yi = build_grid(boxsize,pps)
+    print x.shape,y.shape,scalar.shape,hsml.shape
     zi = scalar_map(x,y,scalar,hsml,boxsize,pps,xi.shape)
     print '%s:: min: %.3e max: %.3e' %(loadable, zi.min(),zi.max())
     imscale = kwargs.pop('imscale','log')

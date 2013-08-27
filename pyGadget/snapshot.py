@@ -26,7 +26,7 @@ class File:
         self.dm = nbody.PartTypeDM(self.file_id)
         self.gas = sph.PartTypeSPH(self.file_id)
         self.sink_ids = None
-        self.sinks = None
+        self.sinks = []
         
     def keys(self):
         for key in self.file_id.keys():

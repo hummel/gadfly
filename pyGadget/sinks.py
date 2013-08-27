@@ -13,18 +13,19 @@ import units
 class Sink(object):
     def __init__(self,**properties):
         super(Sink,self).__init__()
-        sink_props = {'m': None, 'x': None, 'y': None, 'z': None, 'r': None,
-                      'e': None, 'p': None, 'n': None, 'id': None}
+        sink_props = {'m': None, 'x': None, 'y': None, 'z': None, 'pos':None,
+                      'r': None, 'e': None, 'p': None, 'n': None, 'pid': None}
         sink_props.update(properties)
         self.mass = sink_props['m']
         self.x = sink_props['x']
         self.y = sink_props['y']
         self.z = sink_props['z']
+        self.pos = sink_props['pos']
         self.radius = sink_props['r']
         self.energy = sink_props['e']
         self.pressure = sink_props['p']
         self.npart_acc = sink_props['n']
-        self.pid = sink_props['id']
+        self.pid = sink_props['pid']
 
 class SinkData(object):
     def __init__(self,path):

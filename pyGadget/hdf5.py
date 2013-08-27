@@ -179,6 +179,7 @@ class PartTypeX(HDF5Group):
         stride: If set, take every stride'th particle.
         """
         #load primary quantities first.
+        print 'Loading data...'
         for p in properties:
             if p not in self._calculated:
                 self.load_quantity(p)

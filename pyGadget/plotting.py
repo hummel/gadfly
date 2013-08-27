@@ -165,13 +165,13 @@ class Image(Plot):
     Class for image-style plots.
     """
     def __init__(self, snapshot, figsize=(12,9), **fig_args):
+        self.track_sinks = fig_args.pop('track_sinks',True)
         super(Image,self).__init__(snapshot,figsize=figsize,**fig_args)
         self.axes = self.figure.add_subplot(111)
         self.axes.set_axis_off()
         self.cbar = None
-        self.plot_sinks = fig_args.pop('sinks',True)
 
-    def annotate_axes(self, scale=None, sinks=False):
+    def annotate_axes(self, scale=None):
         self.axes.text(.01, .96, 'z: %.2f' %self.snapshot.header.Redshift,
                         color='white', fontsize=18,
                         transform=self.axes.transAxes)
@@ -180,8 +180,20 @@ class Image(Plot):
             unit = "".join(ch if not ch.isdigit() else "" for ch in scale)
             self.axes.text(.01,.01, boxsize+' '+unit, color='white',
                             fontsize=18, transform=self.axes.transAxes)
+        if self.track_sinks:
+            if self.snapshot.sim.tsink:
+                t_acc = self.snapshot.header.Time * units.Time_yr \
+                    - self.snapshot.sim.tsink
+                self.axes.text(.75, .96, 't$_{form}$: %.1f yr' %t_acc,
+                                color='white', fontsize=18,
+                                transform=self.axes.transAxes)
+                for sink in self.snapshot.sinks:
+                    self.axes.plot(sink.x, sink.y, 'k+', ms=5, mew=1.25)
+                    self.axes.text(sink.x+10, sink.y+5, '%.1f' %sink.mass)
 
     def density(self, scale, viewpoint, **kwargs):
+        if self.track_sinks:
+            kwargs['track_sinks'] = True
         x,y,z = visualize.project(self.snapshot, 'ndensity',
                                   scale, viewpoint, **kwargs)
         ax = kwargs.pop('axis',self.axes)

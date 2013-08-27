@@ -7,11 +7,12 @@ from . import units
 from . import constants
 
 #===============================================================================
-def find_center(x, y, z, dens, **kwargs):
+def find_center(x, y, z, dens, *sinks, **kwargs):
 	centering = kwargs.pop('centering','avg')
 	dens_limit = kwargs.pop('dens_limit', 1e11)
 	nparticles = kwargs.pop('centering_npart', 100)
 	verbose = kwargs.pop('centering_verbose', True)
+	retcen = kwargs.pop('retcen',False)
 	if centering == 'avg':
 		hidens = numpy.where(dens >= dens_limit)[0]
 		while hidens.size < nparticles:
@@ -22,14 +23,23 @@ def find_center(x, y, z, dens, **kwargs):
 		    print ('Center averaged over all particles with density '\
 			       'greater than %.2e particles/cc' %dens_limit)
 		#Center on highest density clump, rejecting outliers:
-		x = x - numpy.average(statistics.reject_outliers(x[hidens]))
-		y = y - numpy.average(statistics.reject_outliers(y[hidens]))
-		z = z - numpy.average(statistics.reject_outliers(z[hidens]))
+		cx = numpy.average(statistics.reject_outliers(x[hidens]))
+		cy = numpy.average(statistics.reject_outliers(y[hidens]))
+		cz = numpy.average(statistics.reject_outliers(z[hidens]))
 	elif centering == 'max':
 		center = dens.argmax()
-		x = x - x[center]
-		y = y - y[center]
-		z = z - z[center]
+		cx,cy,cx = x[center], y[center], z[center]
+	else:
+		cx = (x.max() + x.min())/2
+		cy = (y.max() + y.min())/2
+		cz = (z.max() + z.min())/2
+	x -= cx
+	y -= cy
+	z -= cz
+	for sink in sinks:
+		sink.x -= cx
+		sink.y -= cy
+		sink.z -= cz
         return x,y,z
 
 #===============================================================================
