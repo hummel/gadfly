@@ -65,7 +65,7 @@ class Simulation(object):
                               + str(num) + ' not found!')
         snap = snapshot.File(self, fname)
 
-        track_sinks = kwargs.pop('track_sinks',True)
+        track_sinks = kwargs.pop('track_sinks',False)
         if track_sinks:
             print 'Tracking sinks.'
             snap.gas.load_data('masses','coordinates',
