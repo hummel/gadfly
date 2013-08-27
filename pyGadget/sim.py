@@ -14,22 +14,18 @@ import plotting
 
 class Simulation(object):
     """
-    Class for simulations.  Primarily for gathering metadata.
+    Class for simulations.  Primarily for gathering metadata such as file
+    paths and unit coversions.
     """
-    def __init__(self, sim_name, **kwargs):
+    def __init__(self, sim_name, **simargs):
         super(Simulation,self).__init__()
         self.name = sim_name
-        self.datapath = kwargs.pop('datapath',os.getenv('HOME')+'/sim/')
-        self.plotpath = kwargs.pop('plotpath',(os.getenv('HOME')
+        self.datapath = simargs.pop('datapath',os.getenv('HOME')+'/sim/')
+        self.plotpath = simargs.pop('plotpath',(os.getenv('HOME')
                                                +'/data/simplots/'))
-        self.sinkpath = kwargs.pop('sinkpath',os.getenv('HOME')+'/data/sinks/')
-        
-        self.length_unit = kwargs.pop('length_unit',units.Length_AU)
-        self.mass_unit = kwargs.pop('mass_unit',units.Mass_sun)
-        self.time_unit = kwargs.pop('length_unit',units.Time_yr)
-        self.units = {'length':self.length_unit,
-                      'mass':self.mass_unit,
-                      'time':self.time_unit}
+        self.sinkpath = simargs.pop('sinkpath',os.getenv('HOME')+'/data/sinks/')
+        self.units = units.Units(**simargs)
+
         self.snapfiles = self.find_snapshots()
         try:
             self.sink0 = sinks.SingleSink(self.sinkpath)
