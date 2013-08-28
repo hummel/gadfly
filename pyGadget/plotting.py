@@ -206,4 +206,6 @@ class Image(Plot):
             self.cbar.set_ticks(range(clim[0], clim[1]+1))
         self.cbar.set_label('Log Number Density [cm$^{-3}$]')
         self.annotate_axes(scale)
+        self.axes.set_xlim(x.min(), x.max())
+        self.axes.set_ylim(y.min(), y.max())
         pyplot.draw()
