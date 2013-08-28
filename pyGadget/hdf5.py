@@ -200,13 +200,16 @@ class PartTypeX(HDF5Group):
         # Refine if desired
         rf = kwargs.pop('refine', True)
         if rf:
+            #Need full mass and sink arrays loaded to avoid index errors.
+            self.load_masses()
+            self.load_sinks()
             mass = self.get_masses()
             sinks = self.get_sinks()
             minimum = numpy.amin(mass)
             refined = numpy.where((mass <= minimum) | (sinks != 0.))[0]
             for prop in properties:
                 # refine only if not already refined.
-                if vars(self)[prop].size == mass.size:
+                if vars(self)[prop].shape[0] == mass.shape[0]:
                     vars(self)[prop] = vars(self)[prop][refined]
         stride = kwargs.pop('stride', None)
         if stride:
