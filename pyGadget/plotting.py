@@ -165,7 +165,7 @@ class Image(Plot):
     Class for image-style plots.
     """
     def __init__(self, snapshot, figsize=(12,9), **fig_args):
-        self.track_sinks = fig_args.pop('track_sinks',True)
+        self.track_sinks = fig_args.pop('track_sinks',False)
         super(Image,self).__init__(snapshot,figsize=figsize,**fig_args)
         self.axes = self.figure.add_subplot(111)
         self.axes.set_axis_off()
@@ -192,8 +192,6 @@ class Image(Plot):
                     self.axes.text(sink.x+10, sink.y+5, '%.1f' %sink.mass)
 
     def density(self, scale, viewpoint, **kwargs):
-        if self.track_sinks:
-            kwargs['track_sinks'] = True
         x,y,z = visualize.project(self.snapshot, 'ndensity',
                                   scale, viewpoint, **kwargs)
         ax = kwargs.pop('axis',self.axes)
