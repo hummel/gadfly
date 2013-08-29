@@ -216,7 +216,6 @@ def project(snapshot, loadable, scale, viewpoint, **kwargs):
     x,y,z,scalar,hsml = trim_view(boxsize, x,y,z,scalar,hsml,**kwargs)
     hsml = numpy.fmax(sm * hsml, boxsize/pps/2)
     xi,yi = build_grid(boxsize,pps)
-    print x.shape,y.shape,scalar.shape,hsml.shape
     zi = scalar_map(x,y,scalar,hsml,boxsize,pps,xi.shape)
     print '%s:: min: %.3e max: %.3e' %(loadable, zi.min(),zi.max())
     imscale = kwargs.pop('imscale','log')
