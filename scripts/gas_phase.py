@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# gas_temp.py
+# gas_phase.py
 # Jacob Hummel
 
 import os
