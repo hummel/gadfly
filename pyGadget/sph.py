@@ -13,7 +13,7 @@ class PartTypeSPH(hdf5.PartTypeX):
     Class for SPH particles.
     Extends class PartTypeX to include gas physics stuff.
     """
-    def __init__(self, file_id, units):
+    def __init__(self, file_id, units, **kwargs):
         super(PartTypeSPH,self).__init__(file_id,0, units)
 
         sph_loaders = {'density':self.get_density,
@@ -35,6 +35,19 @@ class PartTypeSPH(hdf5.PartTypeX):
         self._load_dict.update(sph_derived)
         self.loadable_keys = self._load_dict.keys()
         self._calculated.append(sph_derived.keys())
+
+        self._refined = None
+        self.refine = kwargs.pop('refine_gas', True)
+        if self.refine:
+            print 'Turning on gas particle refinement.'
+            self.locate_refined_particles()
+
+    def locate_refined_particles(self):
+        mass = self.get_masses()
+        sinks = self.get_sinks()
+        minimum = numpy.amin(mass)
+        self._refined = numpy.where((mass <= minimum) | (sinks != 0.))[0]
+        self.cleanup()
 
     def load_data(self, *properties, **kwargs):
         """
@@ -74,6 +87,8 @@ class PartTypeSPH(hdf5.PartTypeX):
         if self.units.coordinate_system == 'physical':
             ainv = self._header.Redshift + 1 # 1/(scale factor)
             self.density = self.density * ainv**3
+        if self._refined is not None:
+            self.density = self.density[self._refined]
 
     def get_density(self, unit=None):
         """
@@ -108,6 +123,8 @@ class PartTypeSPH(hdf5.PartTypeX):
         if self.units.coordinate_system == 'physical':
             ainv = self._header.Redshift + 1 # 1/(scale factor)
             self.ndensity = self.ndensity * ainv**3
+        if self._refined is not None:
+            self.ndensity = self.ndensity[self._refined]
 
     def get_number_density(self, unit=None):
         """
@@ -132,6 +149,8 @@ class PartTypeSPH(hdf5.PartTypeX):
         if unit:
             self.units.set_energy(unit)
         self.energy = self._InternalEnergy.value * self.units.energy_conv
+        if self._refined is not None:
+            self.energy = self.energy[self._refined]
 
 
     def get_internal_energy(self, unit=None):
@@ -153,6 +172,8 @@ class PartTypeSPH(hdf5.PartTypeX):
         Load particle adiabatic index.
         """
         self.gamma = self._Adiabatic_index.value
+        if self._refined is not None:
+            self.gamma = self.gamma[self._refined]
 
 
     def get_gamma(self):
@@ -173,6 +194,8 @@ class PartTypeSPH(hdf5.PartTypeX):
         0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
         """
         self.abundances = self._ChemicalAbundances.value
+        if self._refined is not None:
+            self.abundances = self.abundances[self._refined]
 
 
     def get_abundances(self, species=None):
@@ -203,6 +226,8 @@ class PartTypeSPH(hdf5.PartTypeX):
         Load particle sink values.
         """
         self.sink_value = self._SinkValue.value
+        if self._refined is not None:
+            self.sink_value = self.sink_value[self._refined]
 
 
     def get_sinks(self):
@@ -231,6 +256,8 @@ class PartTypeSPH(hdf5.PartTypeX):
         if self.units.coordinate_system == 'physical':
             a = self._header.ScaleFactor
             self.smoothing_length *= a
+        if self._refined is not None:
+            self.smoothing_length = self.smoothing_length[self._refined]
 
     def get_smoothing_length(self, unit=None):
         """
@@ -254,6 +281,8 @@ class PartTypeSPH(hdf5.PartTypeX):
         # Chemical Abundances--> 0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
         abundances = self.get_abundances()
         self.electron_frac = abundances[:,1] + abundances[:,4] + abundances[:,5]
+        if self._refined is not None:
+            self.electron_frac = self.electron_frac[self._refined]
 
     def get_electron_fraction(self):
         """

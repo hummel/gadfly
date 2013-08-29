@@ -68,6 +68,8 @@ class PartTypeX(HDF5Group):
         if self.units.remove_h:
             h = self._header.HubbleParam
             self.masses /= h
+        if self._refined is not None:
+            self.masses = self.masses[self._refined]
 
     def get_masses(self, unit=None):
         """
@@ -97,6 +99,8 @@ class PartTypeX(HDF5Group):
         if self.units.coordinate_system == 'physical':
             a = self._header.ScaleFactor
             self.coordinates *= a
+        if self._refined is not None:
+            self.coordinates = self.coordinates[self._refined]
 
     def get_coords(self, unit=None):
         """
@@ -120,6 +124,8 @@ class PartTypeX(HDF5Group):
         if unit:
             self.units.set_velocity(unit)
         self.velocities = self._Velocities.value * self.units.velocity_conv
+        if self._refined is not None:
+            self.velocities = self.velocities[self._refined]
 
     def get_velocities(self, unit=None):
         """
@@ -140,6 +146,8 @@ class PartTypeX(HDF5Group):
         Load Particle ID numbers
         """
         self.particleIDs = self._ParticleIDs.value
+        if self._refined is not None:
+            self.particleIDs = self.particleIDs[self._refined]
 
     def get_PIDs(self):
         """
@@ -197,20 +205,6 @@ class PartTypeX(HDF5Group):
             if p in self._calculated:
                 self.load_quantity(p)
 
-        # Refine if desired
-        rf = kwargs.pop('refine', True)
-        if rf:
-            #Need full mass and sink arrays loaded to avoid index errors.
-            self.load_masses()
-            self.load_sinks()
-            mass = self.get_masses()
-            sinks = self.get_sinks()
-            minimum = numpy.amin(mass)
-            refined = numpy.where((mass <= minimum) | (sinks != 0.))[0]
-            for prop in properties:
-                # refine only if not already refined.
-                if vars(self)[prop].shape[0] == mass.shape[0]:
-                    vars(self)[prop] = vars(self)[prop][refined]
         stride = kwargs.pop('stride', None)
         if stride:
             for prop in properties:

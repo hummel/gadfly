@@ -3,6 +3,7 @@
 """
 This module contains classes for reading Gadget2 HDF5 snapshot files.
 """
+import os
 import string
 import threading
 import h5py
@@ -16,15 +17,15 @@ class File:
     """
     Class for Gadget2 HDF5 snapshot files.
     """
-    def __init__(self, sim, filename):
+    def __init__(self, sim, filename, **kwargs):
         self.sim = sim
         self.filename = filename
         f = filename.replace('.hdf5','')
         self.number = int(f.split('_')[-1])
         self.file_id = h5py.File(filename, 'r')
         self.header = hdf5.Header(self.file_id)
-        self.dm = nbody.PartTypeDM(self.file_id, sim.units)
-        self.gas = sph.PartTypeSPH(self.file_id, sim.units)
+        self.dm = nbody.PartTypeDM(self.file_id, sim.units, **kwargs)
+        self.gas = sph.PartTypeSPH(self.file_id, sim.units, **kwargs)
         self.sink_ids = None
         self.sinks = []
         

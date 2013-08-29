@@ -55,6 +55,7 @@ class Simulation(object):
         self.snapfiles = self.find_snapshots(*nums)
 
     def load_snapshot(self, num, *load_keys,**kwargs):
+        track_sinks = kwargs.pop('track_sinks',False)
         try:
             fname = self.snapfiles[num]
         except KeyError:
@@ -63,9 +64,8 @@ class Simulation(object):
             except KeyError:
                 raise IOError('Sim ' + self.name + ' snapshot '
                               + str(num) + ' not found!')
-        snap = snapshot.File(self, fname)
+        snap = snapshot.File(self, fname, **kwargs)
 
-        track_sinks = kwargs.pop('track_sinks',False)
         if track_sinks:
             print 'Tracking sinks.'
             snap.gas.load_data('masses','coordinates',
@@ -79,6 +79,8 @@ class Simulation(object):
                     pid = snap.gas.particleIDs[index]
                     pos = snap.gas.coordinates[index]
                     snap.sinks.append(sinks.Sink(m=m, pid=pid, pos=pos))
+                snap.sim.units._sink_mass_unit = snap.sim.units.mass_unit
+                snap.sim.units._sink_coord_unit = snap.sim.units.length_unit
             print snap.sink_ids.size,'sinks found.'
 
         if load_keys:
