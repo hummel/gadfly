@@ -212,7 +212,7 @@ def project(snapshot, loadable, scale, viewpoint, **kwargs):
     x,y,z = set_viewpoint(pos, scalar, viewpoint, *snapshot.sinks, **kwargs)
     if snapshot.sink_ids is not None:
         # Artificially shrink sink smoothing lengths.
-        hsml[snapshot.sink_ids] *= 1e-6
+        hsml[snapshot.sink_ids] *= .5
     x,y,z,scalar,hsml = trim_view(boxsize, x,y,z,scalar,hsml,**kwargs)
     hsml = numpy.fmax(sm * hsml, boxsize/pps/2)
     xi,yi = build_grid(boxsize,pps)
