@@ -13,19 +13,22 @@ import units
 class Sink(object):
     def __init__(self,**properties):
         super(Sink,self).__init__()
-        sink_props = {'m': None, 'x': None, 'y': None, 'z': None, 'pos':None,
-                      'r': None, 'e': None, 'p': None, 'n': None, 'pid': None}
-        sink_props.update(properties)
-        self.mass = sink_props['m']
-        self.x = sink_props['x']
-        self.y = sink_props['y']
-        self.z = sink_props['z']
-        self.pos = sink_props['pos']
-        self.radius = sink_props['r']
-        self.energy = sink_props['e']
-        self.pressure = sink_props['p']
-        self.npart_acc = sink_props['n']
-        self.pid = sink_props['pid']
+        self.mass = properties.pop('m', None)
+        self.x = properties.pop('x', None)
+        self.y = properties.pop('y', None)
+        self.z = properties.pop('z', None)
+        self.pos = properties.pop('pos', None)
+        self.radius = properties.pop('r', None)
+        self.energy = properties.pop('e', None)
+        self.pressure = properties.pop('p', None)
+        self.npart_acc = properties.pop('n', None)
+        self.pid = properties.pop('pid', None)
+        self.index = properties.pop('index', None)
+
+    def update_coordinates(self, x,y,z):
+        self.x = x[self.index]
+        self.y = y[self.index]
+        self.z = z[self.index]
 
 class SinkData(object):
     def __init__(self,path):

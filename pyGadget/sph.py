@@ -7,6 +7,7 @@ import numpy
 import units
 import constants
 import hdf5
+import sink
 
 class PartTypeSPH(hdf5.PartTypeX):
     """
@@ -42,32 +43,34 @@ class PartTypeSPH(hdf5.PartTypeX):
             print 'Turning on gas particle refinement.'
             self.locate_refined_particles()
 
+        self.sink_tracking = kwargs.pop('track_sinks', False)
+        if self.sink_tracking:
+            print 'Tracking sinks.'
+            self.locate_sink_particles()
+
     def locate_refined_particles(self):
         mass = self.get_masses()
         sinks = self.get_sinks()
         minimum = numpy.amin(mass)
         self._refined = numpy.where((mass <= minimum) | (sinks != 0.))[0]
-        self.cleanup()
+        self.masses = self.masses[self._refined]
+        self.sink_value = self.sink_value[self._refined]
+        print 'There are', self._refined.size, 'highest resolution particles.'
 
-    def load_data(self, *properties, **kwargs):
-        """
-        Load a selection of keys and refine to highest resolution particles.
-        Cleans up unrequested properties loaded for calculation of other 
-        requested properties when finished.
+    def locate_sink_particles(self):
+        sinks = self.get_sinks()
+        self._sink_indices = numpy.where(sinks != 0.)[0]
+        print self._sink_indices.size, 'sinks found.'
 
-        properties: arbitrary number of keys from the list.
-        refine (default True): refine to highest resolution particles only.
-        sinks (default False): if true, load sink properties.
-        """
-        super(PartTypeSPH,self).load_data(*properties, **kwargs)
-        if kwargs.pop('sinks', False):
-            sinkval = self.get_sinks()
-            ids = self.sink_ids = numpy.where(sinkval != 0)[0] 
-            if self.sink_ids.size > 0:
-                print self.sink_ids.size,'sinks found.'
-            if 'sink_value' not in properties:
-                del self.sink_value
-
+    def get_sink_properties(self):
+        mass = self.get_masses()
+        pos = self.get_coords()
+        pid = self.get_PIDs()
+        sinks = []
+        for index in self._sink_indices:
+            sinks.append(sink.Sink(m = mass[index], pid = pid[index],
+                                   pos = pos[index], index=index))
+        return sinks
 
     def load_density(self, unit=None):
         """

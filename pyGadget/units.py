@@ -35,6 +35,15 @@ Time_gyr = Time_yr / 1e9
 class Units(object):
     def __init__(self, **unitargs):
         super(Units,self).__init__()
+        self.lengths = {'cm':Length_cm, 'AU':Length_AU,
+                        'pc':Length_pc, 'kpc':Length_kpc}
+        self.masses = {'g':Mass_g, 'solar':Mass_sun}
+        self.times = {'s':Time_s, 'yr':Time_yr, 'myr':Time_myr, 'gyr':Time_gyr}
+        self.velocities = {'cgs':Velocity_cgs, 'kms':Velocity_kms}
+        self.densities = {'cgs':Density_cgs}
+        self.pressures = {'cgs':Pressure_cgs}
+        self.energies = {'cgs':Energy_cgs, 'specific cgs':Energy_cgs/Mass_g}
+
         self.remove_h = not unitargs.pop('units_over_h', False)
         self.set_coordinate_system(unitargs.pop('coordinates', 'physical'))
         self.set_length(unitargs.pop('length', 'kpc'))
@@ -46,6 +55,8 @@ class Units(object):
         self.set_energy(unitargs.pop('energy', 'cgs'))
         self._coord_unit = self.length_unit
         self._smoothing_unit = self.length_unit
+        self._sink_mass_unit = None
+        self._sink_coord_unit = None
 
     def set_coordinate_system(self,coordinates):
         if coordinates not in ['physical', 'comoving']:
@@ -53,10 +64,8 @@ class Units(object):
         self.coordinate_system = coordinates
 
     def set_length(self, unit):
-        Lengths = {'cm':Length_cm, 'AU':Length_AU,
-                   'pc':Length_pc, 'kpc':Length_kpc}
         self.length_unit = unit
-        self.length_conv = Lengths[self.length_unit]
+        self.length_conv = self.lengths[self.length_unit]
 
     def _set_coord_length(self, unit):
         self.set_length(unit)
@@ -67,31 +76,37 @@ class Units(object):
         self._smoothing_unit = unit
 
     def set_mass(self, unit):
-        Masses = {'g':Mass_g, 'solar':Mass_sun}
         self.mass_unit = unit
-        self.mass_conv = Masses[self.mass_unit]
+        self.mass_conv = self.masses[self.mass_unit]
 
     def set_time(self, unit):
-        Times = {'s':Time_s, 'yr':Time_yr, 'myr':Time_myr, 'gyr':Time_gyr}
         self.time_unit = unit
-        self.time_conv = Times[self.time_unit]
+        self.time_conv = self.times[self.time_unit]
 
     def set_velocity(self, unit):
-        Velocities = {'cgs':Velocity_cgs, 'kms':Velocity_kms}
         self.velocity_unit = unit
-        self.velocity_conv = Velocities[self.velocity_unit]
+        self.velocity_conv = self.velocities[self.velocity_unit]
 
     def set_density(self, unit):
-        Densities = {'cgs':Density_cgs}
         self.density_unit = unit
-        self.density_conv = Densities[self.density_unit]
+        self.density_conv = self.densities[self.density_unit]
 
     def set_pressure(self, unit):
-        Pressures = {'cgs':Pressure_cgs}
         self.pressure_unit = unit
-        self.pressure_conv = Pressures[self.pressure_unit]
+        self.pressure_conv = self.pressures[self.pressure_unit]
 
     def set_energy(self, unit):
-        Energies = {'cgs':Energy_cgs, 'specific cgs':Energy_cgs/Mass_g}
         self.energy_unit = unit
-        self.energy_conv = Energies[self.energy_unit]
+        self.energy_conv = self.energies[self.energy_unit]
+
+    def convert_units(self, val, u1, u2):
+        val /= self.lengths[u1]
+        val *= self.lengths[u2]
+        return val
+
+    def update_sink_coords(self, new_unit, sinks):
+        for sink in sinks:
+            sink.x = self.convert_units(sink.x, self._sink_coord_unit, new_unit)
+            sink.y = self.convert_units(sink.y, self._sink_coord_unit, new_unit)
+            sink.z = self.convert_units(sink.z, self._sink_coord_unit, new_unit)
+        self._sink_coord_unit = new_unit

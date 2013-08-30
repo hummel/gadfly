@@ -7,7 +7,7 @@ from . import units
 from . import constants
 
 #===============================================================================
-def find_center(x, y, z, dens, *sinks, **kwargs):
+def find_center(x, y, z, dens, **kwargs):
 	centering = kwargs.pop('centering','avg')
 	dens_limit = kwargs.pop('dens_limit', 1e11)
 	nparticles = kwargs.pop('centering_npart', 100)
@@ -39,10 +39,6 @@ def find_center(x, y, z, dens, *sinks, **kwargs):
 	x -= cx
 	y -= cy
 	z -= cz
-	for sink in sinks:
-		sink.x -= cx
-		sink.y -= cy
-		sink.z -= cz
         return x,y,z
 
 #===============================================================================

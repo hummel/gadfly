@@ -7,8 +7,8 @@ import Queue
 import subprocess
 import multiprocessing as mp
 
+import sink
 import units
-import sinks
 import snapshot
 import plotting
 
@@ -28,7 +28,7 @@ class Simulation(object):
 
         self.snapfiles = self.find_snapshots()
         try:
-            self.sink0 = sinks.SingleSink(self.sinkpath)
+            self.sink0 = sink.SingleSink(self.sinkpath)
             print "Found sinkfiles.  Loading sinkdata."
             self.tsink = self.sink0.time[0]
         except IOError:
@@ -55,7 +55,6 @@ class Simulation(object):
         self.snapfiles = self.find_snapshots(*nums)
 
     def load_snapshot(self, num, *load_keys,**kwargs):
-        track_sinks = kwargs.pop('track_sinks',False)
         try:
             fname = self.snapfiles[num]
         except KeyError:
@@ -66,22 +65,10 @@ class Simulation(object):
                               + str(num) + ' not found!')
         snap = snapshot.File(self, fname, **kwargs)
 
-        if track_sinks:
-            print 'Tracking sinks.'
-            snap.gas.load_data('masses','coordinates',
-                               'particleIDs','sink_value')
-            snap.sink_ids = numpy.where(snap.gas.sink_value != 0)[0]
-            if snap.sink_ids.size > 0:
+        if kwargs.get('track_sinks',False):
+            if snap.gas._sink_indices.size > 0:
                 if snap.sim.tsink is None:
                     snap.sim.tsink = snap.header.Time * units.Time_yr
-                for index in snap.sink_ids:
-                    m = snap.gas.masses[index]
-                    pid = snap.gas.particleIDs[index]
-                    pos = snap.gas.coordinates[index]
-                    snap.sinks.append(sinks.Sink(m=m, pid=pid, pos=pos))
-                snap.sim.units._sink_mass_unit = snap.sim.units.mass_unit
-                snap.sim.units._sink_coord_unit = snap.sim.units.length_unit
-            print snap.sink_ids.size,'sinks found.'
 
         if load_keys:
             snap.gas.load_data(*load_keys,**kwargs)

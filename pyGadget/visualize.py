@@ -140,30 +140,18 @@ def set_viewpoint(pos, dens, viewpoint, *sinks, **kwargs):
         x = pos[:,0]
         y = pos[:,1]
         z = pos[:,2]
-        for sink in sinks:
-            sink.x = sink.pos[0]
-            sink.y = sink.pos[1]
-            sink.z = sink.pos[2]
     elif viewpoint == 'xz':
         x = pos[:,0]
         y = pos[:,2]
         z = pos[:,1]
-        for sink in sinks:
-            sink.x = sink.pos[0]
-            sink.y = sink.pos[2]
-            sink.z = sink.pos[1]
     elif viewpoint == 'yz':
         x = pos[:,1]
         y = pos[:,2]
         z = pos[:,0]
-        for sink in sinks:
-            sink.x = sink.pos[1]
-            sink.y = sink.pos[2]
-            sink.z = sink.pos[0]
     else:
         raise KeyError
 
-    x,y,z = analyze.find_center(x,y,z,dens,*sinks,**kwargs)
+    x,y,z = analyze.find_center(x,y,z,dens,**kwargs)
     return x,y,z
 
 def trim_view(width, x, y, z, *args, **kwargs):
@@ -209,10 +197,11 @@ def project(snapshot, loadable, scale, viewpoint, **kwargs):
     hsml = snapshot.gas.get_smoothing_length(unit)
 
     print 'Calculating...'
-    x,y,z = set_viewpoint(pos, scalar, viewpoint, *snapshot.sinks, **kwargs)
-    if snapshot.sink_ids is not None:
-        # Artificially shrink sink smoothing lengths.
-        hsml[snapshot.sink_ids] *= .5
+    x,y,z = set_viewpoint(pos, scalar, viewpoint, **kwargs)
+    snapshot.update_sink_coordinates(x,y,z)
+    # Artificially shrink sink smoothing lengths.
+    for s in snapshot.sinks:
+        hsml[s.index] *= .5
     x,y,z,scalar,hsml = trim_view(boxsize, x,y,z,scalar,hsml,**kwargs)
     hsml = numpy.fmax(sm * hsml, boxsize/pps/2)
     xi,yi = build_grid(boxsize,pps)
