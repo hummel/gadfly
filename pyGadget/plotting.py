@@ -178,8 +178,10 @@ class Image(Plot):
         if scale:
             boxsize = "".join(ch if ch.isdigit() else "" for ch in scale)
             unit = "".join(ch if not ch.isdigit() else "" for ch in scale)
-            self.axes.text(.01,.01, boxsize+' '+unit, color='white',
-                            fontsize=18, transform=self.axes.transAxes)
+            coordinates = self.snapshot.sim.units.coordinate_system
+            text = '{} {} ({})'.format(boxsize,unit,coordinates)
+            self.axes.text(.01,.01, text, color='white', fontsize=18,
+                            transform=self.axes.transAxes)
         if self.track_sinks:
             if self.snapshot.sim.tsink:
                 t_acc = self.snapshot.header.Time * units.Time_yr \
