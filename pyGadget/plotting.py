@@ -198,6 +198,7 @@ class Image(Plot):
                                   scale, viewpoint, **kwargs)
         ax = kwargs.pop('axis',self.axes)
         ax.cla()
+        ax.set_axis_off()
         img = ax.imshow(z, extent=[x.min(),x.max(),y.min(),y.max()],
                         cmap=pyplot.cm.RdGy_r,origin='lower')
         if not self.cbar:
