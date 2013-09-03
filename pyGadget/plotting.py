@@ -195,6 +195,7 @@ class Image(Plot):
         x,y,z = visualize.project(self.snapshot, 'ndensity',
                                   scale, viewpoint, **kwargs)
         ax = kwargs.pop('axis',self.axes)
+        ax.cla()
         img = ax.imshow(z, extent=[x.min(),x.max(),y.min(),y.max()],
                         cmap=pyplot.cm.RdGy_r,origin='lower')
         if not self.cbar:
