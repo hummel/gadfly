@@ -2,9 +2,7 @@
 # gas_phase.py
 # Jacob Hummel
 
-import os
 import sys
-import glob
 import pyGadget
 
 #===============================================================================
