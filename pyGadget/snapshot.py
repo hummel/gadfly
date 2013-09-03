@@ -90,16 +90,24 @@ def plot_gas_fraction(snapshot,wpath=None):
 
 def disk_density_structure(snapshot, wpath=None):
     fig = plotting.Image(snapshot, track_sinks=True)
+    if snapshot.sim.batch_viewscale:
+        scale = snapshot.sim.batch_viewscale
+    else:
+        scale = '5000AU'
     for view in ['xy', 'xz', 'yz']:
-        fig.density('5000AU', view, clim=(8,12))
+        fig.density(scale, view, clim=(8,12))
         if wpath:
             fpath = wpath + '/disk/{}/'.format(view)
             if not os.path.exists(fpath):
                 os.makedirs(fpath)
             fig.save(fpath+'{:0>4}-disk-{}.png'.format(snapshot.number, view))
 
-def halo_density_structure(snapshot, scale, wpath=None):
+def halo_density_structure(snapshot, wpath=None):
     fig = plotting.Image(snapshot)
+    if snapshot.sim.batch_viewscale:
+        scale = snapshot.sim.batch_viewscale
+    else:
+        scale = '1pc'
     fig.density(scale, 'xy')
     if wpath:
         fpath = wpath + '/halo/{}/'.format(scale)
@@ -108,9 +116,13 @@ def halo_density_structure(snapshot, scale, wpath=None):
         fig.save(fpath+'{:0>4}-halo-{}.png'.format(snapshot.number, scale))
 
 def box_structure(snapshot, wpath=None):
-    snapshot.sim.units.set_coordinate_system('comoving')
+    snapshot.sim.set_coordinate_system('comoving')
     fig = plotting.Image(snapshot)
-    fig.density('140kpc', 'xy',depth=.5)
+    if snapshot.sim.batch_viewscale:
+        scale = snapshot.sim.batch_viewscale
+    else:
+        scale = '140kpc'
+    fig.density(scale, 'xy',depth=.5)
     if wpath:
         fpath = wpath + '/box/'
         if not os.path.exists(fpath):

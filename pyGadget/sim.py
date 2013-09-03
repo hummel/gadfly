@@ -24,7 +24,13 @@ class Simulation(object):
         self.plotpath = simargs.pop('plotpath',(os.getenv('HOME')
                                                +'/data/simplots/'))
         self.sinkpath = simargs.pop('sinkpath',os.getenv('HOME')+'/data/sinks/')
+        self.hires = simargs.pop('refine', True)
+        self.sink_tracking = simargs.pop('track_sinks', False)
+        self.coordinates = simargs.pop('coordinates', 'physical')
+        self.batch_viewscale = None
+
         self.units = units.Units(**simargs)
+        self.units.set_coordinate_system(self.coordinates)
 
         self.snapfiles = self.find_snapshots()
         try:
@@ -33,6 +39,23 @@ class Simulation(object):
             self.tsink = self.sink0.time[0]
         except IOError:
             self.tsink = None
+
+    def track_sinks(self, boolean=True):
+        self.sink_tracking = boolean
+
+    def refine_by_mass(self, boolean=True):
+        self.hires = boolean
+
+    def set_coordinate_system(self,coordinates):
+        self.units.set_coordinate_system(coordinates)
+        self.coordinates = self.units.coordinate_system
+
+    def set_batch_viewscale(self, scale):
+        unit = "".join(ch if not ch.isdigit() else "" for ch in scale)
+        if unit in self.units.lengths.keys():
+            self.batch_viewscale = scale
+        else:
+            raise KeyError
 
     def find_snapshots(self, *nums):
         path = self.datapath + self.name
@@ -55,6 +78,10 @@ class Simulation(object):
         self.snapfiles = self.find_snapshots(*nums)
 
     def load_snapshot(self, num, *load_keys,**kwargs):
+        if ((kwargs.pop('track_sinks',False)) or self.sink_tracking):
+            kwargs['track_sinks'] = True
+        if not self.hires:
+            kwargs['refine_gas'] = False
         try:
             fname = self.snapfiles[num]
         except KeyError:
@@ -65,7 +92,7 @@ class Simulation(object):
                               + str(num) + ' not found!')
         snap = snapshot.File(self, fname, **kwargs)
 
-        if kwargs.get('track_sinks',False):
+        if kwargs.get('track_sinks', False):
             if snap.gas._sink_indices.size > 0:
                 if snap.sim.tsink is None:
                     snap.sim.tsink = snap.header.Time * units.Time_yr
