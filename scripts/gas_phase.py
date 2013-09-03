@@ -11,11 +11,11 @@ import pyGadget
 if __name__ == '__main__':
     if ((len(sys.argv) not in [3,4,5]) or (sys.argv[1] == '-h')):
         print 'Usage::'
-        print '   Option 1: python gas_temp.py [key] [simulation name] '\
+        print '   Option 1: python gas_phase.py [key] [simulation name] '\
             '[beginning snapshot] [final snapshot]'
-        print '   Option 2: python gas_temp.py [key] [simulation name] '\
+        print '   Option 2: python gas_phase.py [key] [simulation name] '\
             '[single snapshot]'
-        print '   Option 3: python gas_temp.py [key] [simulation name] '\
+        print '   Option 3: python gas_phase.py [key] [simulation name] '\
             '(creates a plot for every snapshot)'
         sys.exit()
 
