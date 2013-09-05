@@ -186,7 +186,7 @@ class Image(Plot):
             if self.snapshot.sim.tsink:
                 t_acc = self.snapshot.header.Time * units.Time_yr \
                     - self.snapshot.sim.tsink
-                self.axes.text(.75, .96, 't$_{form}$: %.1f yr' %t_acc,
+                self.axes.text(.75, .96, 't$_{form}$: %.0f yr' %t_acc,
                                 color='white', fontsize=18,
                                 transform=self.axes.transAxes)
                 for sink in self.snapshot.sinks:
