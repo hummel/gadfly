@@ -57,9 +57,9 @@ if __name__ == '__main__':
         stop = int(sys.argv[5])
         snaps = range(start,stop+1)
         sim.set_snapshots(*snaps)
-        sim.multitask(plot_func,*data)
+        sim.multitask(plot_func, *data, parallel=False)
 
     else:
-        sim.multitask(plot_func,*data)
+        sim.multitask(plot_func, *data, parallel=False)
 
 

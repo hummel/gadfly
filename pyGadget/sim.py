@@ -103,7 +103,7 @@ class Simulation(object):
             snap.gas.cleanup()
         return snap
 
-    def multitask(self,plot_func,*data):
+    def multitask(self,plot_func,*data,**kwargs):
         maxprocs = mp.cpu_count()
         # Hack to take advantage of larger memory on r900 machines
         if 'r900' not in subprocess.check_output(['uname','-n']):
@@ -118,9 +118,28 @@ class Simulation(object):
         file_queue.put(None)
 
         done = False
-        while not done:
-            jobs = []
-            for i in xrange(maxprocs):
+        if kwargs.pop('parallel', True):
+            while not done:
+                jobs = []
+                for i in xrange(maxprocs):
+                    snap = data_queue.get()
+                    if snap is None:
+                        done = True
+                        break
+                    else:
+                        snap.close()
+                        wp = self.plotpath + self.name
+                        p = mp.Process(target=plot_func, args=(snap, wp))
+                        jobs.append(p)
+                        p.start()
+                print '\nClearing Queue!\n'
+                for process in jobs:
+                    process.join()
+                print '\nQueue Cleared!\n'
+            for process in jobs:
+                process.join()
+        else:
+            while not done:
                 snap = data_queue.get()
                 if snap is None:
                     done = True
@@ -128,12 +147,4 @@ class Simulation(object):
                 else:
                     snap.close()
                     wp = self.plotpath + self.name
-                    p = mp.Process(target=plot_func, args=(snap, wp))
-                    jobs.append(p)
-                    p.start()
-            print '\nClearing Queue!\n'
-            for process in jobs:
-                process.join()
-            print '\nQueue Cleared!\n'
-        for process in jobs:
-            process.join()
+                    plot_func(snap, wp)
