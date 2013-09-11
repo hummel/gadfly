@@ -34,7 +34,7 @@ class Simulation(object):
 
         self.snapfiles = self.find_snapshots()
         try:
-            self.sink0 = sink.SingleSink(self.sinkpath)
+            self.sink0 = sink.SingleSink(self.sinkpath + self.name)
             print "Found sinkfiles.  Loading sinkdata."
             self.tsink = self.sink0.time[0]
         except IOError:

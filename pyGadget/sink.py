@@ -35,11 +35,11 @@ class SinkData(object):
         super(SinkData,self).__init__()
         ### Read in the data
         try:
-            sinkdata = asciitable.read(path+'sinkdat')
+            sinkdata = asciitable.read(path+'/sinkdat')
         except IOError:
             raise IOError("Specified sinkmasses file not found!")
         try:
-            sinkmasses = asciitable.read(path+'sinkmasses')
+            sinkmasses = asciitable.read(path+'/sinkmasses')
         except IOError:
             raise IOError("Specified sinkmasses file not found!")
 
