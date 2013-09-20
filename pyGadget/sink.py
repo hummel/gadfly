@@ -6,7 +6,7 @@ Classes and routines for analyzing sink data output by gadget.
 import sys
 import warnings
 import numpy as np
-import asciitable
+from astropy.io import ascii
 import units
 #===============================================================================
 
@@ -35,11 +35,11 @@ class SinkData(object):
         super(SinkData,self).__init__()
         ### Read in the data
         try:
-            sinkdata = asciitable.read(path+'/sinkdat')
+            sinkdata = ascii.read(path+'/sinkdat')
         except IOError:
             raise IOError("Specified sinkmasses file not found!")
         try:
-            sinkmasses = asciitable.read(path+'/sinkmasses')
+            sinkmasses = ascii.read(path+'/sinkmasses')
         except IOError:
             raise IOError("Specified sinkmasses file not found!")
 
