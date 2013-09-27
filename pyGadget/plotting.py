@@ -214,14 +214,18 @@ class Image(Plot):
         ax.set_axis_off()
         img = ax.imshow(z, extent=[x.min(),x.max(),y.min(),y.max()],
                         cmap=pyplot.cm.RdGy_r,origin='lower')
-        if not self.cbar:
-            self.cbar = self.figure.colorbar(img)
         clim = kwargs.pop('clim',None)
         if clim:
             img.set_clim(clim[0],clim[1])
-            self.cbar.set_clim(clim[0],clim[1])
-            self.cbar.set_ticks(range(clim[0], clim[1]+1))
-        self.cbar.set_label('Log Number Density [cm$^{-3}$]')
+
+        cbar = kwargs.pop('colorbar', True)
+        if cbar:
+            if not self.cbar:
+                self.cbar = self.figure.colorbar(img)
+            if clim:
+                self.cbar.set_clim(clim[0],clim[1])
+                self.cbar.set_ticks(range(clim[0], clim[1]+1))
+            self.cbar.set_label('Log Number Density [cm$^{-3}$]')
         self.annotate_axes(scale)
         self.axes.set_xlim(x.min(), x.max())
         self.axes.set_ylim(y.min(), y.max())
