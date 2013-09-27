@@ -47,8 +47,9 @@ class Phase(Plot):
                              'HDfrac':self.HDfrac}
 
     def plot(self, key, **kwargs):
-        self._phase_plots[key](self.axes, **kwargs)
+        self._phase_plots[key](self.snapshot, self.axes, **kwargs)
 
+    @classmethod
     def _hexbin(self, ax, x, y, **kwargs):
         grid = kwargs.pop('gridsize',500)
         bins = kwargs.pop('bins','log')
@@ -57,62 +58,72 @@ class Phase(Plot):
         mincnt = kwargs.pop('mincnt',1)
         ax.hexbin(x, y, gridsize=grid, bins=bins, xscale=xscale,
                   yscale=yscale, mincnt=mincnt, **kwargs)
+        pyplot.draw()
         return ax
 
-    def temp(self, ax, **kwargs):
-        dens = self.snapshot.gas.get_number_density()
-        temp = self.snapshot.gas.get_temperature()
+    @staticmethod
+    def temp(snapshot, ax, **kwargs):
+        dens = snapshot.gas.get_number_density()
+        temp = snapshot.gas.get_temperature()
         if kwargs.pop('parallel', False):
-            self.snapshot.gas.cleanup('ndensity','temp')
-        ax = self._hexbin(ax, dens, temp, **kwargs)
+            snapshot.gas.cleanup('ndensity','temp')
+        ax = Phase._hexbin(ax, dens, temp, **kwargs)
         ax.set_xscale('log')
         ax.set_yscale('log')
         ax.set_xlim(2e-3, 1e12)
         ax.set_ylim(10, 2e4)
         ax.set_xlabel('n [cm$^{-3}$]')
         ax.set_ylabel('Temperature [K]')
+        pyplot.draw()
         return ax
 
-    def electron_frac(self, ax, **kwargs):
-        dens = self.snapshot.gas.get_number_density()
-        efrac = self.snapshot.gas.get_electron_fraction()
+    @staticmethod
+    def electron_frac(snapshot, ax, **kwargs):
+        dens = snapshot.gas.get_number_density()
+        efrac = snapshot.gas.get_electron_fraction()
         if kwargs.pop('parallel', False):
-            self.snapshot.gas.cleanup('ndensity','electron_frac')
-        ax = self._hexbin(ax, dens, efrac, **kwargs)
+            snapshot.gas.cleanup('ndensity','electron_frac')
+        ax = Phase._hexbin(ax, dens, efrac, **kwargs)
         ax.set_xscale('log')
         ax.set_yscale('log')
         ax.set_xlim(1e-2, 1e12)
         ax.set_ylim(1e-12, 1e-2)
         ax.set_xlabel('n [cm$^{-3}$]')
         ax.set_ylabel('f$_{e^-}$')
+        pyplot.draw()
         return ax
 
-    def h2frac(self, ax, **kwargs):
-        dens = self.snapshot.gas.get_number_density()
-        h2frac = self.snapshot.gas.get_H2_fraction()
+    @staticmethod
+    def h2frac(snapshot, ax, **kwargs):
+        dens = snapshot.gas.get_number_density()
+        h2frac = snapshot.gas.get_H2_fraction()
         if kwargs.pop('parallel', False):
-            self.snapshot.gas.cleanup('ndensity','h2frac')
-        ax = self._hexbin(ax, dens, h2frac, **kwargs)
+            snapshot.gas.cleanup('ndensity','h2frac')
+        ax = Phase._hexbin(ax, dens, h2frac, **kwargs)
         ax.set_xscale('log')
         ax.set_yscale('log')
         ax.set_xlim(1e-2, 1e12)
         ax.set_ylim(1e-7,2)
         ax.set_xlabel('n [cm$^{-3}$]')
         ax.set_ylabel('f$_{H_2}$')
+        pyplot.draw()
         return ax
 
-    def HDfrac(self, ax, **kwargs):
-        dens = self.snapshot.gas.get_number_density()
-        HDfrac = self.snapshot.gas.get_HD_fraction()
+    @staticmethod
+    def HDfrac(snapshot, ax, **kwargs):
+        dens = snapshot.gas.get_number_density()
+        HDfrac = snapshot.gas.get_HD_fraction()
         if kwargs.pop('parallel', False):
-            self.snapshot.gas.cleanup('ndensity','HDfrac')
-        ax = self._hexbin(ax, dens,HDfrac, **kwargs)
+            snapshot.gas.cleanup('ndensity','HDfrac')
+        ax = Phase._hexbin(ax, dens,HDfrac, **kwargs)
         ax.set_xscale('log')
         ax.set_yscale('log')
         ax.set_xlim(1e-2, 1e12)
         ax.set_ylim(1e-11,1e-4)
         ax.set_xlabel('n [cm$^{-3}$]')
         ax.set_ylabel('f$_{HD}$')
+        pyplot.draw()
+        return ax
 
 class Radial(Plot):
     """
