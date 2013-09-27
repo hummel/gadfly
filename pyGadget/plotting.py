@@ -72,6 +72,8 @@ class Phase(Plot):
         ax.set_yscale('log')
         ax.set_xlim(2e-3, 1e12)
         ax.set_ylim(10, 2e4)
+        ax.axhline(2.725 * (snapshot.header.Redshift + 1),
+                   linestyle='--', color='k')
         ax.set_xlabel('n [cm$^{-3}$]')
         ax.set_ylabel('Temperature [K]')
         pyplot.draw()
