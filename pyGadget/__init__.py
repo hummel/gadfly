@@ -12,4 +12,5 @@ import snapshot
 import visualize
 import analyze
 import plotting
+import multiplot
 import sink
