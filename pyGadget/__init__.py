@@ -14,3 +14,4 @@ import analyze
 import plotting
 import multiplot
 import sink
+import halo
