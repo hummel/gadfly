@@ -10,25 +10,40 @@ class Halo(object):
     def __init__(self, snapshot, **kwargs):
         super(Halo, self).__init__()
         self.snapshot = snapshot
-        self.r_start = kwargs.pop('r_start', 3.08568e17)
+        self.r_init = kwargs.pop('r_start', 3.08568e17)
         self.step = kwargs.pop('multiplier', 1.01)
 
         default = snapshot.sim.plotpath +'/'+ snapshot.sim.name
         if not os.path.exists(default):
             os.makedirs(default)
         dbfile = kwargs.pop('dbfile', default+'/halo.db')
-        connection = sqlite3.connect(dbfile)
-        self.db = connection.cursor()
+        self.db = sqlite3.connect(dbfile)
+        self.c = self.db.cursor()
+        self.table = 'snapshot'+str(self.snapshot.number)
 
 
-    def populate(self):
-        haloprops = radial_properties(self.snapshot, self.r_init, self.step)
+    def populate(self, verbose=True):
+        haloprops = radial_properties(self.snapshot, self.r_init, self.step,
+                                      verbose=verbose)
+        
+        self.c.execute("CREATE TABLE " + self.table +
+                        "(redshift real, radius real, delta real, mass real,"\
+                        " density real, Tavg real, Tshell real, tff real,"\
+                        " cs real, Lj real, Mj real, gpe real, npart integer)")
+        for entry in haloprops:
+            self.c.execute("INSERT INTO "+self.table+"(redshift, radius, "\
+                           "delta, mass, density, Tavg, Tshell, tff, cs, Lj, "\
+                           "Mj, gpe, npart) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+                           entry)
+        self.db.commit()
+            
 
-
+#===============================================================================
 def radial_properties(snapshot, r_start=3.08568e17, r_multiplier=1.01,
                       n_min=50, verbose=True):
     length_unit = 'cm'
     mass_unit = 'g'
+    redshift = snapshot.header.Redshift
     dm_mass = snapshot.dm.get_masses(mass_unit)
     dm_pos = snapshot.dm.get_coords(length_unit)
     gas_mass = snapshot.gas.get_masses(mass_unit)
@@ -67,7 +82,7 @@ def radial_properties(snapshot, r_start=3.08568e17, r_multiplier=1.01,
     halo_properties = []
     n = old_n = old_r = density = energy = 0
     # background density:: Omega_m * rho_crit(z)
-    background_density = .27 * 9.31e-30 * (1+snapshot.header.Redshift)**3 
+    background_density = .27 * 9.31e-30 * (1+redshift)**3 
     rmax = r_start
     while (density > 180 * background_density or n < n_min):
         inR = numpy.where(r <= rmax)[0]
@@ -95,7 +110,7 @@ def radial_properties(snapshot, r_start=3.08568e17, r_multiplier=1.01,
                 print 'Energy: %.3e' %energy,
                 print 'delta: %.3f' %delta
             if delta >= 178.0:
-                halo_properties.append((rpc,delta,solar_masses,density,
+                halo_properties.append((redshift,rpc,delta,solar_masses,density,
                                         tavg,tshell,tff,cs,Lj,Mj,-energy,n))
             old_n = n
 	    old_r = rmax
@@ -103,6 +118,6 @@ def radial_properties(snapshot, r_start=3.08568e17, r_multiplier=1.01,
     
     del r
     print 'snapshot', snapshot.number, 'analyzed.'
-    return numpy.asarray(halo_properties)
+    return halo_properties
 
 
