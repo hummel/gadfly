@@ -7,40 +7,62 @@ import analyze
 import constants
 
 class Halo(object):
-    def __init__(self, snapshot, **kwargs):
+    def __init__(self, sim, **kwargs):
         super(Halo, self).__init__()
-        self.snapshot = snapshot
-        self.r_init = kwargs.pop('r_start', 3.08568e17)
-        self.step = kwargs.pop('multiplier', 1.01)
-
-        default = snapshot.sim.plotpath +'/'+ snapshot.sim.name
+        self.sim = sim
+        default = sim.plotpath +'/'+ sim.name
         if not os.path.exists(default):
             os.makedirs(default)
         dbfile = kwargs.pop('dbfile', default+'/halo.db')
         self.db = sqlite3.connect(dbfile)
         self.c = self.db.cursor()
-        self.table = 'snapshot'+str(self.snapshot.number)
 
-
-    def populate(self, verbose=True):
-        haloprops = radial_properties(self.snapshot, self.r_init, self.step,
-                                      verbose=verbose)
-        
-        self.c.execute("CREATE TABLE " + self.table +
-                        "(redshift real, radius real, delta real, mass real,"\
-                        " density real, Tavg real, Tshell real, tff real,"\
-                        " cs real, Lj real, Mj real, gpe real, npart integer)")
-        for entry in haloprops:
-            self.c.execute("INSERT INTO "+self.table+"(redshift, radius, "\
-                           "delta, mass, density, Tavg, Tshell, tff, cs, Lj, "\
-                           "Mj, gpe, npart) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)", 
-                           entry)
-        self.db.commit()
+    def load(self, snap, *hprops):
+        fields = ''
+        if hprops:
+            for hprop in hprops[:-1]:
+                fields += hprop + ', '
+            fields += hprops[-1]
+        else: 
+            fields = '*'
+        table = 'snapshot{:0>4}'.format(snap)
+        try:
+            self.c.execute("SELECT " + fields + " FROM " + table)
+        except sqlite3.OperationalError:
+            print "Warning: Halo data for this snapshot does not exist."
+            print "Analyzing..."
+            self.populate(snap, verbose=False)
+            self.c.execute("SELECT " + fields + " FROM " + table)
             
+        self.data = numpy.asarray(self.c.fetchall())
+
+    def populate(self, snap, **kwargs):
+        snapshot = self.sim.load_snapshot(snap)
+        haloprops = radial_properties(snapshot, **kwargs)
+        snapshot.close()
+        table = 'snapshot{:0>4}'.format(snap)
+        create = ("CREATE TABLE " + table +
+                  "(redshift real, radius real, delta real, mass real,"\
+                      " density real, Tavg real, Tshell real, tff real,"\
+                      " cs real, Lj real, Mj real, gpe real, npart integer)")
+        try:
+            self.c.execute(create)
+        except sqlite3.OperationalError:
+            self.c.execute("DROP TABLE " + table)
+            self.c.execute(create)
+        insert = ("INSERT INTO " + table + "(redshift, radius, "\
+                      "delta, mass, density, Tavg, Tshell, tff, cs, Lj, "\
+                      "Mj, gpe, npart) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)")
+        self.c.executemany(insert, haloprops)
+        self.db.commit()
 
 #===============================================================================
-def radial_properties(snapshot, r_start=3.08568e17, r_multiplier=1.01,
-                      n_min=50, verbose=True):
+def radial_properties(snapshot, **kwargs):
+    r_start = kwargs.pop('r_start', 3.08568e17)
+    r_multiplier = kwargs.pop('multiplier', 1.01)
+    verbose = kwargs.pop('verbose', True)
+    n_min = kwargs.pop('n_min', 50)
+
     length_unit = 'cm'
     mass_unit = 'g'
     redshift = snapshot.header.Redshift
