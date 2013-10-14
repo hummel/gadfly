@@ -90,7 +90,7 @@ class Phase(Plot):
         ax = Phase._hexbin(ax, r, temp, **kwargs)
         ax.set_xscale('log')
         ax.set_yscale('log')
-        ax.set_xlim(2,1e3)
+        ax.set_xlim(5e-5,1e3)
         ax.set_ylim(10, 2e4)
         ax.axhline(2.725 * (snapshot.header.Redshift + 1),
                    linestyle='--', color='k')
