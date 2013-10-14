@@ -80,6 +80,25 @@ class Phase(Plot):
         return ax
 
     @staticmethod
+    def radial_temp(snapshot, ax, **kwargs):
+        pos = snapshot.gas.get_coords(unit='pc')
+        dens = snapshot.gas.get_number_density()
+        temp = snapshot.gas.get_temperature()
+        x,y,z = analyze.find_center(pos[:,0], pos[:,1], pos[:,2],
+                                    dens, centering='avg')
+        r = numpy.sqrt(numpy.square(x) + numpy.square(y) + numpy.square(z))
+        ax = Phase._hexbin(ax, r, temp, **kwargs)
+        ax.set_xscale('log')
+        ax.set_yscale('log')
+        ax.set_xlim(2,1e3)
+        ax.set_ylim(10, 2e4)
+        ax.axhline(2.725 * (snapshot.header.Redshift + 1),
+                   linestyle='--', color='k')
+        ax.set_xlabel('Radius [pc]')
+        ax.set_ylabel('Temperature [K]')
+        return ax
+
+    @staticmethod
     def electron_frac(snapshot, ax, **kwargs):
         dens = snapshot.gas.get_number_density()
         efrac = snapshot.gas.get_electron_fraction()
