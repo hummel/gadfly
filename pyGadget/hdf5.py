@@ -6,6 +6,7 @@ This module contains classes for reading Gadget2 HDF5 snapshot data.
 import numpy
 import units
 import constants
+import analyze
 
 class HDF5Group(object):
     """
@@ -102,19 +103,66 @@ class PartTypeX(HDF5Group):
         if self._refined is not None:
             self.coordinates = self.coordinates[self._refined]
 
-    def get_coords(self, unit=None):
+    def calculate_spherical_coords(self, unit=None, **centering):
         """
-        Return Particle Coordinates in units of kpc (default set in units class)
+        Load particle positions in spherical coordinates with default units of 
+        kpc (default set in units class)
         unit: unit conversion from code units
         """
         if unit:
             if unit != self.units._coord_unit:
                 self.load_coords(unit)
         try:
-            return self.coordinates
+            xyz = self.coordinates
         except AttributeError:
             self.load_coords(unit)
-            return self.coordinates
+            xyz = self.coordinates
+
+        center = centering.get('center', None)
+        if not center:
+            try:
+                dens = self.get_number_density()
+            except AttributeError:
+                raise KeyError("Cannot auto-center dark matter. "\
+                                   "Please specify center.")
+            x,y,z = analyze.find_center(xyz[:,0], xyz[:,1], xyz[:,2],
+                                        dens, **centering)
+        else:
+            x,y,z =  analyze.find_center(xyz[:,0], xyz[:,1], xyz[:,2],
+                                         **centering)
+
+        r,theta,phi = analyze.transform_cartesian2spherical(x,y,z)
+        self.spherical_coords = numpy.column_stack((r,theta,phi))
+
+    def get_coords(self, unit=None, **kwargs):
+        """
+        Return Particle Coordinates in units of kpc (default set in units class)
+        unit: unit conversion from code units
+        system: coordinate system to use.  Options are cartesian or spherical.
+                Note that spherical coordinates require a cartesian coordinate
+                'center' point to be calculated by analyze.find_center()
+        """
+        system = kwargs.pop('system','cartesian')
+        if unit:
+            if unit != self.units._coord_unit:
+                self.load_coords(unit)
+                if system == 'spherical':
+                    self.calculate_spherical_coordinates(unit, **kwargs)
+
+        if system == 'cartesian':
+            try:
+                return self.coordinates
+            except AttributeError:
+                self.load_coords(unit)
+                return self.coordinates
+        elif system == 'spherical':
+            try:
+                return self.spherical_coords
+            except AttributeError:
+                self.calculate_spherical_coords(unit, **kwargs)
+                return self.spherical_coords
+        else:
+            raise KeyError("Coordinate system options are 'cartesian' or 'spherical'")
 
     def load_velocities(self, unit=None):
         """
