@@ -95,7 +95,7 @@ def disk_density_structure(snapshot, wpath=None):
     else:
         scale = '5000AU'
     for view in ['xy', 'xz', 'yz']:
-        fig.density(scale, view, clim=(8,12))
+        fig.density(scale, view, clim=(8,12), centering='avg')
         if wpath:
             fpath = wpath + '/disk/{}/'.format(view)
             if not os.path.exists(fpath):
@@ -108,7 +108,7 @@ def halo_density_structure(snapshot, wpath=None):
         scale = snapshot.sim.batch_viewscale
     else:
         scale = '1pc'
-    fig.density(scale, 'xy')
+    fig.density(scale, 'xy', centering='avg')
     if wpath:
         fpath = wpath + '/halo/{}/'.format(scale)
         if not os.path.exists(fpath):
@@ -122,7 +122,7 @@ def box_structure(snapshot, wpath=None):
         scale = snapshot.sim.batch_viewscale
     else:
         scale = '140kpc'
-    fig.density(scale, 'xy',depth=.5)
+    fig.density(scale, 'xy', depth=.5, centering='box')
     if wpath:
         fpath = wpath + '/box/'
         if not os.path.exists(fpath):
