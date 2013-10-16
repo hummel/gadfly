@@ -103,7 +103,7 @@ class PartTypeX(HDF5Group):
         if self._refined is not None:
             self.coordinates = self.coordinates[self._refined]
 
-    def calculate_spherical_coords(self, unit=None, **centering):
+    def calculate_spherical_coords(self, unit=None, **kwargs):
         """
         Load particle positions in spherical coordinates with default units of 
         kpc (default set in units class)
@@ -118,18 +118,19 @@ class PartTypeX(HDF5Group):
             self.load_coords(unit)
             xyz = self.coordinates
 
-        center = centering.get('center', None)
-        if not center:
-            try:
-                dens = self.get_number_density()
-            except AttributeError:
-                raise KeyError("Cannot auto-center dark matter. "\
-                                   "Please specify center.")
-            x,y,z = analyze.find_center(xyz[:,0], xyz[:,1], xyz[:,2],
-                                        dens, **centering)
+        center = kwargs.get('center', None)
+        if center:
+            x,y,z =  analyze.center_box(xyz[:,0], xyz[:,1], xyz[:,2], center)
         else:
-            x,y,z =  analyze.find_center(xyz[:,0], xyz[:,1], xyz[:,2],
-                                         **centering)
+            centering = kwargs.get('centering', None)
+            if centering in ['avg','max']:
+                try:
+                    dens = self.get_number_density()
+                except AttributeError:
+                    raise KeyError("Cannot density-center dark matter!")
+            else:
+                x,y,z = analyze.center_box(xyz[:,0], xyz[:,1], xyz[:,2],
+                                           **kwargs)
 
         r,theta,phi = analyze.transform_cartesian2spherical(x,y,z)
         self.spherical_coords = numpy.column_stack((r,theta,phi))

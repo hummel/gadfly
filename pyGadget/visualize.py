@@ -151,7 +151,7 @@ def set_viewpoint(pos, dens, viewpoint, *sinks, **kwargs):
     else:
         raise KeyError
 
-    x,y,z = analyze.find_center(x,y,z,dens,**kwargs)
+    x,y,z = analyze.center_box(x,y,z,density=dens,**kwargs)
     return x,y,z
 
 def trim_view(width, x, y, z, *args, **kwargs):

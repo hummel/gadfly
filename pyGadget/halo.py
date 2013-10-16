@@ -89,10 +89,10 @@ def radial_properties(snapshot, **kwargs):
     z = numpy.concatenate((gasz,dmz))
     del dmx,dmy,dmz
 
-    x,y,z = analyze.find_center(x, y, z, dens, centering='max',
-                                centering_verbose=verbose)
-    gasx,gasy,gasz = analyze.find_center(gasx,gasy,gasz, dens, centering='max',
-                                         centering_verbose=verbose)
+    x,y,z = analyze.center_box(x,y,z, density=dens, centering='max',
+                               verbose=verbose)
+    gasx,gasy,gasz = analyze.center_box(gasx,gasy,gasz, density=dens,
+                                        centering='max', verbose=verbose)
     del dens
     del gas_pos
     r = numpy.sqrt(numpy.square(x) + numpy.square(y) + numpy.square(z))

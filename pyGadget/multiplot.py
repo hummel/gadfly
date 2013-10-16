@@ -84,8 +84,8 @@ class Phase(Plot):
         pos = snapshot.gas.get_coords(unit='pc')
         dens = snapshot.gas.get_number_density()
         temp = snapshot.gas.get_temperature()
-        x,y,z = analyze.find_center(pos[:,0], pos[:,1], pos[:,2],
-                                    dens, centering='avg')
+        x,y,z = analyze.center_box(pos[:,0], pos[:,1], pos[:,2],
+                                    density=dens, centering='avg')
         r = numpy.sqrt(numpy.square(x) + numpy.square(y) + numpy.square(z))
         ax = Phase._hexbin(ax, r, temp, **kwargs)
         ax.set_xscale('log')

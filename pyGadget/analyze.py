@@ -9,48 +9,56 @@ def reject_outliers(data, m=2):
     return data[numpy.abs(data - numpy.mean(data)) < m * numpy.std(data)]
 
 def find_center(x, y, z, dens=None, **kwargs):
-    center = kwargs.pop('center', None)
-    retcen = kwargs.pop('retcen',False)
-    if dens:
-        centering = kwargs.pop('centering','avg')
-        dens_limit = kwargs.pop('dens_limit', 1e11)
-        nparticles = kwargs.pop('centering_npart', 100)
-        verbose = kwargs.pop('centering_verbose', True)
-        if centering == 'avg':
-            hidens = numpy.where(dens >= dens_limit)[0]
-            while hidens.size < nparticles:
-                dens_limit /= 2
+    centering = kwargs.pop('centering','box')
+    verbose = kwargs.get('verbose', True)
+    if centering in ['avg', 'max']:
+        if dens is not None:
+            dens_limit = kwargs.pop('dens_limit', 1e11)
+            nparticles = kwargs.pop('centering_npart', 100)
+            if centering == 'avg':
                 hidens = numpy.where(dens >= dens_limit)[0]
-            if verbose:
-                print ('Center averaged over %d particles' %nparticles)
-                print ('Center averaged over all particles with density '\
-                           'greater than %.2e particles/cc' %dens_limit)
-            #Center on highest density clump, rejecting outliers:
-            cx = numpy.average(statistics.reject_outliers(x[hidens]))
-            cy = numpy.average(statistics.reject_outliers(y[hidens]))
-            cz = numpy.average(statistics.reject_outliers(z[hidens]))
-            print 'Density averaged box center: %.3e %.3e %.3e' %(cx,cy,cz)
-        elif centering == 'max':
-            center = dens.argmax()
-            cx,cy,cz = x[center], y[center], z[center]
-            print 'Density maximum box center: %.3e %.3e %.3e' %(cx,cy,cz)
+                while hidens.size < nparticles:
+                    dens_limit /= 2
+                    hidens = numpy.where(dens >= dens_limit)[0]
+                if verbose:
+                    print ('Center averaged over %d particles' %nparticles)
+                    print ('Center averaged over all particles with density '\
+                               'greater than %.2e particles/cc' %dens_limit)
+                #Center on highest density clump, rejecting outliers:
+                cx = numpy.average(reject_outliers(x[hidens]))
+                cy = numpy.average(reject_outliers(y[hidens]))
+                cz = numpy.average(reject_outliers(z[hidens]))
+                print 'Density averaged box center: %.3e %.3e %.3e' %(cx,cy,cz)
+            elif centering == 'max':
+                center = dens.argmax()
+                cx,cy,cz = x[center], y[center], z[center]
+                print 'Density maximum box center: %.3e %.3e %.3e' %(cx,cy,cz)
         else:
-            raise KeyError("Centering must be either 'avg' or 'max'")
+            raise KeyError("'avg' and 'max' centering require gas density")
+    elif centering == 'box':
+        cx = (x.max() + x.min())/2
+        cy = (y.max() + y.min())/2
+        cz = (z.max() + z.min())/2
+        print 'Simple box center: %.3e %.3e %.3e' %(cx,cy,cz)
     else:
-        if center:
-            cx = center[0]
-            cy = center[1]
-            cz = center[2]
-            print 'Using provided center: %.3e %.3e %.3e' %(cx,cy,cz)
-        else:
-            cx = (x.max() + x.min())/2
-            cy = (y.max() + y.min())/2
-            cz = (z.max() + z.min())/2
-            print 'Simple box center: %.3e %.3e %.3e' %(cx,cy,cz)
-    if retcen:
-        return cx,cy,cz
+        raise KeyError("Centering options are 'avg', 'max', and 'box'")
+    return cx,cy,cz
+
+def center_box(x, y, z, center=None, **kwargs):
+    dens = kwargs.pop('density', None)
+    centering = kwargs.get('centering', None)
+    if center:
+        cx = center[0]
+        cy = center[1]
+        cz = center[2]
+    elif centering:
+        cx,cy,cz = find_center(x,y,z, dens, **kwargs)
     else:
-        x -= cx
-        y -= cy
-        z -= cz
-        return x,y,z
+        print "WARNING! NO CENTER OR CENTERING ALGORITHM SPECIFIED!"
+        print "Attempting simple box centering..."
+        cx,cy,cz = find_center(x,y,z, centering='box')
+
+    x -= cx
+    y -= cy
+    z -= cz
+    return x,y,z
