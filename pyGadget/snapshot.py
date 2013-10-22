@@ -130,15 +130,20 @@ def box_structure(snapshot, wpath=None):
             os.makedirs(fpath)
         fig.save(fpath+'{:0>4}-box.png'.format(snapshot.number))
 
-def disk_rotation(snapshot, rot_axis, n, wpath=None):
+def disk_rotation(snapshot, view, rot_axis, n, wpath=None):
     fig = plotting.Image(snapshot, track_sinks=True)
     if snapshot.sim.batch_viewscale:
         scale = snapshot.sim.batch_viewscale
     else:
         scale = '5000AU'
     count = 0
-    for view in numpy.linspace(0,2*numpy.pi, n):
-        fig.density(scale, {rot_axis:view}, clim=(8,12), centering='avg')
+    for angle in numpy.linspace(0,2*numpy.pi, n):
+        viewpoint = view
+        if rot_axis in viewpoint.keys():
+            viewpoint[rot_axis] += angle
+        else:
+            viewpoint[rot_axis] = angle
+        fig.density(scale, viewpoint, clim=(8,12), centering='avg')
         if wpath:
             fpath = wpath + '/disk/{}rotation/'.format(rot_axis)
             if not os.path.exists(fpath):
