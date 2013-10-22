@@ -135,21 +135,46 @@ def py_scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
     return zi
 
 #===============================================================================
+def rotation_matrix(axis, angle):
+    if axis == 'x':
+        rot = ((1., 0., 0.),
+               (0., numpy.cos(angle), -numpy.sin(angle)),
+               (0., numpy.sin(angle), numpy.cos(angle)))
+    elif axis == 'y':
+        rot = ((numpy.cos(angle), 0.,numpy.sin(angle)),
+               (0., 1., 0.),
+               (-numpy.sin(angle), 0., numpy.cos(angle)))
+    if axis == 'z':
+        rot = ((numpy.cos(angle), -numpy.sin(angle), 0.),
+               (numpy.sin(angle), numpy.cos(angle), 0.),
+               (1., 0., 0.))
+    rot = numpy.asarray(rot)
+    return rot
+
+def rotate_view(coords, axis, angle):
+    rot = rotation_matrix(axis,angle)
+    return numpy.dot(coords,rot)
+
 def set_viewpoint(pos, dens, viewpoint, *sinks, **kwargs):
+    error_message = "set_viewpoint() takes 'xy', 'xz', 'yz' or a dictionary "\
+        "of angle rotations around 'x', 'y' and 'z' as the 'viewpoint' arg "\
+        "(rotations must be in radians, not degrees)."
     if viewpoint == 'xy':
-        x = pos[:,0]
-        y = pos[:,1]
-        z = pos[:,2]
+        pass
     elif viewpoint == 'xz':
-        x = pos[:,0]
-        y = pos[:,2]
-        z = pos[:,1]
+        pos = rotate_view(pos,'x', -numpy.pi/2)
     elif viewpoint == 'yz':
-        x = pos[:,1]
-        y = pos[:,2]
-        z = pos[:,0]
+        pos = rotate_view(pos,'y', numpy.pi/2)
     else:
-        raise KeyError
+        try:
+            axes = viewpoint.keys()
+        except AttributeError:
+            raise KeyError(error_message)
+        for ax in axes:
+            pos = rotate_view(pos, ax, viewpoint[ax])
+    x = pos[:,0]
+    y = pos[:,1]
+    z = pos[:,2]
 
     x,y,z = analyze.center_box(x,y,z,density=dens,**kwargs)
     return x,y,z
