@@ -62,3 +62,15 @@ def center_box(x, y, z, center=None, **kwargs):
     y -= cy
     z -= cz
     return x,y,z
+
+def transform_cart2sph(x ,y, z):
+    r = numpy.sqrt(numpy.square(x) + numpy.square(y) + numpy.square(z))
+    theta = numpy.arccos(z/r)
+    phi = numpy.arctan(y/x)
+    return r,theta,phi
+
+def transform_sph2cart(r, theta, phi):
+    x = r * numpy.sin(theta) * numpy.cos(phi)
+    y = r * numpy.sin(theta) * numpy.sin(phi)
+    z = r * numpy.cos(theta)
+    return x,y,z
