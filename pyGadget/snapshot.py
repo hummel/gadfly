@@ -7,6 +7,7 @@ import os
 import string
 import threading
 import h5py
+import numpy
 
 import hdf5
 import nbody
@@ -128,3 +129,19 @@ def box_structure(snapshot, wpath=None):
         if not os.path.exists(fpath):
             os.makedirs(fpath)
         fig.save(fpath+'{:0>4}-box.png'.format(snapshot.number))
+
+def disk_rotation(snapshot, rot_axis, n, wpath=None):
+    fig = plotting.Image(snapshot, track_sinks=True)
+    if snapshot.sim.batch_viewscale:
+        scale = snapshot.sim.batch_viewscale
+    else:
+        scale = '5000AU'
+    count = 0
+    for view in numpy.linspace(0,2*numpy.pi, n):
+        fig.density(scale, {rot_axis:view}, clim=(8,12), centering='avg')
+        if wpath:
+            fpath = wpath + '/disk/{}rotation/'.format(rot_axis)
+            if not os.path.exists(fpath):
+                os.makedirs(fpath)
+            fig.save(fpath+'{:0>4}-disk-{}.png'.format(count,rot_axis))
+            count += 1
