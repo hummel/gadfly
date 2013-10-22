@@ -147,12 +147,15 @@ def rotation_matrix(axis, angle):
     if axis == 'z':
         rot = ((numpy.cos(angle), -numpy.sin(angle), 0.),
                (numpy.sin(angle), numpy.cos(angle), 0.),
-               (1., 0., 0.))
+               (0., 0.,1.))
     rot = numpy.asarray(rot)
     return rot
 
 def rotate_view(coords, axis, angle):
     rot = rotation_matrix(axis,angle)
+    print "Rotating about the {}-axis by {:6.3f} radians.".format(axis,angle)
+    print "Rotation Matrix:"
+    print rot
     return numpy.dot(coords,rot)
 
 def set_viewpoint(pos, dens, viewpoint, *sinks, **kwargs):
