@@ -136,14 +136,11 @@ def disk_rotation(snapshot, view, rot_axis, n, wpath=None):
         scale = snapshot.sim.batch_viewscale
     else:
         scale = '5000AU'
+    axis_init = view.get(rot_axis, 0)
     count = 0
     for angle in numpy.linspace(0,2*numpy.pi, n):
-        viewpoint = view
-        if rot_axis in viewpoint.keys():
-            viewpoint[rot_axis] += angle
-        else:
-            viewpoint[rot_axis] = angle
-        fig.density(scale, viewpoint, clim=(8,12), centering='avg')
+        view[rot_axis] = axis_init + angle
+        fig.density(scale, view, clim=(8,12), centering='avg')
         if wpath:
             fpath = wpath + '/disk/{}rotation/'.format(rot_axis)
             if not os.path.exists(fpath):
