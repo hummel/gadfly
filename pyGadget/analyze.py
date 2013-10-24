@@ -44,9 +44,12 @@ def find_center(x, y, z, dens=None, **kwargs):
         raise KeyError("Centering options are 'avg', 'max', and 'box'")
     return cx,cy,cz
 
-def center_box(x, y, z, center=None, **kwargs):
+def center_box(pos, center=None, **kwargs):
     dens = kwargs.pop('density', None)
     centering = kwargs.get('centering', None)
+    x = pos[:,0]
+    y = pos[:,1]
+    z = pos[:,2]
     if center:
         cx = center[0]
         cy = center[1]
@@ -61,7 +64,7 @@ def center_box(x, y, z, center=None, **kwargs):
     x -= cx
     y -= cy
     z -= cz
-    return x,y,z
+    return numpy.column_stack((x,y,z))
 
 def transform_cart2sph(x ,y, z):
     r = numpy.sqrt(numpy.square(x) + numpy.square(y) + numpy.square(z))

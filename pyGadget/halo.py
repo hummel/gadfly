@@ -87,14 +87,21 @@ def radial_properties(snapshot, **kwargs):
     x = numpy.concatenate((gasx,dmx))
     y = numpy.concatenate((gasy,dmy))
     z = numpy.concatenate((gasz,dmz))
-    del dmx,dmy,dmz
+    pos = numpy.column_stack((x,y,z))
 
-    x,y,z = analyze.center_box(x,y,z, density=dens, centering='max',
-                               verbose=verbose)
-    gasx,gasy,gasz = analyze.center_box(gasx,gasy,gasz, density=dens,
-                                        centering='max', verbose=verbose)
+    pos = analyze.center_box(pos, density=dens, centering='max',
+                             verbose=verbose)
+    gas_pos = analyze.center_box(gas_pos, density=dens,
+                                 centering='max', verbose=verbose)
+    gasx = gas_pos[:,0]
+    gasy = gas_pos[:,1]
+    gasz = gas_pos[:,2]
+    x = pos[:,0]
+    y = pos[:,1]
+    z = pos[:,2]
     del dens
     del gas_pos
+    del pos
     r = numpy.sqrt(numpy.square(x) + numpy.square(y) + numpy.square(z))
     gasr = numpy.sqrt(numpy.square(gasx)
 		      + numpy.square(gasy)

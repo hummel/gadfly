@@ -120,7 +120,7 @@ class PartTypeX(HDF5Group):
 
         center = kwargs.get('center', None)
         if center:
-            x,y,z =  analyze.center_box(xyz[:,0], xyz[:,1], xyz[:,2], center)
+            xyz =  analyze.center_box(xyz, center)
         else:
             centering = kwargs.get('centering', None)
             if centering in ['avg','max']:
@@ -128,13 +128,11 @@ class PartTypeX(HDF5Group):
                     dens = self.get_number_density()
                 except AttributeError:
                     raise KeyError("Cannot density-center dark matter!")
-                x,y,z = analyze.center_box(xyz[:,0], xyz[:,1], xyz[:,2],
-                                           density=dens, **kwargs)
+                xyz = analyze.center_box(xyz, density=dens, **kwargs)
             else:
-                x,y,z = analyze.center_box(xyz[:,0], xyz[:,1], xyz[:,2],
-                                           **kwargs)
+                xyz = analyze.center_box(xyz, **kwargs)
 
-        r,theta,phi = analyze.transform_cart2sph(x,y,z)
+        r,theta,phi = analyze.transform_cart2sph(xyz[:,0],xyz[:,1],xyz[:,2])
         self.spherical_coords = numpy.column_stack((r,theta,phi))
 
     def get_coords(self, unit=None, **kwargs):
