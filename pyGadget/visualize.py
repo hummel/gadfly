@@ -165,9 +165,10 @@ def set_view(pos, dens, view, **kwargs):
     if view == 'xy':
         pass
     elif view == 'xz':
-        pos = rotate_view(pos,'x', -numpy.pi/2)
+        pos = rotate_view(pos,'x', numpy.pi/2)
     elif view == 'yz':
-        pos = rotate_view(pos,'y', numpy.pi/2)
+        pos = rotate_view(pos,'z', numpy.pi/2)
+        pos = rotate_view(pos,'x', numpy.pi/2)
     else:
         try:
             axes = view.keys()
