@@ -218,6 +218,10 @@ def project(snapshot, loadable, scale, view, **kwargs):
     scalar = snapshot.gas._load_dict[loadable]()
     pos = snapshot.gas.get_coords(unit)
     hsml = snapshot.gas.get_smoothing_length(unit)
+    if loadable not in ['density', 'ndensity']:
+        dens = snapshot.gas.get_number_density()
+    else:
+        dens = scalar
 
     print 'Calculating...'
     pos = analyze.center_box(pos,density=dens,**kwargs)
