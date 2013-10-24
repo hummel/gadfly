@@ -158,29 +158,24 @@ def rotate_view(coords, axis, angle):
     print rot
     return numpy.dot(coords,rot)
 
-def set_viewpoint(pos, dens, viewpoint, *sinks, **kwargs):
-    error_message = "set_viewpoint() takes 'xy', 'xz', 'yz' or a dictionary "\
-        "of angle rotations around 'x', 'y' and 'z' as the 'viewpoint' arg "\
+def set_view(pos, dens, view, **kwargs):
+    error_message = "set_view() takes 'xy', 'xz', 'yz' or a dictionary "\
+        "of angle rotations around 'x', 'y' and 'z' as the 'view' arg "\
         "(rotations must be in radians, not degrees)."
-    if viewpoint == 'xy':
+    if view == 'xy':
         pass
-    elif viewpoint == 'xz':
+    elif view == 'xz':
         pos = rotate_view(pos,'x', -numpy.pi/2)
-    elif viewpoint == 'yz':
+    elif view == 'yz':
         pos = rotate_view(pos,'y', numpy.pi/2)
     else:
         try:
-            axes = viewpoint.keys()
+            axes = view.keys()
         except AttributeError:
             raise KeyError(error_message)
         for ax in axes:
-            pos = rotate_view(pos, ax, viewpoint[ax])
-    x = pos[:,0]
-    y = pos[:,1]
-    z = pos[:,2]
-
-    x,y,z = analyze.center_box(x,y,z,density=dens,**kwargs)
-    return x,y,z
+            pos = rotate_view(pos, ax, view[ax])
+    return pos[:,0], pos[:,1], pos[:,2]
 
 def trim_view(width, x, y, z, *args, **kwargs):
     depth = kwargs.pop('depth',None)
@@ -215,7 +210,7 @@ def build_grid(width,pps):
     yvals = numpy.arange(-width/2,width/2,yres)
     return numpy.meshgrid(xvals,yvals)
 
-def project(snapshot, loadable, scale, viewpoint, **kwargs):
+def project(snapshot, loadable, scale, view, **kwargs):
     pps = kwargs.pop('pps',500)
     sm = kwargs.pop('sm',1.7)
     boxsize = float("".join(ch if ch.isdigit() else "" for ch in scale))
@@ -225,7 +220,8 @@ def project(snapshot, loadable, scale, viewpoint, **kwargs):
     hsml = snapshot.gas.get_smoothing_length(unit)
 
     print 'Calculating...'
-    x,y,z = set_viewpoint(pos, scalar, viewpoint, **kwargs)
+    pos = analyze.center_box(pos,density=dens,**kwargs)
+    x,y,z = set_view(pos, scalar, view, **kwargs)
     snapshot.update_sink_coordinates(x,y,z)
     # Artificially shrink sink smoothing lengths.
     for s in snapshot.sinks:
@@ -254,7 +250,7 @@ def density_projection(snapshot, width, depth, length_unit, *args,**kwargs):
     smL = snapshot.gas.get_smoothing_length(length_unit)
     sinkval = snapshot.gas.get_sinks()
 
-    x,y,z = set_viewpoint(pos,dens,*args,**kwargs)
+    x,y,z = set_view(pos,dens,*args,**kwargs)
 
     # Save sink particle positions for overplotting
     snapshot.sinks = []
