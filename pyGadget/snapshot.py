@@ -96,7 +96,7 @@ def disk_density_structure(snapshot, wpath=None):
     else:
         scale = '5000AU'
     for view in ['xy', 'xz', 'yz']:
-        fig.density(scale, view, clim=(8,12), centering='avg')
+        fig.density(scale, view, clim=(7,12), centering='avg')
         if wpath:
             fpath = wpath + '/disk/{}/'.format(view)
             if not os.path.exists(fpath):
@@ -140,7 +140,7 @@ def disk_rotation(snapshot, view, rot_axis, n, wpath=None):
     count = 0
     for angle in numpy.linspace(0,2*numpy.pi, n):
         view[rot_axis] = axis_init + angle
-        fig.density(scale, view, clim=(8,12), centering='avg')
+        fig.density(scale, view, clim=(7,12), centering='avg')
         if wpath:
             fpath = wpath + '/disk/{}rotation/'.format(rot_axis)
             if not os.path.exists(fpath):
