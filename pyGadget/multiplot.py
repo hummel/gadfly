@@ -222,8 +222,8 @@ class Image(Plot):
                                 color='white', fontsize=18,
                                 transform=self.axes.transAxes)
                 for sink in self.snapshot.sinks:
-                    self.axes.plot(sink.y, sink.x, 'ko', ms=5, mew=1)
-                    self.axes.text(sink.y+15, sink.x+12, ' %.1f' %sink.mass)
+                    self.axes.plot(sink.x, sink.y, 'ko', ms=5, mew=1)
+                    self.axes.text(sink.x+15, sink.y+12, ' %.1f' %sink.mass)
 
     def density(self, scale, viewpoint, **kwargs):
         x,y,z = visualize.project(self.snapshot, 'ndensity',

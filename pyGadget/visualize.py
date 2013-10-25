@@ -10,7 +10,12 @@ from scipy.weave import converters
 
 import analyze
 #===============================================================================
-def scalar_map(x,y,scalar_field,hsml,width,pps,zshape):
+def scalar_map(y,x,scalar_field,hsml,width,pps,zshape):
+    """
+    code contains an algorithm for doing sph particle smoothing.
+    """
+    # !!!!! x and y are reversed in the c-code below - no idea why/how...
+    # !!!!! (Hence the reversal above)
     zi = numpy.zeros(zshape)
     nzi = numpy.zeros_like(zi)
     N_gas = scalar_field.size
