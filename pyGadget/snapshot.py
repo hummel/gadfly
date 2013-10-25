@@ -135,7 +135,7 @@ def disk_rotation(snapshot, view, rot_axis, n, wpath=None):
     if snapshot.sim.batch_viewscale:
         scale = snapshot.sim.batch_viewscale
     else:
-        scale = '5000AU'
+        scale = '10000AU'
     axis_init = view.get(rot_axis, 0)
     count = 0
     for angle in numpy.linspace(0,2*numpy.pi, n):
