@@ -149,10 +149,12 @@ def rotation_matrix(axis, angle):
         rot = ((numpy.cos(angle), 0.,numpy.sin(angle)),
                (0., 1., 0.),
                (-numpy.sin(angle), 0., numpy.cos(angle)))
-    if axis == 'z':
+    elif axis == 'z':
         rot = ((numpy.cos(angle), -numpy.sin(angle), 0.),
                (numpy.sin(angle), numpy.cos(angle), 0.),
                (0., 0.,1.))
+    else:
+        raise KeyError("{} is not a valid axis choice".format(axis))
     rot = numpy.asarray(rot)
     return rot
 
@@ -164,9 +166,6 @@ def rotate_view(coords, axis, angle):
     return numpy.dot(coords,rot)
 
 def set_view(pos, dens, view, **kwargs):
-    error_message = "set_view() takes 'xy', 'xz', 'yz' or a dictionary "\
-        "of angle rotations around 'x', 'y' and 'z' as the 'view' arg "\
-        "(rotations must be in radians, not degrees)."
     if view == 'xy':
         pass
     elif view == 'xz':
@@ -175,12 +174,8 @@ def set_view(pos, dens, view, **kwargs):
         pos = rotate_view(pos,'z', numpy.pi/2)
         pos = rotate_view(pos,'x', numpy.pi/2)
     else:
-        try:
-            axes = view.keys()
-        except AttributeError:
-            raise KeyError(error_message)
-        for ax in axes:
-            pos = rotate_view(pos, ax, view[ax])
+        for rot in view:
+            pos = rotate_view(pos, rot[0], rot[1])
     return pos[:,0], pos[:,1], pos[:,2]
 
 def trim_view(width, x, y, z, *args, **kwargs):
