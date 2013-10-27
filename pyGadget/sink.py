@@ -82,6 +82,8 @@ class SingleSink(SinkData):
     '''
     def __init__(self, path, nform=None, id_=None):
         super(SingleSink,self).__init__(path)
+        unique = np.unique(self.sink_id)
+
         if((nform is None) and (id_ is None)):
             print "No sink specified: Selecting first sink to form..."
             nform = 1
@@ -122,3 +124,5 @@ class SingleSink(SinkData):
         for i in xrange(self.mass.size):
             self.mass[i] = 0.015*self.npart_acc[:i].sum()
 
+        # Finally, record total number of sinks found.
+        self.all_ids = unique
