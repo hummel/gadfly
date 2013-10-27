@@ -39,6 +39,14 @@ class Simulation(object):
             self.tsink = self.sink0.time[0]
         except IOError:
             self.tsink = None
+        if self.tsink:
+            self.sinks = [self.sink0]
+            nsinks = self.sink0.all_ids.size
+            if nsinks > 1:
+                for i in range(nsinks-1):
+                    s = sink.SingleSink(self.sinkpath+self.name, i+2)
+                    vars(self)['sink'+str(i+1)] = s
+                    self.sinks.append(s)
 
     def track_sinks(self, boolean=True):
         self.sink_tracking = boolean
