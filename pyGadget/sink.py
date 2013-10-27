@@ -120,9 +120,9 @@ class SingleSink(SinkData):
         self.sink_id = id_
 
         # Calculate sink mass at each timestep
-        self.mass = np.zeros_like(self.npart_acc)
+        self.mass = np.zeros_like(self.time)
         for i in xrange(self.mass.size):
-            self.mass[i] = 0.015*self.npart_acc[:i].sum()
+            self.mass[i] = 0.015*self.npart_acc[:i+1].sum()
 
         # Finally, record total number of sinks found.
         self.all_ids = unique
