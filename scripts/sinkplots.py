@@ -16,8 +16,8 @@ if len(sys.argv) < 2:
 simulation = sys.argv[1]
 path = os.getenv('HOME')+'/data/sinks/'+simulation+'/'
 wdir = os.getenv('HOME')+'/data/sinks/'+simulation+'/'
-sink1 = pyGadget.sinks.SingleSink(path,1)
-sink2 = pyGadget.sinks.SingleSink(path,2)
+sink1 = pyGadget.sink.SingleSink(path,1)
+sink2 = pyGadget.sink.SingleSink(path,2)
 t0 = sink1.time[0] # set t=0 at first sink formation.
 sink1.time = sink1.time - t0
 sink2.time = sink2.time - t0
