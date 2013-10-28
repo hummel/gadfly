@@ -214,6 +214,9 @@ def build_grid(width,pps):
 def project(snapshot, loadable, scale, view, **kwargs):
     pps = kwargs.pop('pps',500)
     sm = kwargs.pop('sm',1.7)
+    shiftx = kwargs.pop('shiftx',None)
+    shifty = kwargs.pop('shifty',None)
+    shiftz = kwargs.pop('shiftz',None)
     boxsize = float("".join(ch if ch.isdigit() else "" for ch in scale))
     unit = "".join(ch if not ch.isdigit() else "" for ch in scale)
     scalar = snapshot.gas._load_dict[loadable]()
@@ -227,6 +230,12 @@ def project(snapshot, loadable, scale, view, **kwargs):
     print 'Calculating...'
     pos = analyze.center_box(pos,density=dens,**kwargs)
     x,y,z = set_view(pos, scalar, view, **kwargs)
+    if shiftx:
+        x += shiftx
+    if shifty:
+        y += shifty
+    if shiftz:
+        z += shiftz
     snapshot.update_sink_coordinates(x,y,z)
     # Artificially shrink sink smoothing lengths.
     for s in snapshot.sinks:
