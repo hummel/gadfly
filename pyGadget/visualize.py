@@ -176,7 +176,7 @@ def set_view(pos, view):
     else:
         for rot in view:
             pos = rotate_view(pos, rot[0], rot[1])
-    return pos[:,0], pos[:,1], pos[:,2]
+    return pos
 
 def trim_view(width, x, y, z, *args, **kwargs):
     depth = kwargs.pop('depth',None)
@@ -229,7 +229,10 @@ def project(snapshot, loadable, scale, view, **kwargs):
 
     print 'Calculating...'
     pos = analyze.center_box(pos,density=dens,**kwargs)
-    x,y,z = set_view(pos, view)
+    pos = set_view(pos, view)
+    x = pos[:,0]
+    y = pos[:,1]
+    z = pos[:,2]
     if shiftx:
         x += shiftx
     if shifty:
