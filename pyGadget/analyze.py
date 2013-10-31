@@ -66,7 +66,7 @@ def center_box(pos, center=None, **kwargs):
     z -= cz
     return numpy.column_stack((x,y,z))
 
-def cart2sph(x ,y, z):
+def cart2sph(x, y, z):
     r = numpy.sqrt(numpy.square(x) + numpy.square(y) + numpy.square(z))
     theta = numpy.arccos(z/r)
     phi = numpy.arctan(y/x)
