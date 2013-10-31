@@ -113,7 +113,7 @@ class PartTypeX(HDF5Group):
         try:
             xyz = self.coordinates
         except AttributeError:
-            self.load_coords(unit)
+            self.load_coords()
             xyz = self.coordinates
 
         center = kwargs.get('center', None)
@@ -175,8 +175,6 @@ class PartTypeX(HDF5Group):
         if unit:
             if unit != self.units._coord_unit:
                 self.load_coords(unit)
-                if system == 'spherical':
-                    self.calculate_spherical_coordinates(unit, **kwargs)
 
         system = kwargs.pop('system','cartesian')
         if system == 'cartesian':
