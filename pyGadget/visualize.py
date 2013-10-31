@@ -111,7 +111,7 @@ def scalar_map(y,x,scalar_field,hsml,width,pps,zshape):
     return zi
 
 #===============================================================================
-def py_scalar_map(pps,width, x,y,scalar_field,hsml,zshape):
+def py_scalar_map(y,x,scalar_field,hsml,width,pps,zshape):
     zi = numpy.zeros(zshape)
     nzi = numpy.zeros_like(zi)
     i_min = (x - hsml + width/2.0) / width*pps
