@@ -165,7 +165,7 @@ def rotate_view(coords, axis, angle):
     print rot
     return numpy.dot(coords,rot)
 
-def set_view(pos, dens, view, **kwargs):
+def set_view(pos, view, **kwargs):
     if view == 'xy':
         pass
     elif view == 'xz':
@@ -229,7 +229,7 @@ def project(snapshot, loadable, scale, view, **kwargs):
 
     print 'Calculating...'
     pos = analyze.center_box(pos,density=dens,**kwargs)
-    x,y,z = set_view(pos, scalar, view, **kwargs)
+    x,y,z = set_view(pos, view, **kwargs)
     if shiftx:
         x += shiftx
     if shifty:
