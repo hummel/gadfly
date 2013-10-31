@@ -69,7 +69,7 @@ def center_box(pos, center=None, **kwargs):
 def cart2sph(x, y, z):
     r = numpy.sqrt(numpy.square(x) + numpy.square(y) + numpy.square(z))
     theta = numpy.arccos(z/r)
-    phi = numpy.arctan(y/x)
+    phi = numpy.arctan2(y,x)
     return r,theta,phi
 
 def sph2cart(r, theta, phi):
@@ -80,7 +80,7 @@ def sph2cart(r, theta, phi):
 
 def cart2cyl(x ,y, z):
     r = numpy.sqrt(numpy.square(x) + numpy.square(y))
-    theta = numpy.arctan(y/x)
+    theta = numpy.arctan2(y,x)
     return r,theta,z
 
 def cyl2cart(r, theta, z):
