@@ -65,49 +65,25 @@ def radial_properties(snapshot, **kwargs):
 
     length_unit = 'cm'
     mass_unit = 'g'
+
     redshift = snapshot.header.Redshift
-    dm_mass = snapshot.dm.get_masses(mass_unit)
-    dm_pos = snapshot.dm.get_coords(length_unit)
-    gas_mass = snapshot.gas.get_masses(mass_unit)
-    gas_pos = snapshot.gas.get_coords(length_unit)
     dens = snapshot.gas.get_density('cgs')
+    xyz = snapshot.gas.get_coords(length_unit)
+    center = analyze.find_center(xyz[:,0],xyz[:,1],xyz[:,2], dens,
+                                 centering='max')
+    gas_pos = snapshot.gas.get_coords(length_unit, system='spherical',
+                                      center=center)
+    dm_pos = snapshot.dm.get_coords(length_unit, system='spherical',
+                                    center=center)
+    dm_mass = snapshot.dm.get_masses(mass_unit)
+    gas_mass = snapshot.gas.get_masses(mass_unit)
     temp = snapshot.gas.get_temperature()
 
-    gasx = gas_pos[:,0]
-    gasy = gas_pos[:,1]
-    gasz = gas_pos[:,2]
-    dmx = dm_pos[:,0]
-    dmy = dm_pos[:,1]
-    dmz = dm_pos[:,2]
-    del dm_pos
-
+    gasr = gas_pos[:,0]
+    dmr = dm_pos[:,0]
+    r = numpy.concatenate((gasr,dmr))
     mass = numpy.concatenate((gas_mass, dm_mass))
-    del gas_mass
-    del dm_mass
-    x = numpy.concatenate((gasx,dmx))
-    y = numpy.concatenate((gasy,dmy))
-    z = numpy.concatenate((gasz,dmz))
-    pos = numpy.column_stack((x,y,z))
 
-    pos = analyze.center_box(pos, density=dens, centering='max',
-                             verbose=verbose)
-    gas_pos = analyze.center_box(gas_pos, density=dens,
-                                 centering='max', verbose=verbose)
-    gasx = gas_pos[:,0]
-    gasy = gas_pos[:,1]
-    gasz = gas_pos[:,2]
-    x = pos[:,0]
-    y = pos[:,1]
-    z = pos[:,2]
-    del dens
-    del gas_pos
-    del pos
-    r = numpy.sqrt(numpy.square(x) + numpy.square(y) + numpy.square(z))
-    gasr = numpy.sqrt(numpy.square(gasx)
-		      + numpy.square(gasy)
-		      + numpy.square(gasz))
-    del x,y,z,gasx,gasy,gasz
-    
     halo_properties = []
     n = old_n = old_r = density = energy = 0
     # background density:: Omega_m * rho_crit(z)
@@ -145,7 +121,6 @@ def radial_properties(snapshot, **kwargs):
 	    old_r = rmax
         rmax *= r_multiplier
     
-    del r
     print 'snapshot', snapshot.number, 'analyzed.'
     return halo_properties
 
