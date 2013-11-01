@@ -127,7 +127,7 @@ class PartTypeX(HDF5Group):
                 except AttributeError:
                     raise KeyError("Cannot density-center dark matter!")
                 xyz = analyze.center_box(xyz, density=dens, **kwargs)
-            elif centering == 'simple':
+            elif centering == 'box':
                 xyz = analyze.center_box(xyz, **kwargs)
 
         view = kwargs.get('view', None)
