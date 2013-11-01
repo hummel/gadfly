@@ -14,7 +14,7 @@ def find_center(x, y, z, dens=None, **kwargs):
     if centering in ['avg', 'max']:
         if dens is not None:
             dens_limit = kwargs.pop('dens_limit', 1e11)
-            nparticles = kwargs.pop('centering_npart', 100)
+            nparticles = kwargs.pop('centering_npart', 10)
             if centering == 'avg':
                 hidens = numpy.where(dens >= dens_limit)[0]
                 while hidens.size < nparticles:
