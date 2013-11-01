@@ -39,6 +39,8 @@ class Halo(object):
     def populate(self, snap, **kwargs):
         snapshot = self.sim.load_snapshot(snap)
         haloprops = radial_properties(snapshot, **kwargs)
+        snapshot.gas.cleanup()
+        snapshot.dm.cleanup()
         snapshot.close()
         table = 'snapshot{:0>4}'.format(snap)
         create = ("CREATE TABLE " + table +
