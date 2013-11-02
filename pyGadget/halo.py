@@ -96,8 +96,8 @@ def radial_properties(snapshot, **kwargs):
         gasinR = numpy.where(gasr <= rmax)[0]
         n = inR.size
         if n > old_n:
-            inShell = numpy.where(r[inR] > old_r)[0]
-            gasinShell = numpy.where(r[gasinR] > old_r)[0]
+            inShell = numpy.where((r > old_r) & (r <= rmax))[0]
+            gasinShell = numpy.where((gasr > old_r) & (gasr <= rmax))[0]
             rpc = rmax/3.08568e18
             Mtot = mass[inR].sum()
 	    Mshell = mass[inShell].sum()
