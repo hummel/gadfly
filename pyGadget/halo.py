@@ -3,7 +3,7 @@
 import os
 import numpy
 import sqlite3
-from numba import autojit
+#from numba import autojit
 
 import analyze
 import constants
@@ -94,14 +94,18 @@ def radial_properties(snapshot, **kwargs):
     print 'snapshot', snapshot.number, 'analyzed.'
     return halo_properties
 
-@autojit
+#@autojit
 def analyze_halo(redshift, r, gasr, mass, gmass, temp,
                  r_start, r_multiplier, n_min):
     k_B = 1.3806e-16 # erg/K
     m_H = 1.6726e-24 # g
     GRAVITY = 6.6726e-8 # dyne * cm**2 / g**2
     halo_properties = []
-    n = old_n = old_r = density = energy = 0
+    n = 0
+    old_n = 0
+    old_r = 0
+    density = 0
+    energy = 0
     # background density:: Omega_m * rho_crit(z)
     background_density = .27 * 9.31e-30 * (1+redshift)**3 
     rmax = r_start
@@ -142,3 +146,4 @@ def analyze_halo(redshift, r, gasr, mass, gmass, temp,
             old_n = n
 	    old_r = rmax
         rmax *= r_multiplier
+    return halo_properties
