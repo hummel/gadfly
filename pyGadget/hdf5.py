@@ -57,7 +57,8 @@ class PartTypeX(HDF5Group):
                            'velocities':self.get_velocities,
                            'particleIDs':self.get_PIDs}
         self.loadable_keys = self._load_dict.keys()
-        self._calculated = []
+        self._calculated = ['spherical_coords',
+                            'cylindrical_coords']
 
     def load_masses(self, unit=None):
         """
