@@ -3,6 +3,8 @@
 import os
 import numpy
 import sqlite3
+from numba import autojit
+
 import analyze
 import constants
 
@@ -86,12 +88,24 @@ def radial_properties(snapshot, **kwargs):
     r = numpy.concatenate((gasr,dmr))
     mass = numpy.concatenate((gas_mass, dm_mass))
 
+    print 'Data loaded.  Analyzing...'
+    halo_properties = analyze_halo(redshift, r, gasr, mass, gas_mass, temp,
+                                   r_start, r_multiplier, n_min)
+    print 'snapshot', snapshot.number, 'analyzed.'
+    return halo_properties
+
+@autojit
+def analyze_halo(redshift, r, gasr, mass, gmass, temp,
+                 r_start, r_multiplier, n_min):
+    k_B = 1.3806e-16 # erg/K
+    m_H = 1.6726e-24 # g
+    GRAVITY = 6.6726e-8 # dyne * cm**2 / g**2
     halo_properties = []
     n = old_n = old_r = density = energy = 0
     # background density:: Omega_m * rho_crit(z)
     background_density = .27 * 9.31e-30 * (1+redshift)**3 
     rmax = r_start
-    while (density > 180 * background_density or n < n_min):
+    while (density > 178 * background_density or n < n_min):
         inR = numpy.where(r <= rmax)[0]
         gasinR = numpy.where(gasr <= rmax)[0]
         n = inR.size
@@ -102,28 +116,29 @@ def radial_properties(snapshot, **kwargs):
             Mtot = mass[inR].sum()
 	    Mshell = mass[inShell].sum()
             solar_masses = Mtot/1.989e33
+            gMtot = gmass[gasinR].sum()
+	    gMshell = gmass[gasinShell].sum()
+            gas_solar_masses = gMtot/1.989e33
             density = 3 * Mtot / (4*numpy.pi * rmax**3)
             delta = density/background_density
 	    tshell = temp[gasinShell].mean()
 	    tavg = temp[gasinR].mean()
-	    tff = numpy.sqrt(3*numpy.pi/32/constants.GRAVITY/density)
-	    cs = numpy.sqrt(constants.k_B * tavg / constants.m_H)
+	    tff = numpy.sqrt(3*numpy.pi/32/GRAVITY/density)
+	    cs = numpy.sqrt(k_B * tavg / m_H)
 	    Lj = cs*tff
 	    Mj = density * (4*numpy.pi/3) * Lj**3 / 1.989e33
-	    energy += constants.GRAVITY * Mtot * Mshell / rmax
+	    energy += GRAVITY * Mtot * Mshell / rmax
+            '''
             if verbose: 
                 print 'R = %.2e pc' %rpc,
 		print 'Mass enclosed: %.2e' %solar_masses,
                 print 'Energy: %.3e' %energy,
                 print 'delta: %.3f' %delta
+            '''
             if delta >= 178.0:
                 halo_properties.append((redshift,rpc,delta,solar_masses,density,
+                                        gMtot, gMshell,gas_solar_masses,
                                         tavg,tshell,tff,cs,Lj,Mj,-energy,n))
             old_n = n
 	    old_r = rmax
         rmax *= r_multiplier
-    
-    print 'snapshot', snapshot.number, 'analyzed.'
-    return halo_properties
-
-
