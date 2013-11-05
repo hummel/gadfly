@@ -46,17 +46,22 @@ class Halo(object):
         snapshot.close()
         table = 'snapshot{:0>4}'.format(snap)
         create = ("CREATE TABLE " + table +
-                  "(redshift real, radius real, delta real, mass real,"\
-                      " density real, Tavg real, Tshell real, tff real,"\
-                      " cs real, Lj real, Mj real, gpe real, npart integer)")
+                  "(redshift real, radius real, delta real, density real, "\
+                  "gas_density real, total_mass real, total_gas real, "\
+                  "shell_mass real, shell_gas real, shell_dens real, "\
+                  "shell_gdens real, tff real, Tavg real, Tshell real, "\
+                  "cs real, cshell real, Lj real, Mj real, gpe real, "\
+                  "npart integer)")
         try:
             self.c.execute(create)
         except sqlite3.OperationalError:
             self.c.execute("DROP TABLE " + table)
             self.c.execute(create)
-        insert = ("INSERT INTO " + table + "(redshift, radius, "\
-                      "delta, mass, density, Tavg, Tshell, tff, cs, Lj, "\
-                      "Mj, gpe, npart) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)")
+        insert = ("INSERT INTO " + table + "(redshift, radius, delta, "\
+                  "density, gas_density, total_mass, total_gas, shell_mass, "\
+                  "shell_gas, shell_dens, shell_gdens, tff, Tavg, Tshell, cs, "\
+                  "cshell, Lj, Mj, gpe, npart) "\
+                  "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
         self.c.executemany(insert, haloprops)
         self.db.commit()
 
@@ -90,13 +95,13 @@ def radial_properties(snapshot, **kwargs):
 
     print 'Data loaded.  Analyzing...'
     halo_properties = analyze_halo(redshift, r, gasr, mass, gas_mass, temp,
-                                   r_start, r_multiplier, n_min)
+                                   r_start, r_multiplier, n_min, verbose)
     print 'snapshot', snapshot.number, 'analyzed.'
     return halo_properties
 
 #@autojit
 def analyze_halo(redshift, r, gasr, mass, gmass, temp,
-                 r_start, r_multiplier, n_min):
+                 r_start, r_multiplier, n_min, verbose):
     k_B = 1.3806e-16 # erg/K
     m_H = 1.6726e-24 # g
     GRAVITY = 6.6726e-8 # dyne * cm**2 / g**2
@@ -119,30 +124,34 @@ def analyze_halo(redshift, r, gasr, mass, gmass, temp,
             rpc = rmax/3.08568e18
             Mtot = mass[inR].sum()
 	    Mshell = mass[inShell].sum()
-            solar_masses = Mtot/1.989e33
+            Msun = Mtot/1.989e33
             gMtot = gmass[gasinR].sum()
 	    gMshell = gmass[gasinShell].sum()
-            gas_solar_masses = gMtot/1.989e33
+            gMsun = gMtot/1.989e33
             density = 3 * Mtot / (4*numpy.pi * rmax**3)
+            gdensity = 3 * gMtot / (4*numpy.pi * rmax**3)
+            shell_vol = 4/3 * numpy.pi * (rmax**3 - old_r**3)
+            rhoShell = Mshell / shell_vol
+            grhoShell = gMshell / shell_vol
             delta = density/background_density
 	    tshell = temp[gasinShell].mean()
 	    tavg = temp[gasinR].mean()
 	    tff = numpy.sqrt(3*numpy.pi/32/GRAVITY/density)
 	    cs = numpy.sqrt(k_B * tavg / m_H)
+	    cshell = numpy.sqrt(k_B * tshell / m_H)
 	    Lj = cs*tff
 	    Mj = density * (4*numpy.pi/3) * Lj**3 / 1.989e33
 	    energy += GRAVITY * Mtot * Mshell / rmax
-            '''
             if verbose: 
                 print 'R = %.2e pc' %rpc,
-		print 'Mass enclosed: %.2e' %solar_masses,
+		print 'Mass enclosed: %.2e' %Msun,
                 print 'Energy: %.3e' %energy,
                 print 'delta: %.3f' %delta
-            '''
             if delta >= 178.0:
-                halo_properties.append((redshift,rpc,delta,solar_masses,density,
-                                        gMtot, gMshell,gas_solar_masses,
-                                        tavg,tshell,tff,cs,Lj,Mj,-energy,n))
+                halo_properties.append((redshift,rpc,delta,density,gdensity,
+                                        Msun,gMsun,Mshell,gMshell,rhoShell,
+                                        grhoShell,tff,tavg,tshell,cs,cshell,Lj,
+                                        Mj,-energy,n))
             old_n = n
 	    old_r = rmax
         rmax *= r_multiplier
