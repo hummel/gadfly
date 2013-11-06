@@ -33,23 +33,25 @@ class Simulation(object):
         self.units.set_coordinate_system(self.coordinates)
 
         self.snapfiles = self.find_snapshots()
-        try:
-            self.sink0 = sink.SingleSink(self.sinkpath + self.name)
-            print "Found sinkfiles.  Loading sinkdata."
-            self.tsink = self.sink0.time[0]
-        except IOError:
-            self.tsink = None
-        if self.tsink:
-            self.sinks = [self.sink0]
-            nsinks = self.sink0.all_ids.size
-            if nsinks > 1:
-                for i in range(nsinks-1):
-                    s = sink.SingleSink(self.sinkpath+self.name, i+2)
-                    vars(self)['sink'+str(i+1)] = s
-                    self.sinks.append(s)
+        self.track_sinks(self.sink_tracking)
 
     def track_sinks(self, boolean=True):
         self.sink_tracking = boolean
+        if self.sink_tracking:
+            try:
+                self.sink0 = sink.SingleSink(self.sinkpath + self.name)
+                print "Found sinkfiles.  Loading sinkdata."
+                self.tsink = self.sink0.time[0]
+            except IOError:
+                self.tsink = None
+            if self.tsink:
+                self.sinks = [self.sink0]
+                nsinks = self.sink0.all_ids.size
+                if nsinks > 1:
+                    for i in range(nsinks-1):
+                        s = sink.SingleSink(self.sinkpath+self.name, i+2)
+                        vars(self)['sink'+str(i+1)] = s
+                        self.sinks.append(s)
 
     def refine_by_mass(self, boolean=True):
         self.hires = boolean
