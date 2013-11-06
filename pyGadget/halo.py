@@ -142,16 +142,17 @@ def analyze_halo(redshift, r, gasr, mass, gmass, temp,
 	    Lj = cs*tff
 	    Mj = density * (4*numpy.pi/3) * Lj**3 / 1.989e33
 	    energy += GRAVITY * Mtot * Mshell / rmax
-            if verbose: 
-                print 'R = %.2e pc' %rpc,
-		print 'Mass enclosed: %.2e' %Msun,
-                print 'Energy: %.3e' %energy,
-                print 'delta: %.3f' %delta
-            if delta >= 178.0:
-                halo_properties.append((redshift,rpc,delta,density,gdensity,
-                                        Msun,gMsun,Mshell,gMshell,rhoShell,
-                                        grhoShell,tff,tavg,tshell,cs,cshell,Lj,
-                                        Mj,-energy,n))
+            if n > n_min:
+                if verbose:
+                    print 'R = %.2e pc' %rpc,
+                    print 'Mass enclosed: %.2e' %Msun,
+                    print 'Energy: %.3e' %energy,
+                    print 'delta: %.3f' %delta
+                if delta >= 178.0:
+                    halo_properties.append((redshift,rpc,delta,density,gdensity,
+                                            Msun,gMsun,Mshell,gMshell,rhoShell,
+                                            grhoShell,tff,tavg,tshell,cs,cshell,
+                                            Lj,Mj,-energy,n))
             old_n = n
 	    old_r = rmax
         rmax *= r_multiplier
