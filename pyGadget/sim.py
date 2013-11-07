@@ -37,13 +37,14 @@ class Simulation(object):
 
     def track_sinks(self, boolean=True):
         self.sink_tracking = boolean
+        self.tsink = None
         if self.sink_tracking:
             try:
                 self.sink0 = sink.SingleSink(self.sinkpath + self.name)
                 print "Found sinkfiles.  Loading sinkdata."
                 self.tsink = self.sink0.time[0]
             except IOError:
-                self.tsink = None
+                pass
             if self.tsink:
                 self.sinks = [self.sink0]
                 nsinks = self.sink0.all_ids.size
