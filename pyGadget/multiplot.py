@@ -42,6 +42,7 @@ class Phase(Plot):
 
     def _set_phase_dict(self):
         self._phase_plots = {'temp':self.temp,
+                             'temp-radius':self.radial_temp,
                              'electron_frac':self.electron_frac,
                              'h2frac':self.h2frac,
                              'HDfrac':self.HDfrac}
@@ -81,16 +82,21 @@ class Phase(Plot):
 
     @staticmethod
     def radial_temp(snapshot, ax, **kwargs):
-        pos = snapshot.gas.get_coords(unit='pc')
-        dens = snapshot.gas.get_number_density()
+        snapshot.gas.calculate_spherical_coords(unit='pc', centering='avg')
+        r = snapshot.gas.spherical_coords[:,0]
         temp = snapshot.gas.get_temperature()
-        pos = analyze.center_box(pos, density=dens, centering='avg')
-        r = numpy.sqrt(numpy.square(pos[:,0]) + numpy.square(pos[:,1]) 
-                       + numpy.square(pos[:,2]))
+        virialized = numpy.where(r <= 70.)[0]
+        r = r[virialized]
+        temp = temp[virialized]
+        snapshot.gas.cleanup()
+
+        gridsize = kwargs.get('gridsize', None)
+        if gridsize is None:
+            kwargs['gridsize'] = 250
         ax = Phase._hexbin(ax, r, temp, **kwargs)
         ax.set_xscale('log')
         ax.set_yscale('log')
-        ax.set_xlim(5e-5,1e3)
+        ax.set_xlim(5e-5,70)
         ax.set_ylim(10, 2e4)
         ax.axhline(2.725 * (snapshot.header.Redshift + 1),
                    linestyle='--', color='k')
