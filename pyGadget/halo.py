@@ -68,7 +68,7 @@ class Halo(object):
 #===============================================================================
 def radial_properties(snapshot, **kwargs):
     r_start = kwargs.pop('r_start', 3.08568e14)
-    r_multiplier = kwargs.pop('multiplier', 1.05)
+    r_multiplier = kwargs.pop('multiplier', 1.2)
     verbose = kwargs.pop('verbose', True)
     n_min = kwargs.pop('n_min', 50)
 
@@ -114,11 +114,11 @@ def analyze_halo(redshift, r, gasr, mass, gmass, temp,
     # background density:: Omega_m * rho_crit(z)
     background_density = .27 * 9.31e-30 * (1+redshift)**3 
     rmax = r_start
-    while (density > 178 * background_density or n < n_min):
+    while (density > 178 * background_density or n < 100):
         inR = numpy.where(r <= rmax)[0]
         gasinR = numpy.where(gasr <= rmax)[0]
         n = inR.size
-        if n > old_n:
+        if n > old_n + n_min:
             inShell = numpy.where((r > old_r) & (r <= rmax))[0]
             gasinShell = numpy.where((gasr > old_r) & (gasr <= rmax))[0]
             rpc = rmax/3.08568e18
@@ -142,17 +142,15 @@ def analyze_halo(redshift, r, gasr, mass, gmass, temp,
 	    Lj = cs*tff
 	    Mj = density * (4*numpy.pi/3) * Lj**3 / 1.989e33
 	    energy += GRAVITY * Mtot * Mshell / rmax
-            if n > n_min:
-                if verbose:
-                    print 'R = %.2e pc' %rpc,
-                    print 'Mass enclosed: %.2e' %Msun,
-                    print 'Energy: %.3e' %energy,
-                    print 'delta: %.3f' %delta
-                if delta >= 178.0:
-                    halo_properties.append((redshift,rpc,delta,density,gdensity,
-                                            Msun,gMsun,Mshell,gMshell,rhoShell,
-                                            grhoShell,tff,tavg,tshell,cs,cshell,
-                                            Lj,Mj,-energy,n))
+            if verbose:
+                print 'R = %.2e pc' %rpc,
+                print 'Mass enclosed: %.2e' %Msun,
+                print 'Energy: %.3e' %energy,
+                print 'delta: %.3f' %delta
+            halo_properties.append((redshift,rpc,delta,density,gdensity,
+                                    Msun,gMsun,Mshell,gMshell,rhoShell,
+                                    grhoShell,tff,tavg,tshell,cs,cshell,
+                                    Lj,Mj,-energy,n))
             old_n = n
 	    old_r = rmax
         rmax *= r_multiplier
