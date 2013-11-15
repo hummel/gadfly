@@ -243,7 +243,11 @@ def project(snapshot, loadable, scale, view, **kwargs):
     # Artificially shrink sink smoothing lengths.
     for s in snapshot.sinks:
         hsml[s.index] *= .5
-    x,y,z,scalar,hsml = trim_view(boxsize, x,y,z,scalar,hsml,**kwargs)
+    if loadable not in ['density', 'ndensity']:
+        trimmed = trim_view(boxsize, x,y,z,dens,scalar,hsml,**kwargs)
+        x,y,z,dens,scalar,hsml = trimmed
+    else:
+        x,y,z,scalar,hsml = trim_view(boxsize, x,y,z,scalar,hsml,**kwargs)
     hsml = numpy.fmax(sm * hsml, boxsize/pps/2)
     xi,yi = build_grid(boxsize,pps)
     zi = scalar_map(x,y,scalar,hsml,boxsize,pps,xi.shape)
