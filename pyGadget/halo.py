@@ -70,7 +70,7 @@ def radial_properties(snapshot, **kwargs):
     r_start = kwargs.pop('r_start', 3.08568e14)
     r_multiplier = kwargs.pop('multiplier', 1.2)
     verbose = kwargs.pop('verbose', True)
-    n_min = kwargs.pop('n_min', 50)
+    n_min = kwargs.pop('n_min', 32)
 
     length_unit = 'cm'
     mass_unit = 'g'
