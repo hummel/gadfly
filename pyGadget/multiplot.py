@@ -232,8 +232,8 @@ class Image(Plot):
                     self.axes.text(sink.x+15, sink.y+12, ' %.1f' %sink.mass)
 
     def density(self, scale, viewpoint, **kwargs):
-        x,y,z = visualize.project(self.snapshot, 'ndensity',
-                                  scale, viewpoint, **kwargs)
+        x,y,z = visualize.project(self.snapshot, 'ndensity', scale, viewpoint, 
+                                  centering='avg', **kwargs)
         ax = kwargs.pop('axis',self.axes)
         ax.cla()
         ax.set_axis_off()
@@ -251,6 +251,31 @@ class Image(Plot):
                 self.cbar.set_clim(clim[0],clim[1])
                 self.cbar.set_ticks(range(clim[0], clim[1]+1))
             self.cbar.set_label('Log Number Density [cm$^{-3}$]')
+        self.annotate_axes(scale)
+        self.axes.set_xlim(x.min(), x.max())
+        self.axes.set_ylim(y.min(), y.max())
+        pyplot.draw()
+
+    def temperature(self, scale, viewpoint, **kwargs):
+        x,y,z = visualize.project(self.snapshot, 'temp', scale, viewpoint,
+                                  centering='avg', **kwargs)
+        ax = kwargs.pop('axis',self.axes)
+        ax.cla()
+        ax.set_axis_off()
+        img = ax.imshow(z, extent=[x.min(),x.max(),y.min(),y.max()],
+                        cmap=pyplot.cm.hot,origin='lower')
+        clim = kwargs.pop('clim',None)
+        if clim:
+            img.set_clim(clim[0],clim[1])
+
+        cbar = kwargs.pop('colorbar', True)
+        if cbar:
+            if not self.cbar:
+                self.cbar = self.figure.colorbar(img)
+            if clim:
+                self.cbar.set_clim(clim[0],clim[1])
+                self.cbar.set_ticks(range(clim[0], clim[1]+1))
+            self.cbar.set_label('Log Gas Temperature [K]')
         self.annotate_axes(scale)
         self.axes.set_xlim(x.min(), x.max())
         self.axes.set_ylim(y.min(), y.max())
