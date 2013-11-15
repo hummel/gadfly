@@ -179,7 +179,7 @@ def set_view(pos, view):
     return pos
 
 def trim_view(width, x, y, z, *args, **kwargs):
-    depth = kwargs.pop('depth',None)
+    depth = kwargs.pop('depth',1.0)
     arrs = [i for i in args]
     if depth:
         depth *= width
