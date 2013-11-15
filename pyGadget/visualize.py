@@ -255,4 +255,7 @@ def project(snapshot, loadable, scale, view, **kwargs):
     imscale = kwargs.pop('imscale','log')
     if imscale == 'log':
         zi = numpy.log10(zi)
+        print 'log(%s):: min: %.3e max: %.3e' %(loadable, zi.min(),zi.max())
+    else:
+        print 'Returning raw (non-log) values!'
     return xi,yi,zi
