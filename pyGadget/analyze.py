@@ -87,3 +87,12 @@ def cyl2cart(r, theta, z):
     x = r * numpy.cos(theta)
     y = r * numpy.sin(theta)
     return x,y,z
+
+def density_cut(dens_lim, dens, *args):
+    arrs = [i for i in args]
+    slice_ = numpy.where(numpy.abs(dens) > dens_lim)[0]
+    dens = dens[slice_]
+    for i,array in enumerate(arrs):
+        arrs[i] = array[slice_]
+    print ' density cut:: max: %.3e min: %.3e' %(dens.max(),dens.min())
+    return [dens]+arrs

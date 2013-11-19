@@ -217,6 +217,7 @@ def project(snapshot, loadable, scale, view, **kwargs):
     shiftx = kwargs.pop('shiftx',None)
     shifty = kwargs.pop('shifty',None)
     shiftz = kwargs.pop('shiftz',None)
+    dens_lim = kwargs.pop('dens_lim', None)
     boxsize = float("".join(ch if ch.isdigit() else "" for ch in scale))
     unit = "".join(ch if not ch.isdigit() else "" for ch in scale)
     scalar = snapshot.gas._load_dict[loadable]()
@@ -243,11 +244,18 @@ def project(snapshot, loadable, scale, view, **kwargs):
     # Artificially shrink sink smoothing lengths.
     for s in snapshot.sinks:
         hsml[s.index] *= .5
-    if loadable not in ['density', 'ndensity']:
-        trimmed = trim_view(boxsize, x,y,z,dens,scalar,hsml,**kwargs)
-        x,y,z,dens,scalar,hsml = trimmed
-    else:
+    arrs = [scalar, hsml]
+    if loadable in ['density', 'ndensity']:
         x,y,z,scalar,hsml = trim_view(boxsize, x,y,z,scalar,hsml,**kwargs)
+        if dens_lim:
+            arrs = [x,y,z,hsml]
+            scalar,x,y,z,hsml = analyze.density_cut(dens_lim, scalar, *arrs)
+    else:
+        arrs.append(dens)
+        x,y,z,dens,scalar,hsml = trim_view(boxsize, x,y,z, *arrs, **kwargs)
+        if dens_lim:
+            arrs = [x,y,z,scalar,hsml]
+            dens,x,y,z,scalar,hsml = analyze.density_cut(dens_lim, dens, *arrs)
     hsml = numpy.fmax(sm * hsml, boxsize/pps/2)
     xi,yi = build_grid(boxsize,pps)
     zi = scalar_map(x,y,scalar,hsml,boxsize,pps,xi.shape)
