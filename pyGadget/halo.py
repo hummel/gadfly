@@ -134,8 +134,8 @@ def analyze_halo(redshift, r, gasr, mass, gmass, temp,
             rhoShell = Mshell / shell_vol
             grhoShell = gMshell / shell_vol
             delta = density/background_density
-	    tshell = temp[gasinShell].mean()
-	    tavg = temp[gasinR].mean()
+	    tshell = analyze.reject_outliers(temp[gasinShell]).mean()
+	    tavg = analyze.reject_outliers(temp[gasinR]).mean()
 	    tff = numpy.sqrt(3*numpy.pi/32/GRAVITY/density)
 	    cs = numpy.sqrt(k_B * tavg / m_H)
 	    cshell = numpy.sqrt(k_B * tshell / m_H)
