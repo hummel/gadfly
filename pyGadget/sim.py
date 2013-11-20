@@ -40,18 +40,18 @@ class Simulation(object):
         self.tsink = None
         if self.sink_tracking:
             try:
-                self.sink0 = sink.SinkHistory(self.sinkpath + self.name)
+                self.sink1 = sink.SinkHistory(self.sinkpath + self.name)
                 print "Found sinkfiles.  Loading sinkdata."
-                self.tsink = self.sink0.time[0]
+                self.tsink = self.sink1.time[0]
             except IOError:
                 pass
             if self.tsink:
-                self.sinks = [self.sink0]
-                nsinks = self.sink0.all_ids.size
+                self.sinks = [self.sink1]
+                nsinks = self.sink1.all_ids.size
                 if nsinks > 1:
-                    for i in range(nsinks-1):
-                        s = sink.SinkHistory(self.sinkpath+self.name, i+2)
-                        vars(self)['sink'+str(i+1)] = s
+                    for i in range(2,nsinks+1):
+                        s = sink.SinkHistory(self.sinkpath+self.name, i)
+                        vars(self)['sink'+str(i)] = s
                         self.sinks.append(s)
 
     def refine_by_mass(self, boolean=True):
