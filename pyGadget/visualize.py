@@ -252,7 +252,7 @@ def project(snapshot, loadable, scale, view, **kwargs):
             scalar,x,y,z,hsml = analyze.density_cut(dens_lim, scalar, *arrs)
     else:
         arrs.append(dens)
-        x,y,z,dens,scalar,hsml = trim_view(boxsize, x,y,z, *arrs, **kwargs)
+        x,y,z,scalar,hsml,dens = trim_view(boxsize, x,y,z, *arrs, **kwargs)
         if dens_lim:
             arrs = [x,y,z,scalar,hsml]
             dens,x,y,z,scalar,hsml = analyze.density_cut(dens_lim, dens, *arrs)
