@@ -72,7 +72,7 @@ class SinkData(object):
         for key in vars(self).keys():
             vars(self)[key] = vars(self)[key][good]
 
-class SingleSink(SinkData):
+class SinkHistory(SinkData):
     '''
     Select sink data for a single sink particle.
 
@@ -81,7 +81,7 @@ class SingleSink(SinkData):
     ID: select sink by ID.
     '''
     def __init__(self, path, nform=None, id_=None):
-        super(SingleSink,self).__init__(path)
+        super(SinkHistory,self).__init__(path)
         unique = np.unique(self.sink_id)
 
         if((nform is None) and (id_ is None)):

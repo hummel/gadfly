@@ -40,7 +40,7 @@ class Simulation(object):
         self.tsink = None
         if self.sink_tracking:
             try:
-                self.sink0 = sink.SingleSink(self.sinkpath + self.name)
+                self.sink0 = sink.SinkHistory(self.sinkpath + self.name)
                 print "Found sinkfiles.  Loading sinkdata."
                 self.tsink = self.sink0.time[0]
             except IOError:
@@ -50,7 +50,7 @@ class Simulation(object):
                 nsinks = self.sink0.all_ids.size
                 if nsinks > 1:
                     for i in range(nsinks-1):
-                        s = sink.SingleSink(self.sinkpath+self.name, i+2)
+                        s = sink.SinkHistory(self.sinkpath+self.name, i+2)
                         vars(self)['sink'+str(i+1)] = s
                         self.sinks.append(s)
 
