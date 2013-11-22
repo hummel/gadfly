@@ -171,6 +171,13 @@ class AccretionDisk(object):
             self.c.execute(command)
 
         self.data = numpy.asarray(self.c.fetchall())
+        print self.data.size
+        if self.data.size < 1:
+            print "Warning: Requested accretion disk data does not exist!"
+            print "Calculating..."
+            self.populate(snap, density_limit, verbose=False)
+            self.c.execute(command)
+            self.data = numpy.asarray(self.c.fetchall())
 
     def populate(self, snap, density_limit, **kwargs):
         self.sim.units.set_length('cm')
@@ -213,8 +220,11 @@ class AccretionDisk(object):
         try:
             self.c.executemany(insert, diskprops)
         except sqlite3.OperationalError:
-            self.c.execute("DROP TABLE " + table)
-            self.c.execute(create)
+            try:
+                self.c.execute(create)
+            except sqlite3.OperationalError:
+                self.c.execute("DROP TABLE " + table)
+                self.c.execute(create)
 
         self.c.executemany(insert, diskprops)
         self.db.commit()
