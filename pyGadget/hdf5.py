@@ -213,19 +213,86 @@ class PartTypeX(HDF5Group):
         if self._refined is not None:
             self.velocities = self.velocities[self._refined]
 
-    def get_velocities(self, unit=None):
+    def orient_velocities(self, **kwargs):
+        """
+        Orient velocities according to received kwarg 'view'.
+        """
+        try:
+            vel = self.velocities
+        except AttributeError:
+            self.load_coords()
+            vel = self.velocities
+
+        view = kwargs.get('view', None)
+        if view:
+            vel = visualize.set_view(vel, view)
+
+        self.velocities = vel
+
+    def calculate_spherical_velocities(self, unit=None, **kwargs):
+        """
+        Load particle velocities in spherical coordinates with default units of
+        km/s (default set in units class)
+        unit: unit conversion from code units
+        """
+        if unit:
+            if unit != self.units._coord_unit:
+                self.load_velocities(unit)
+        self.orient_box(**kwargs)
+        vel = self.coordinates
+        r,theta,phi = analyze.cart2sph(vel[:,0],vel[:,1],vel[:,2])
+        self.spherical_velocities = numpy.column_stack((r,theta,phi))
+
+    def calculate_cylindrical_velocities(self, unit=None, **kwargs):
+        """
+        Load particle velocities in spherical coordinates with default units of
+        km/s (default set in units class)
+        unit: unit conversion from code units
+        """
+        if unit:
+            if unit != self.units._coord_unit:
+                self.load_velocities(unit)
+        self.orient_box(**kwargs)
+        vel = self.coordinates
+        r,theta,z = analyze.cart2cyl(vel[:,0],vel[:,1],vel[:,2])
+        self.cylindrical_velocities = numpy.column_stack((r,theta,z))
+
+    def get_velocities(self, unit=None, **kwargs):
         """
         Return Particle Velocities in units of km/s (default set in units class)
         unit: unit conversion from code units
+        system: coordinate system to use.
+                Options are cartesian, spherical or cylindrical.
+                Note that calculating a spherical/cylindrical coordinates
+                require a center point.
         """
         if unit:
             if unit != self.units.velocity_unit:
                 self.load_velocities(unit)
-        try:
-            return self.velocities
-        except AttributeError:
-            self.load_velocities(unit)
-            return self.velocities
+
+        system = kwargs.pop('system','cartesian')
+        if system == 'cartesian':
+            try:
+                return self.velocities
+            except AttributeError:
+                self.load_velocities(unit)
+                return self.velocities
+
+        elif system == 'spherical':
+            try:
+                return self.spherical_velocities
+            except AttributeError:
+                self.calculate_spherical_velocities(unit, **kwargs)
+                return self.spherical_velocities
+        elif system == 'cylindrical':
+            try:
+                return self.cylindrical_velocities
+            except AttributeError:
+                self.calculate_cylindrical_velocities(unit, **kwargs)
+                return self.cylindrical_velocities
+        else:
+            raise KeyError("Coordinate system options: 'cartesian' "\
+                           "'spherical' 'cylindrical'")
 
     def load_PIDs(self):
         """
