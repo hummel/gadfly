@@ -171,7 +171,6 @@ class AccretionDisk(object):
             self.c.execute(command)
 
         self.data = numpy.asarray(self.c.fetchall())
-        print self.data.size
         if self.data.size < 1:
             print "Warning: Requested accretion disk data does not exist!"
             print "Calculating..."
