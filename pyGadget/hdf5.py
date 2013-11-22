@@ -154,7 +154,7 @@ class PartTypeX(HDF5Group):
         """
         if (c_unit or v_unit):
             if (c_unit != self.units._coord_unit
-                or v_unit != self.units._velocity_unit):
+                or v_unit != self.units.velocity_unit):
                 self.load_coords(c_unit)
                 self.load_velocities(v_unit)
         self.orient_box(**kwargs)
@@ -172,7 +172,7 @@ class PartTypeX(HDF5Group):
         """
         if (c_unit or v_unit):
             if (c_unit != self.units._coord_unit
-                or v_unit != self.units._velocity_unit):
+                or v_unit != self.units.velocity_unit):
                 self.load_coords(c_unit)
                 self.load_velocities(v_unit)
         self.orient_box(**kwargs)
