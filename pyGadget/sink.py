@@ -156,15 +156,19 @@ class AccretionDisk(object):
         else:
             fields = '*'
         table = 'snapshot{:0>4}'.format(snap)
+        if density_limit:
+            command = ("SELECT " + fields + " FROM " + table
+                       + " WHERE density_limit = " + str(density_limit))
+        else:
+            command = "SELECT " + fields + " FROM " + table
+        print '"'+command+'"'
         try:
-            self.c.execute("SELECT " + fields + " FROM " + table
-                           + " WHERE density_limit = " + str(density_limit))
+            self.c.execute(command)
         except sqlite3.OperationalError:
             print "Warning: Error loading requested accretion disk data!"
             print "Recalculating..."
             self.populate(snap, density_limit, verbose=False)
-            self.c.execute("SELECT " + fields + " FROM " + table
-                           + " WHERE density_limit = " + str(density_limit))
+            self.c.execute(command)
 
         self.data = numpy.asarray(self.c.fetchall())
 
@@ -191,11 +195,6 @@ class AccretionDisk(object):
                   "Lj real, "\
                   "Mj real, "\
                   "npart integer)")
-        try:
-            self.c.execute(create)
-        except sqlite3.OperationalError:
-            self.c.execute("DROP TABLE " + table)
-            self.c.execute(create)
         insert = ("INSERT INTO " + table +
                   "(density_limit, "\
                   "redshift, "\
@@ -211,6 +210,12 @@ class AccretionDisk(object):
                       "Mj, "\
                       "npart) "\
                       "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)")
+        try:
+            self.c.executemany(insert, diskprops)
+        except sqlite3.OperationalError:
+            self.c.execute("DROP TABLE " + table)
+            self.c.execute(create)
+
         self.c.executemany(insert, diskprops)
         self.db.commit()
 
