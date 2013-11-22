@@ -147,7 +147,7 @@ class AccretionDisk(object):
         self.db = sqlite3.connect(dbfile)
         self.c = self.db.cursor()
 
-    def load(self, snap, *dprops):
+    def load(self, snap, density_limit=1e8, *dprops):
         fields = ''
         if dprops:
             for dprop in dprops[:-1]:
@@ -157,42 +157,48 @@ class AccretionDisk(object):
             fields = '*'
         table = 'snapshot{:0>4}'.format(snap)
         try:
-            self.c.execute("SELECT " + fields + " FROM " + table)
+            self.c.execute("SELECT " + fields + " FROM " + table
+                           + " WHERE density_limit = " + str(density_limit))
         except sqlite3.OperationalError:
-            print "Warning: Can't find accretion disk data for this snapshot!"
-            print "Analyzing..."
-            self.populate(snap, verbose=False)
-            self.c.execute("SELECT " + fields + " FROM " + table)
+            print "Warning: Error loading requested accretion disk data!"
+            print "Recalculating..."
+            self.populate(snap, density_limit, verbose=False)
+            self.c.execute("SELECT " + fields + " FROM " + table
+                           + " WHERE density_limit = " + str(density_limit))
 
         self.data = numpy.asarray(self.c.fetchall())
 
-    def populate(self, snap, **kwargs):
+    def populate(self, snap, density_limit, **kwargs):
         self.sim.units.set_length('cm')
         snapshot = self.sim.load_snapshot(snap, track_sinks=True)
+        kwargs['dens_lim'] = density_limit
         diskprops = disk_properties(snapshot, self.sink.sink_id, **kwargs)
         snapshot.gas.cleanup()
         snapshot.close()
+        print "Saving table containing", len(diskprops), "entries to database."
         table = 'snapshot{:0>4}'.format(snap)
         create = ("CREATE TABLE " + table +
-                  "(redshift real, "\
-                      "radius real, "\
-                      "density real, "\
-                      "total_mass real, "\
-                      "shell_mass real, "\
-                      "tff real, "\
-                      "Tshell real, "\
-                      "Tavg real, "\
-                      "cs real, "\
-                      "Lj real, "\
-                      "Mj real, "\
-                      "npart integer)")
+                  "(density_limit real, "\
+                  "redshift real, "\
+                  "radius real, "\
+                  "density real, "\
+                  "total_mass real, "\
+                  "shell_mass real, "\
+                  "tff real, "\
+                  "Tshell real, "\
+                  "Tavg real, "\
+                  "cs real, "\
+                  "Lj real, "\
+                  "Mj real, "\
+                  "npart integer)")
         try:
             self.c.execute(create)
         except sqlite3.OperationalError:
             self.c.execute("DROP TABLE " + table)
             self.c.execute(create)
         insert = ("INSERT INTO " + table +
-                  "(redshift, "\
+                  "(density_limit, "\
+                  "redshift, "\
                       "radius, "\
                       "density, "\
                       "total_mass, "\
@@ -204,7 +210,7 @@ class AccretionDisk(object):
                       "Lj, "\
                       "Mj, "\
                       "npart) "\
-                      "VALUES(?,?,?,?,?,?,?,?,?,?,?,?)")
+                      "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)")
         self.c.executemany(insert, diskprops)
         self.db.commit()
 
@@ -233,7 +239,8 @@ def disk_properties(snapshot, sink_id, **kwargs):
     mass = snapshot.gas.get_masses(mass_unit)
     temp = snapshot.gas.get_temperature()
 
-    dens,pos,mass,temp = analyze.density_cut(dens_lim, dens, pos, mass, temp)
+    if dens_lim:
+        dens,pos,mass,temp = analyze.density_cut(dens_lim, dens, pos, mass, temp)
     r = pos[:,0]
 
     print 'Data loaded.  Analyzing...'
@@ -269,7 +276,7 @@ def disk_properties(snapshot, sink_id, **kwargs):
                 print 'Mass enclosed: %.2e' %Msun,
                 print 'density: %.3e' %density,
                 print 'npart: {}'.format(n)
-            disk_properties.append((redshift,rau,density,Msun,Mshell,
+            disk_properties.append((dens_lim,redshift,rau,density,Msun,Mshell,
                                     tff,T,tavg,cs,Lj,Mj,n))
 
             old_n = n
