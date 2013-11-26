@@ -142,7 +142,13 @@ class Simulation(object):
                         wp = self.plotpath + self.name
                         p = mp.Process(target=plot_func, args=(snap, wp))
                         jobs.append(p)
-                        p.start()
+                        try:
+                            p.start()
+                        except OSError:
+                            print "Warning! OSError (Probably out of memory)"
+                            print "Clearing queue..."
+                            data_queue.put(snap)
+                            break
                 print '\nClearing Queue!\n'
                 for process in jobs:
                     process.join()
