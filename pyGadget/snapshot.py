@@ -13,6 +13,7 @@ import hdf5
 import nbody
 import sph
 import plotting
+import multiplot
 
 class File:
     """
@@ -72,10 +73,19 @@ class Loader(threading.Thread):
 
 #===============================================================================
 def plot_temp(snapshot,wpath=None):
-    fig = plotting.Phase(snapshot)
+    fig = multiplot.Phase(snapshot)
     fig.plot('temp')
     if wpath:
         fpath = wpath + '/gas/temp/'
+        if not os.path.exists(fpath):
+            os.makedirs(fpath)
+        fig.save(fpath+'{:0>4}-temp.png'.format(snapshot.number))
+
+def plot_radial_temp(snapshot,wpath=None):
+    fig = multiplot.Phase(snapshot)
+    fig.plot('radial-temp')
+    if wpath:
+        fpath = wpath + '/gas/radial-temp/'
         if not os.path.exists(fpath):
             os.makedirs(fpath)
         fig.save(fpath+'{:0>4}-temp.png'.format(snapshot.number))

@@ -21,13 +21,16 @@ if __name__ == '__main__':
     if key == 'temp':
         plot_func = pyGadget.snapshot.plot_temp
         data = ['ndensity','temp']
+    elif key == 'radial-temp':
+        plot_func = pyGadget.snapshot.plot_radial_temp
+        data = ['ndensity','temp','coordinates']
     elif key == 'frac':
         plot_func = pyGadget.snapshot.plot_gas_fraction
         data = ['ndensity','temp','electron_frac','h2frac','HDfrac']
     else:
         raise KeyError
     simname = sys.argv[2]
-    sim = pyGadget.sim.Simulation(simname)
+    sim = pyGadget.sim.Simulation(simname, length='pc')
                  
     if len(sys.argv) == 4:
         snap = int(sys.argv[3])
