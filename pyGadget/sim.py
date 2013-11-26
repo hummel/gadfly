@@ -3,7 +3,6 @@
 import os
 import glob
 import numpy
-import Queue
 import subprocess
 import multiprocessing as mp
 
@@ -114,54 +113,43 @@ class Simulation(object):
             snap.gas.cleanup()
         return snap
 
-    def multitask(self,plot_func,*data,**kwargs):
+    def multitask(self, plot_func, *data, **kwargs):
         maxprocs = mp.cpu_count()
         # Hack to take advantage of larger memory on r900 machines
         if 'r900' not in subprocess.check_output(['uname','-n']):
             maxprocs /= 2
-        file_queue = Queue.Queue()
-        data_queue = Queue.Queue(maxprocs/4)
+        file_queue = mp.Queue()
+        data_queue = mp.Queue(maxprocs/4)
         loader = snapshot.Loader(self.load_snapshot, file_queue, data_queue)
         loader.start()
         for snap in self.snapfiles.keys():
             args = (snap,)+data
             file_queue.put(args)
-        file_queue.put(None)
+        for i in range(maxprocs):
+            file_queue.put(None)
 
-        done = False
+        jobs = []
         if kwargs.pop('parallel', True):
-            while not done:
-                jobs = []
-                for i in xrange(maxprocs):
-                    snap = data_queue.get()
-                    if snap is None:
-                        done = True
-                        break
-                    else:
-                        snap.close()
-                        wp = self.plotpath + self.name
-                        p = mp.Process(target=plot_func, args=(snap, wp))
-                        jobs.append(p)
-                        try:
-                            p.start()
-                        except OSError:
-                            print "Warning! OSError (Probably out of memory)"
-                            print "Clearing queue..."
-                            data_queue.put(snap)
-                            break
-                print '\nClearing Queue!\n'
-                for process in jobs:
-                    process.join()
-                print '\nQueue Cleared!\n'
+            for i in range(maxprocs):
+                p = mp.Process(target=self.controller,
+                               args=(plot_func,data_queue))
+                p.start()
+                jobs.append(p)
             for process in jobs:
                 process.join()
+
         else:
-            while not done:
-                snap = data_queue.get()
-                if snap is None:
-                    done = True
-                    break
-                else:
-                    snap.close()
-                    wp = self.plotpath + self.name
-                    plot_func(snap, wp)
+            file_queue.put(None)
+            self.controller(plot_func, data_queue)
+
+    def controller(self, plot_func, data_queue):
+        print "Starting compute process..."
+        done = False
+        while not done:
+            snap = data_queue.get()
+            if snap is None:
+                done = True
+                break
+            else:
+                wp = self.plotpath + self.name
+                plot_func(snap, wp)
