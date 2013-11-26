@@ -32,6 +32,16 @@ class File:
         if kwargs.get('track_sinks', False):
             self.sinks = self.gas.get_sink_properties()
 
+    def __getstate__(self):
+        result = self.__dict__.copy()
+        del result['file_id']
+        return result
+
+#    def __setstate__(self, in_dict):
+#        self.__dict__ = in_dict
+#        self.file_id = h5py.File(self.filename, 'r')
+#        self.header = hdf5.Header(self.file_id)
+
     def update_sink_coordinates(self, x,y,z):
         for s in self.sinks:
             s.update_coordinates(x,y,z)
@@ -64,6 +74,7 @@ class Loader(threading.Thread):
             lock.release()
             try:
                 snapshot = self.load_function(*args)
+                snapshot.close()
                 self.data_queue.put(snapshot)
             except IOError:
                 lock.acquire()

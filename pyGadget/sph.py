@@ -48,6 +48,21 @@ class PartTypeSPH(hdf5.PartTypeX):
             print 'Tracking sinks.'
             self.locate_sink_particles()
 
+    def __getstate__(self):
+        result = self.__dict__.copy()
+        del result['_Coordinates']
+        del result['_ParticleIDs']
+        del result['_Velocities']
+        del result['_Masses']
+        del result['_Adiabatic_index']
+        del result['_ChemicalAbundances']
+        del result['_Density']
+        del result['_SinkValue']
+        del result['_SmoothingLength']
+        del result['_InternalEnergy']
+        del result['_load_dict']
+        return result
+
     def locate_refined_particles(self):
         mass = self.get_masses()
         sinks = self.get_sinks()

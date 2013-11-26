@@ -62,6 +62,16 @@ class PartTypeX(HDF5Group):
         self.loadable_keys = self._load_dict.keys()
         self._calculated = derived.keys()
 
+    def __getstate__(self):
+        result = self.__dict__.copy()
+        del result['_Coordinates']
+        del result['_ParticleIDs']
+        del result['_Velocities']
+        del result['_Masses']
+        del result['_load_dict']
+        return result
+
+
     def load_masses(self, unit=None):
         """
         Load Particle Masses in units of M_sun (default set in units class)
