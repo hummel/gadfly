@@ -114,10 +114,7 @@ class Simulation(object):
         return snap
 
     def multitask(self, plot_func, *data, **kwargs):
-        maxprocs = mp.cpu_count()
-        # Hack to take advantage of larger memory on r900 machines
-        if 'r900' not in subprocess.check_output(['uname','-n']):
-            maxprocs /= 2
+        maxprocs = mp.cpu_count() - 1
         file_queue = mp.Queue()
         data_queue = mp.Queue(maxprocs/4)
         loader = snapshot.Loader(self.load_snapshot, file_queue, data_queue)
@@ -153,3 +150,4 @@ class Simulation(object):
             else:
                 wp = self.plotpath + self.name
                 plot_func(snap, wp)
+        print "Compute process complete."
