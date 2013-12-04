@@ -27,7 +27,7 @@ class HDF5Group(object):
         """
         Return the raw values of the array from the HDF5 group.
         """
-        return vars(self)[key].value
+        return vars(self)[key]
         
 class Header(HDF5Group):
     """
