@@ -168,11 +168,14 @@ class PartTypeX(HDF5Group):
                 self.load_coords(c_unit)
                 self.load_velocities(v_unit)
         self.orient_box(**kwargs)
+
         xyz = self.coordinates
         r,theta,phi = analyze.cart2sph(xyz[:,0],xyz[:,1],xyz[:,2])
         self.spherical_coords = numpy.column_stack((r,theta,phi))
 
-        vel = self.velocities
+        vxyz = self.velocities
+        vr,vtheta,vphi = analyze.cart2sph_velocities(xyz, vxyz)
+        self.spherical_velocities = numpy.column_stack((vr,vtheta,vphi))
 
     def calculate_cylindrical_coords(self, c_unit=None, v_unit=None, **kwargs):
         """
@@ -222,13 +225,13 @@ class PartTypeX(HDF5Group):
             try:
                 return self.spherical_coords
             except AttributeError:
-                self.calculate_spherical_coords(unit, **kwargs)
+                self.calculate_spherical_coords(c_unit=unit, **kwargs)
                 return self.spherical_coords
         elif system == 'cylindrical':
             try:
                 return self.cylindrical_coords
             except AttributeError:
-                self.calculate_cylindrical_coords(unit, **kwargs)
+                self.calculate_cylindrical_coords(c_unit=unit, **kwargs)
                 return self.cylindrical_coords
         else:
             raise KeyError("Coordinate system options: 'cartesian' "\
@@ -256,9 +259,9 @@ class PartTypeX(HDF5Group):
         """
         system = kwargs.pop('system','cartesian')
         if (unit or len(kwargs) > 0):
-            if (unit != self.units._coord_unit or len(kwargs) > 0):
+            if (unit != self.units._velocity_unit or len(kwargs) > 0):
                 if system == 'cartesian':
-                    self.load_coords(unit)
+                    self.load_velocities(unit)
                     self.orient_box(**kwargs)
                 elif system == 'spherical':
                     self.calculate_spherical_coords(v_unit=unit, **kwargs)
@@ -272,18 +275,17 @@ class PartTypeX(HDF5Group):
                 self.load_velocities(unit)
                 self.orient_box(**kwargs)
                 return self.velocities
-
         elif system == 'spherical':
             try:
                 return self.spherical_velocities
             except AttributeError:
-                self.calculate_spherical_coords(unit, **kwargs)
+                self.calculate_spherical_coords(v_unit=unit, **kwargs)
                 return self.spherical_velocities
         elif system == 'cylindrical':
             try:
                 return self.cylindrical_velocities
             except AttributeError:
-                self.calculate_cylindrical_coords(unit, **kwargs)
+                self.calculate_cylindrical_coords(v_unit=unit, **kwargs)
                 return self.cylindrical_velocities
         else:
             raise KeyError("Coordinate system options: 'cartesian' "\
