@@ -147,7 +147,7 @@ class AccretionDisk(object):
         self.db = sqlite3.connect(dbfile)
         self.c = self.db.cursor()
 
-    def load(self, snap, density_limit=1e8, *dprops):
+    def load(self, snap, *dprops):
         fields = ''
         if dprops:
             for dprop in dprops[:-1]:
@@ -156,18 +156,14 @@ class AccretionDisk(object):
         else:
             fields = '*'
         table = 'snapshot{:0>4}'.format(snap)
-        if density_limit:
-            command = ("SELECT " + fields + " FROM " + table
-                       + " WHERE density_limit = " + str(density_limit))
-        else:
-            command = "SELECT " + fields + " FROM " + table
+        command = "SELECT " + fields + " FROM " + table
         print '"'+command+'"'
         try:
             self.c.execute(command)
         except sqlite3.OperationalError:
             print "Warning: Error loading requested accretion disk data!"
             print "Recalculating..."
-            self.populate(snap, density_limit, verbose=False)
+            self.populate(snap, verbose=False)
             self.c.execute(command)
 
         self.data = numpy.asarray(self.c.fetchall())
@@ -178,10 +174,11 @@ class AccretionDisk(object):
             self.c.execute(command)
             self.data = numpy.asarray(self.c.fetchall())
 
-    def populate(self, snap, density_limit, **kwargs):
+    def populate(self, snap, **kwargs):
         self.sim.units.set_length('cm')
+        self.sim.units.set_mass('g')
+        self.sim.units.set_velocity('cgs')
         snapshot = self.sim.load_snapshot(snap, track_sinks=True)
-        kwargs['dens_lim'] = density_limit
         diskprops = disk_properties(snapshot, self.sink.sink_id, **kwargs)
         snapshot.gas.cleanup()
         snapshot.close()
@@ -194,6 +191,7 @@ class AccretionDisk(object):
                   "density real, "\
                   "total_mass real, "\
                   "shell_mass real, "\
+                  "vrot real, "\
                   "tff real, "\
                   "Tshell real, "\
                   "Tavg real, "\
@@ -208,6 +206,7 @@ class AccretionDisk(object):
                       "density, "\
                       "total_mass, "\
                       "shell_mass, "\
+                      "vrot, "\
                       "tff, "\
                       "Tshell, "\
                       "Tavg, "\
@@ -215,31 +214,42 @@ class AccretionDisk(object):
                       "Lj, "\
                       "Mj, "\
                       "npart) "\
-                      "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)")
+                      "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
         try:
-            self.c.executemany(insert, diskprops)
+            self.c.execute(create)
         except sqlite3.OperationalError:
-            try:
-                self.c.execute(create)
-            except sqlite3.OperationalError:
-                self.c.execute("DROP TABLE " + table)
-                self.c.execute(create)
-
+            self.c.execute("DROP TABLE " + table)
+            self.c.execute(create)
         self.c.executemany(insert, diskprops)
         self.db.commit()
 
 #===============================================================================
 def disk_properties(snapshot, sink_id, **kwargs):
+    if 'vanilla' in snapshot.sim.name:
+        view = [('x', 0.29518), ('z', 0.825), ('x',numpy.pi/2)]
+    elif 'XR_sfr_1e-3' in snapshot.sim.name:
+        view = [('y', 0.6346), ('z', 2.03), ('x',numpy.pi/2)]
+    elif 'XR_sfr_1e-2' in snapshot.sim.name:
+        view = [('x', 1.865), ('z', 2.919), ('x',numpy.pi/2)]
+    elif 'XR_sfr_1e-1' in snapshot.sim.name:
+        view = [('x', 1.7136), ('z', 0.18), ('x',numpy.pi/2)]
+    else:
+        view = None
+
     r_start = kwargs.pop('r_start', 1.49597871e13)
     r_step = kwargs.pop('r_step', 1.49597871e14)
     r_multiplier = kwargs.pop('multiplier', 1.2)
     verbose = kwargs.pop('verbose', True)
     n_min = kwargs.pop('n_min', 32)
-    dens_lim = kwargs.pop('dens_lim', 1e8)
+    dens_lim = kwargs.pop('dens_lim', 1e5)
     redshift = snapshot.header.Redshift
 
     length_unit = 'cm'
     mass_unit = 'g'
+    velocity_unit = 'cgs'
+    snapshot.gas.units.set_velocity(velocity_unit)
+    xyz = snapshot.gas.get_coords(length_unit, system='cartesian')
+    snapshot.update_sink_coordinates(xyz[:,0], xyz[:,1], xyz[:,2])
 
     i = 0
     print 'Locating sink...'
@@ -247,15 +257,24 @@ def disk_properties(snapshot, sink_id, **kwargs):
         i += 1
     print 'Done'
     sink = snapshot.sinks[i]
-    xyz = (sink.pos[0], sink.pos[1],sink.pos[2])
-    pos = snapshot.gas.get_coords(length_unit, system='spherical', center=xyz)
+    sinkpos = (sink.pos[0], sink.pos[1],sink.pos[2])
+    pos = snapshot.gas.get_coords(length_unit, system='spherical',
+                                  center=sinkpos, view=view)
+    vel = snapshot.gas.get_velocities(system='spherical')
+    xyz = snapshot.gas.get_coords(system='cartesian')
+    vxyz = snapshot.gas.get_velocities(system='cartesian')
     dens = snapshot.gas.get_number_density('cgs')
     mass = snapshot.gas.get_masses(mass_unit)
     temp = snapshot.gas.get_temperature()
 
+
     if dens_lim:
-        dens,pos,mass,temp = analyze.density_cut(dens_lim, dens, pos, mass, temp)
+        arrs = [pos,xyz,vxyz,mass,temp,vel]
+        dens,pos,xyz,vxyz,mass,temp,vel = analyze.density_cut(dens_lim,dens,*arrs)
     r = pos[:,0]
+    vr = vel[:,0]
+    vphi = vel[:,2]
+    orbital_frequency = vphi/r
 
     print 'Data loaded.  Analyzing...'
     GRAVITY = 6.6726e-8 # dyne * cm**2 / g**2
@@ -275,6 +294,19 @@ def disk_properties(snapshot, sink_id, **kwargs):
             Mtot = mass[inR].sum()
             Mshell = mass[inShell].sum()
             Msun = Mtot/1.989e33
+            Omega = abs(orbital_frequency[inShell].mean())
+            col_mass = mass[inShell][:,numpy.newaxis]
+            rxv = numpy.cross(xyz[inShell],vxyz[inShell])
+            L = (col_mass*rxv).sum(axis=0)
+            unitL = L/numpy.linalg.norm(L)
+            rxL = numpy.cross(xyz[inShell],unitL)
+            rxL2 = numpy.einsum('ij,ij->i',rxL,rxL)
+            I = (mass[inShell]*rxL2).sum()
+            W = L/I
+            rxW = numpy.cross(xyz[inShell],W)
+            rxW2 = numpy.einsum('ij,ij->i',rxW,rxW)
+            vrot = numpy.sqrt((mass[inShell]*rxW2).sum()/Mshell)
+
             density = dens[inShell].mean()
             if numpy.isnan(density):
                 density = dens.max()
@@ -284,14 +316,18 @@ def disk_properties(snapshot, sink_id, **kwargs):
             tavg = analyze.reject_outliers(temp[inR]).mean()
             cs = numpy.sqrt(constants.k_B * T / constants.m_H)
             Lj = cs*tff
-            Mj = density * (4*numpy.pi/3) * Lj**3 / 1.989e33
+            Mj = mdensity * (4*numpy.pi/3) * Lj**3 / 1.989e33
+
+            vr = Omega*rmax
             if verbose:
                 print 'R = %.2e AU' %rau,
                 print 'Mass enclosed: %.2e' %Msun,
                 print 'density: %.3e' %density,
+                print 'vphi: %.3e' %vr,
+                print 'vrot: %.3e' %vrot,
                 print 'npart: {}'.format(n)
             disk_properties.append((dens_lim,redshift,rau,density,Msun,Mshell,
-                                    tff,T,tavg,cs,Lj,Mj,n))
+                                    vrot,tff,T,tavg,cs,Lj,Mj,n))
 
             old_n = n
             old_r = rmax
