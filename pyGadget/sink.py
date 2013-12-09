@@ -294,7 +294,9 @@ def disk_properties(snapshot, sink_id, **kwargs):
             Mtot = mass[inR].sum()
             Mshell = mass[inShell].sum()
             Msun = Mtot/1.989e33
+            # Simple estimate
             Omega = abs(orbital_frequency[inShell].mean())
+            # Robust, Angular Momentum / Moment if Inertia Calculation
             col_mass = mass[inShell][:,numpy.newaxis]
             rxv = numpy.cross(xyz[inShell],vxyz[inShell])
             L = (col_mass*rxv).sum(axis=0)
