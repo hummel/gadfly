@@ -20,10 +20,8 @@ class Sink(object):
     def __init__(self,**properties):
         super(Sink,self).__init__()
         self.mass = properties.pop('m', None)
-        self.x = properties.pop('x', None)
-        self.y = properties.pop('y', None)
-        self.z = properties.pop('z', None)
         self.pos = properties.pop('pos', None)
+        self.velocity = properties.pop('vel', None)
         self.radius = properties.pop('r', None)
         self.energy = properties.pop('e', None)
         self.pressure = properties.pop('p', None)
@@ -31,10 +29,22 @@ class Sink(object):
         self.pid = properties.pop('pid', None)
         self.index = properties.pop('index', None)
 
+        self.x = properties.pop('x', self.pos[0])
+        self.y = properties.pop('y', self.pos[1])
+        self.z = properties.pop('z', self.pos[2])
+        self.vx = properties.pop('vx', self.velocity[0])
+        self.vy = properties.pop('vy', self.velocity[1])
+        self.vz = properties.pop('vz', self.velocity[2])
+
     def update_coordinates(self, x,y,z):
         self.x = x[self.index]
         self.y = y[self.index]
         self.z = z[self.index]
+
+    def update_velocities(self, x,y,z):
+        self.vx = x[self.index]
+        self.vy = y[self.index]
+        self.vz = z[self.index]
 
 class SinkData(object):
     def __init__(self,path):

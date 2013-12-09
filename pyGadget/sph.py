@@ -80,11 +80,13 @@ class PartTypeSPH(hdf5.PartTypeX):
     def get_sink_properties(self):
         mass = self.get_masses()
         pos = self.get_coords()
+        vel = self.get_velocities()
         pid = self.get_PIDs()
         sinks = []
         for index in self._sink_indices:
             sinks.append(sink.Sink(m = mass[index], pid = pid[index],
-                                   pos = pos[index], index=index))
+                                   pos = pos[index], vel=vel[index],
+                                   index=index))
         return sinks
 
     def load_density(self, unit=None):
