@@ -92,17 +92,17 @@ def cartesian_unit_vectors(xyz):
     unit_x = numpy.zeros_like(xyz)
     unit_y = numpy.zeros_like(xyz)
     unit_z = numpy.zeros_like(xyz)
-    unit_x[:,0] = 1.
-    unit_y[:,1] = 1.
-    unit_z[:,2] = 1.
+    unit_x[...,0] = 1.
+    unit_y[...,1] = 1.
+    unit_z[...,2] = 1.
     return unit_x, unit_y, unit_z
 
 def spherical_unit_vectors(xyz):
     unit_x, unit_y, unit_z = cartesian_unit_vectors(xyz)
-    r,theta,phi = cart2sph(xyz[:,0],xyz[:,1],xyz[:,2])
-    r = r[:,numpy.newaxis]
-    theta = theta[:,numpy.newaxis]
-    phi = phi[:, numpy.newaxis]
+    r,theta,phi = cart2sph(xyz[...,0],xyz[...,1],xyz[...,2])
+    r = r[...,numpy.newaxis]
+    theta = theta[...,numpy.newaxis]
+    phi = phi[..., numpy.newaxis]
     unit_r = xyz / r
     unit_phi = unit_y * numpy.cos(phi) - unit_x * numpy.sin(phi)
     unit_theta = (unit_x * numpy.cos(theta) * numpy.cos(phi)
