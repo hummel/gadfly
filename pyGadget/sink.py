@@ -258,8 +258,9 @@ def disk_properties(snapshot, sink_id, **kwargs):
     mass_unit = 'g'
     velocity_unit = 'cgs'
     snapshot.gas.units.set_velocity(velocity_unit)
-    xyz = snapshot.gas.get_coords(length_unit, system='cartesian')
-    snapshot.update_sink_coordinates(xyz[:,0], xyz[:,1], xyz[:,2])
+    xyz = snapshot.gas.get_coords(length_unit)
+    vxyz = snapshot.gas.get_velocities()
+    snapshot.update_sink_frame_ofR(xyz, vxyz)
 
     i = 0
     print 'Locating sink...'
@@ -267,9 +268,10 @@ def disk_properties(snapshot, sink_id, **kwargs):
         i += 1
     print 'Done'
     sink = snapshot.sinks[i]
-    sinkpos = (sink.pos[0], sink.pos[1],sink.pos[2])
+    sinkpos = (sink.x, sink.y, sink.z)
+    sinkvel = (sink.vx, sink.vy, sink.vz)
     pos = snapshot.gas.get_coords(length_unit, system='spherical',
-                                  center=sinkpos, view=view)
+                                  center=sinkpos, vcenter=sinkvel, view=view)
     vel = snapshot.gas.get_velocities(system='spherical')
     xyz = snapshot.gas.get_coords(system='cartesian')
     vxyz = snapshot.gas.get_velocities(system='cartesian')
