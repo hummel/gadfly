@@ -129,16 +129,19 @@ class PartTypeX(HDF5Group):
             self.load_coords()
             xyz = self.coordinates
         try:
-            vel = self.velocities
+            vxyz = self.velocities
         except AttributeError:
             self.load_velocities()
-            vel = self.velocities
+            vxyz = self.velocities
 
         center = kwargs.get('center', None)
+        vcenter = kwargs.get('vcenter', None)
+        centering = kwargs.get('centering', None)
+        view = kwargs.get('view', None)
+
         if center:
             xyz =  analyze.center_box(xyz, center)
         else:
-            centering = kwargs.get('centering', None)
             if centering in ['avg','max']:
                 try:
                     dens = self.get_number_density()
@@ -148,13 +151,24 @@ class PartTypeX(HDF5Group):
             elif centering == 'box':
                 xyz = analyze.center_box(xyz, **kwargs)
 
-        view = kwargs.get('view', None)
+        if vcenter:
+            vxyz =  analyze.center_box(vxyz, vcenter)
+        else:
+            if centering in ['avg','max']:
+                try:
+                    dens = self.get_number_density()
+                except AttributeError:
+                    raise KeyError("Cannot density-center dark matter!")
+                vxyz = analyze.center_box(vxyz, density=dens, **kwargs)
+            else:
+                print "Warning: Not Re-centering particle Velocities!"
+
         if view:
             xyz = visualize.set_view(xyz, view)
-            vel = visualize.set_view(vel, view)
+            vxyz = visualize.set_view(vxyz, view)
 
         self.coordinates = xyz
-        self.velocities = vel
+        self.velocities = vxyz
 
     def calculate_spherical_coords(self, c_unit=None, v_unit=None, **kwargs):
         """
