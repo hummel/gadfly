@@ -4,6 +4,7 @@ import os
 import glob
 import numpy
 import subprocess
+import Queue
 import multiprocessing as mp
 
 import sink
@@ -113,13 +114,15 @@ class Simulation(object):
             snap.gas.cleanup()
         return snap
 
-    def multitask(self, plot_func, *data, **kwargs):
+    def multitask(self, task, *data, **kwargs):
         maxprocs = mp.cpu_count() - 1
         file_queue = mp.Queue()
         data_queue = mp.Queue(maxprocs/4)
         loader = snapshot.Loader(self.load_snapshot, file_queue, data_queue)
         loader.start()
-        for snap in self.snapfiles.keys():
+        snaps = self.snapfiles.keys()
+        snaps.sort()
+        for snap in snaps:
             args = (snap,)+data
             file_queue.put(args)
         for i in range(maxprocs):
@@ -129,7 +132,7 @@ class Simulation(object):
         if kwargs.pop('parallel', True):
             for i in range(maxprocs):
                 p = mp.Process(target=self.controller,
-                               args=(plot_func,data_queue))
+                               args=(task,data_queue))
                 p.start()
                 jobs.append(p)
             for process in jobs:
@@ -137,17 +140,20 @@ class Simulation(object):
 
         else:
             file_queue.put(None)
-            self.controller(plot_func, data_queue)
+            self.controller(task, data_queue)
 
-    def controller(self, plot_func, data_queue):
+    def controller(self, task, data_queue):
         print "Starting compute process..."
         done = False
         while not done:
-            snap = data_queue.get()
+            try:
+                snap = data_queue.get(timeout=30)
+            except Queue.Empty:
+                break
             if snap is None:
                 done = True
                 break
             else:
                 wp = self.plotpath + self.name
-                plot_func(snap, wp)
+                task(snap, wp)
         print "Compute process complete."

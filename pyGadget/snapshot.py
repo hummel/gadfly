@@ -6,6 +6,7 @@ This module contains classes for reading Gadget2 HDF5 snapshot files.
 import os
 import string
 import threading
+import Queue
 import h5py
 import numpy
 
@@ -72,23 +73,26 @@ class Loader(threading.Thread):
     def run(self):
         lock = threading.Lock()
         while 1:
-            args = self.file_queue.get()
+            try:
+                args = self.file_queue.get(timeout=1)
+            except Queue.Empty:
+                break # reached end of queue
             if args is None:
                 self.data_queue.put(None)
-                break # reached end of queue
-            fname = args[0]
-            lock.acquire()
-            print 'loading snapshot', fname
-            lock.release()
-            try:
-                snapshot = self.load_function(*args)
-                snapshot.close()
-                self.data_queue.put(snapshot)
-            except IOError:
+            else:
+                fname = args[0]
                 lock.acquire()
-                print 'Warning: snapshot '+str(fname)+' not found!'
+                print 'loading snapshot', fname
                 lock.release()
-                pass
+                try:
+                    snapshot = self.load_function(*args)
+                    snapshot.close()
+                    self.data_queue.put(snapshot)
+                except IOError:
+                    lock.acquire()
+                    print 'Warning: snapshot '+str(fname)+' not found!'
+                    lock.release()
+                    pass
 
 #===============================================================================
 def plot_temp(snapshot,wpath=None):
