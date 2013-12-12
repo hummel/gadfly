@@ -374,7 +374,10 @@ class PartTypeSPH(hdf5.PartTypeX):
         Calculate the sound speed of the gas in cm/s.
         """
         temp = self.get_temperature()
-        self.c_s = numpy.sqrt(constants.k_B*temp/constants.m_H)
+        h2frac = self.get_H2_fraction()
+        mu = (0.24/4.0) + ((1.0-h2frac)*0.76) + (h2frac*.76/2.0)
+        mu = 1 / mu # mean molecular weight
+        self.c_s = numpy.sqrt(constants.k_B*temp/(mu*constants.m_H))
 
     def get_sound_speed(self):
         """
