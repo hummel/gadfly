@@ -394,7 +394,7 @@ class PartTypeSPH(hdf5.PartTypeX):
         Calculate the freefall time of the gas in s.
         """
         rho = self.get_density() # NOT number density!
-        denominator = 32 * numpy.pi * constants.G * rho
+        denominator = 32 * numpy.pi * constants.GRAVITY* rho
         self.t_ff = numpy.sqrt(3/denominator)
 
     def get_freefall_time(self):
