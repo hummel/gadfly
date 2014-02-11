@@ -20,10 +20,13 @@ class Simulation(object):
     def __init__(self, sim_name, **simargs):
         super(Simulation,self).__init__()
         self.name = sim_name
-        self.datapath = simargs.pop('datapath',os.getenv('HOME')+'/sim/')
-        self.plotpath = simargs.pop('plotpath',(os.getenv('HOME')
-                                               +'/data/simplots/'))
-        self.sinkpath = simargs.pop('sinkpath',os.getenv('HOME')+'/data/sinks/')
+        self.filepath = simargs.pop('path',os.getenv('HOME')+'/sim/')
+        self.datapath = simargs.pop('datapath',os.getenv('HOME')+'/data/')
+        self.sinkpath = simargs.pop('sinkpath',
+                                    os.getenv('HOME') + '/data/sinks/')
+        self.plotpath = simargs.pop('plotpath',
+                                    os.getenv('HOME') + '/data/simplots/')
+                                     
         self.hires = simargs.pop('refine', True)
         self.sink_tracking = simargs.pop('track_sinks', False)
         self.coordinates = simargs.pop('coordinates', 'physical')
@@ -69,7 +72,7 @@ class Simulation(object):
             raise KeyError
 
     def find_snapshots(self, *nums):
-        path = self.datapath + self.name
+        path = self.filepath + self.name
         files0 = glob.glob(path+'/snapshot_???.hdf5')
         files1 = glob.glob(path+'/snapshot_????.hdf5')
         files0.sort()
