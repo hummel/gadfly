@@ -273,7 +273,7 @@ class PartTypeX(HDF5Group):
         """
         system = kwargs.pop('system','cartesian')
         if (unit or len(kwargs) > 0):
-            if (unit != self.units._velocity_unit or len(kwargs) > 0):
+            if (unit != self.units.velocity_unit or len(kwargs) > 0):
                 if system == 'cartesian':
                     self.load_velocities(unit)
                     self.orient_box(**kwargs)
