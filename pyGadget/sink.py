@@ -180,7 +180,7 @@ class AccretionDisk(object):
         if self.data.size < 1:
             print "Warning: Requested accretion disk data does not exist!"
             print "Calculating..."
-            self.populate(snap, density_limit, verbose=False)
+            self.populate(snap, verbose=False)
             self.c.execute(command)
             self.data = numpy.asarray(self.c.fetchall())
 
@@ -251,7 +251,7 @@ def disk_properties(snapshot, sink_id, **kwargs):
     r_multiplier = kwargs.pop('multiplier', 1.2)
     verbose = kwargs.pop('verbose', True)
     n_min = kwargs.pop('n_min', 32)
-    dens_lim = kwargs.pop('dens_lim', 1e5)
+    dens_lim = kwargs.pop('dens_lim', 1e8)
     redshift = snapshot.header.Redshift
 
     length_unit = 'cm'
@@ -263,15 +263,19 @@ def disk_properties(snapshot, sink_id, **kwargs):
     snapshot.update_sink_frame_ofR(xyz, vxyz)
 
     i = 0
-    print 'Locating sink...'
-    while snapshot.sinks[i].pid != sink_id:
-        i += 1
-    print 'Done'
-    sink = snapshot.sinks[i]
-    sinkpos = (sink.x, sink.y, sink.z)
-    sinkvel = (sink.vx, sink.vy, sink.vz)
-    pos = snapshot.gas.get_coords(length_unit, system='spherical',
-                                  center=sinkpos, vcenter=sinkvel, view=view)
+    try:
+        while snapshot.sinks[i].pid != sink_id:
+            i += 1
+    except IndexError:
+        pos = snapshot.gas.get_coords(length_unit, system='spherical',
+                                      centering='max', view=view)
+    else:
+        sink = snapshot.sinks[i]
+        sinkpos = (sink.x, sink.y, sink.z)
+        sinkvel = (sink.vx, sink.vy, sink.vz)
+        pos = snapshot.gas.get_coords(length_unit, system='spherical',
+                                      center=sinkpos, vcenter=sinkvel, 
+                                      view=view)
     vel = snapshot.gas.get_velocities(system='spherical')
     xyz = snapshot.gas.get_coords(system='cartesian')
     vxyz = snapshot.gas.get_velocities(system='cartesian')
