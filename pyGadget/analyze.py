@@ -118,11 +118,9 @@ def cart2sph_velocities(xyz, vxyz):
     vphi = numpy.einsum('ij,ij->i',vxyz,unit_phi)
     return vr, vtheta, vphi
 
-def density_cut(dens_lim, dens, *args):
+def data_slice(expr, *args):
     arrs = [i for i in args]
-    slice_ = numpy.where(numpy.abs(dens) > dens_lim)[0]
-    dens = dens[slice_]
+    slice_ = numpy.where(expr)[0]
     for i,array in enumerate(arrs):
         arrs[i] = array[slice_]
-    print ' density cut:: max: %.3e min: %.3e' %(dens.max(),dens.min())
-    return [dens]+arrs
+    return arrs
