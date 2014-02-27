@@ -303,7 +303,6 @@ def disk_properties(snapshot, sink_id, **kwargs):
     energy = 0
     rmax = r_start
     while n < r.size:
-        print n, rmax
         inR = numpy.where(r <= rmax)[0]
         n = inR.size
         if n > old_n + n_min:
