@@ -281,8 +281,9 @@ def disk_properties(snapshot, sink_id, **kwargs):
 
 
     if dens_lim:
-        arrs = [pos,xyz,vxyz,mass,temp,vel]
-        dens,pos,xyz,vxyz,mass,temp,vel = analyze.density_cut(dens_lim,dens,*arrs)
+        arrs = [dens,pos,xyz,vxyz,mass,temp,vel]
+        dens,pos,xyz,vxyz,mass,temp,vel = analyze.data_slice(dens > dens_lim,
+                                                             *arrs)
     r = pos[:,0]
     vr = vel[:,0]
     vphi = vel[:,2]
@@ -298,6 +299,7 @@ def disk_properties(snapshot, sink_id, **kwargs):
     energy = 0
     rmax = r_start
     while n < r.size:
+        print n, rmax
         inR = numpy.where(r <= rmax)[0]
         n = inR.size
         if n > old_n + n_min:
