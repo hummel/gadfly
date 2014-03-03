@@ -8,6 +8,13 @@ import constants
 def reject_outliers(data, m=2):
     return data[numpy.abs(data - numpy.mean(data)) < m * numpy.std(data)]
 
+def data_slice(expr, *args):
+    arrs = [i for i in args]
+    slice_ = numpy.where(expr)[0]
+    for i,array in enumerate(arrs):
+        arrs[i] = array[slice_]
+    return arrs
+
 def find_center(x, y, z, dens=None, **kwargs):
     centering = kwargs.pop('centering','box')
     verbose = kwargs.get('verbose', True)
@@ -65,62 +72,3 @@ def center_box(pos, center=None, **kwargs):
     y -= cy
     z -= cz
     return numpy.column_stack((x,y,z))
-
-def cart2sph(x, y, z):
-    r = numpy.sqrt(numpy.square(x) + numpy.square(y) + numpy.square(z))
-    theta = numpy.arccos(z/r)
-    phi = numpy.arctan2(y,x)
-    return r,theta,phi
-
-def sph2cart(r, theta, phi):
-    x = r * numpy.sin(theta) * numpy.cos(phi)
-    y = r * numpy.sin(theta) * numpy.sin(phi)
-    z = r * numpy.cos(theta)
-    return x,y,z
-
-def cart2cyl(x ,y, z):
-    r = numpy.sqrt(numpy.square(x) + numpy.square(y))
-    theta = numpy.arctan2(y,x)
-    return r,theta,z
-
-def cyl2cart(r, theta, z):
-    x = r * numpy.cos(theta)
-    y = r * numpy.sin(theta)
-    return x,y,z
-
-def cartesian_unit_vectors(xyz):
-    unit_x = numpy.zeros_like(xyz)
-    unit_y = numpy.zeros_like(xyz)
-    unit_z = numpy.zeros_like(xyz)
-    unit_x[...,0] = 1.
-    unit_y[...,1] = 1.
-    unit_z[...,2] = 1.
-    return unit_x, unit_y, unit_z
-
-def spherical_unit_vectors(xyz):
-    unit_x, unit_y, unit_z = cartesian_unit_vectors(xyz)
-    r,theta,phi = cart2sph(xyz[...,0],xyz[...,1],xyz[...,2])
-    r = r[...,numpy.newaxis]
-    theta = theta[...,numpy.newaxis]
-    phi = phi[..., numpy.newaxis]
-    unit_r = xyz / r
-    unit_phi = unit_y * numpy.cos(phi) - unit_x * numpy.sin(phi)
-    unit_theta = (unit_x * numpy.cos(theta) * numpy.cos(phi)
-                  + unit_y * numpy.cos(theta) * numpy.sin(phi)
-                  - unit_z * numpy.sin(theta))
-    return unit_r, unit_theta, unit_phi
-
-def cart2sph_velocities(xyz, vxyz):
-    unit_r, unit_theta, unit_phi = spherical_unit_vectors(xyz)
-    # numpy.einsum('ij,ij->i',...) is einstein notation for dot product.
-    vr = numpy.einsum('ij,ij->i',vxyz,unit_r)
-    vtheta = numpy.einsum('ij,ij->i',vxyz,unit_theta)
-    vphi = numpy.einsum('ij,ij->i',vxyz,unit_phi)
-    return vr, vtheta, vphi
-
-def data_slice(expr, *args):
-    arrs = [i for i in args]
-    slice_ = numpy.where(expr)[0]
-    for i,array in enumerate(arrs):
-        arrs[i] = array[slice_]
-    return arrs
