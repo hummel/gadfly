@@ -255,7 +255,7 @@ def project(snapshot, loadable, scale, view, **kwargs):
         x,y,z,scalar,hsml,dens = trim_view(boxsize, x,y,z, *arrs, **kwargs)
         if dens_lim:
             arrs = [dens,x,y,z,scalar,hsml]
-            dens,x,y,z,scalar,hsml = analyze.density_cut(dens > dens_lim, *arrs)
+            dens,x,y,z,scalar,hsml = analyze.data_slice(dens > dens_lim, *arrs)
     hsml = numpy.fmax(sm * hsml, boxsize/pps/2)
     xi,yi = build_grid(boxsize,pps)
     zi = scalar_map(x,y,scalar,hsml,boxsize,pps,xi.shape)
