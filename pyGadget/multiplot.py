@@ -8,7 +8,6 @@ import multiprocessing
 from matplotlib import pyplot 
 
 import units
-import analyze
 import visualize
 
 class Plot(object):
