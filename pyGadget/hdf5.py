@@ -191,7 +191,7 @@ class PartTypeX(HDF5Group):
         self.spherical_coords = numpy.column_stack((r,theta,phi))
 
         vxyz = self.velocities
-        vr,vtheta,vphi = coordinates.cartesian_to_spherical_velocities(xyz, vxyz)
+        vr,vtheta,vphi = coordinates.cartesian_to_spherical_velocities(xyz,vxyz)
         self.spherical_velocities = numpy.column_stack((vr,vtheta,vphi))
 
     def calculate_cylindrical_coords(self, c_unit=None, v_unit=None, **kwargs):
