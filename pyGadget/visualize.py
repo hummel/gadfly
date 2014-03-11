@@ -9,6 +9,7 @@ from scipy import weave
 from scipy.weave import converters
 
 import analyze
+import coordinates
 #===============================================================================
 def scalar_map(y,x,scalar_field,hsml,width,pps,zshape):
     """
@@ -140,42 +141,17 @@ def py_scalar_map(y,x,scalar_field,hsml,width,pps,zshape):
     return zi
 
 #===============================================================================
-def rotation_matrix(axis, angle):
-    if axis == 'x':
-        rot = ((1., 0., 0.),
-               (0., numpy.cos(angle), -numpy.sin(angle)),
-               (0., numpy.sin(angle), numpy.cos(angle)))
-    elif axis == 'y':
-        rot = ((numpy.cos(angle), 0.,numpy.sin(angle)),
-               (0., 1., 0.),
-               (-numpy.sin(angle), 0., numpy.cos(angle)))
-    elif axis == 'z':
-        rot = ((numpy.cos(angle), -numpy.sin(angle), 0.),
-               (numpy.sin(angle), numpy.cos(angle), 0.),
-               (0., 0.,1.))
-    else:
-        raise KeyError("{} is not a valid axis choice".format(axis))
-    rot = numpy.asarray(rot)
-    return rot
-
-def rotate_view(coords, axis, angle):
-    rot = rotation_matrix(axis,angle)
-    print "Rotating about the {}-axis by {:6.3f} radians.".format(axis,angle)
-    print "Rotation Matrix:"
-    print rot
-    return numpy.dot(coords,rot)
-
 def set_view(pos, view):
     if view == 'xy':
         pass
     elif view == 'xz':
-        pos = rotate_view(pos,'x', numpy.pi/2)
+        pos = coordinates.rotate(pos,'x', numpy.pi/2)
     elif view == 'yz':
-        pos = rotate_view(pos,'z', numpy.pi/2)
-        pos = rotate_view(pos,'x', numpy.pi/2)
+        pos = coordinates.rotate(pos,'z', numpy.pi/2)
+        pos = coordinates.rotate(pos,'x', numpy.pi/2)
     else:
         for rot in view:
-            pos = rotate_view(pos, rot[0], rot[1])
+            pos = coordinates.rotate(pos, rot[0], rot[1])
     return pos
 
 def trim_view(width, x, y, z, *args, **kwargs):

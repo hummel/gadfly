@@ -76,3 +76,28 @@ def spherical_to_cartesian_velocities(sph, vsph):
     v = np.einsum('ij,ij->i', vsph, unit_y)
     w = np.einsum('ij,ij->i', vsph, unit_z)
     return u, v, w
+
+def rotation_matrix(axis, angle):
+    if axis == 'x':
+        rot = ((1., 0., 0.),
+               (0., numpy.cos(angle), -numpy.sin(angle)),
+               (0., numpy.sin(angle), numpy.cos(angle)))
+    elif axis == 'y':
+        rot = ((numpy.cos(angle), 0.,numpy.sin(angle)),
+               (0., 1., 0.),
+               (-numpy.sin(angle), 0., numpy.cos(angle)))
+    elif axis == 'z':
+        rot = ((numpy.cos(angle), -numpy.sin(angle), 0.),
+               (numpy.sin(angle), numpy.cos(angle), 0.),
+               (0., 0.,1.))
+    else:
+        raise KeyError("{} is not a valid axis choice".format(axis))
+    rot = numpy.asarray(rot)
+    return rot
+
+def rotate(coords, axis, angle):
+    rot = rotation_matrix(axis,angle)
+    print "Rotating about the {}-axis by {:6.3f} radians.".format(axis,angle)
+    print "Rotation Matrix:"
+    print rot
+    return numpy.dot(coords,rot)
