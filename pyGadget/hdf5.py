@@ -264,6 +264,9 @@ class PartTypeX(HDF5Group):
         if unit:
             self.units.set_velocity(unit)
         self.velocities = self._Velocities.value * self.units.velocity_conv
+        if self.units.coordinate_system == 'physical':
+            a = self._header.ScaleFactor
+            self.velocities *= numpy.sqrt(a)
         if self._refined is not None:
             self.velocities = self.velocities[self._refined]
 
