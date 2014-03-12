@@ -80,24 +80,35 @@ def spherical_to_cartesian_velocities(sph, vsph):
 def rotation_matrix(axis, angle):
     if axis == 'x':
         rot = ((1., 0., 0.),
-               (0., numpy.cos(angle), -numpy.sin(angle)),
-               (0., numpy.sin(angle), numpy.cos(angle)))
+               (0., np.cos(angle), -np.sin(angle)),
+               (0., np.sin(angle), np.cos(angle)))
     elif axis == 'y':
-        rot = ((numpy.cos(angle), 0.,numpy.sin(angle)),
+        rot = ((np.cos(angle), 0.,np.sin(angle)),
                (0., 1., 0.),
-               (-numpy.sin(angle), 0., numpy.cos(angle)))
+               (-np.sin(angle), 0., np.cos(angle)))
     elif axis == 'z':
-        rot = ((numpy.cos(angle), -numpy.sin(angle), 0.),
-               (numpy.sin(angle), numpy.cos(angle), 0.),
+        rot = ((np.cos(angle), -np.sin(angle), 0.),
+               (np.sin(angle), np.cos(angle), 0.),
                (0., 0.,1.))
     else:
-        raise KeyError("{} is not a valid axis choice".format(axis))
-    rot = numpy.asarray(rot)
+        u = axis[0]
+        v = axis[1]
+        w = axis[2]
+        u2= u*u
+        v2= v*v
+        w2= w*w
+        cos = np.cos(angle)
+        sin = np.sin(angle)
+        rot = ((u2 + (1-u2)*cos, u*v*(1-cos) - w*sin, u*w*(1-cos) + v*sin),
+               (u*v*(1-cos) + w*sin, v2 + (1-v2)*cos, v*w*(1-cos) - u*sin),
+               (u*w*(1-cos) - v*sin, v*w*(1-cos) + u*sin, w2 + (1-w2)*cos))
+    rot = np.asarray(rot)
     return rot
 
-def rotate(coords, axis, angle):
+def rotate(coords, axis, angle, verbose=False):
     rot = rotation_matrix(axis,angle)
-    print "Rotating about the {}-axis by {:6.3f} radians.".format(axis,angle)
-    print "Rotation Matrix:"
-    print rot
-    return numpy.dot(coords,rot)
+    if verbose:
+        print "Rotating about the {}-axis by {:6.3f} radians.".format(axis,angle)
+        print "Rotation Matrix:"
+        print rot
+    return np.dot(coords,rot)
