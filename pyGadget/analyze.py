@@ -72,3 +72,26 @@ def center_box(pos, center=None, **kwargs):
     y -= cy
     z -= cz
     return numpy.column_stack((x,y,z))
+
+def angular_momentum(xyz, uvw, mass):
+    rxv = numpy.cross(xyz, uvw)
+    L = (mass[:, numpy.newaxis] * rxv).sum(axis=0)
+    return L
+
+def moment_of_inertia(xyz, uvw, mass):
+    L = angular_momentum(xyz, uvw, mass)
+    unitL = L / numpy.linalg.norm(L)
+    rxL = numpy.cross(xyz, unitL)
+    rxL2 = numpy.einsum('ij,ij->i',rxL,rxL)
+    I = (mass[:, numpy.newaxis] * rxL2).sum()
+    return I
+
+def faceon_rotation(xyz, uvw, mass=None):
+    if mass is None:
+        mass = numpy.ones(xyz.shape[0])
+    L = angular_momentum(xyz, uvw, mass)
+    unitL = L / numpy.linalg.norm(L)
+    z = numpy.array([0.,0.,1.])
+    axis = numpy.cross(z, unitL)
+    angle = numpy.arccos(unitL.dot(z))
+    return axis, angle
