@@ -174,7 +174,7 @@ class PartTypeX(HDF5Group):
                 xyz, vxyz = visualize.set_view(view, xyz, velocity=vxyz,
                                                density=dens, dens_lim=dlim)
             else:
-                xyz, vxyz = visualize.set_view(view, xyz, vxyz)
+                xyz, vxyz = visualize.set_view(view, xyz, velocity=vxyz)
 
         self.coordinates = xyz
         self.velocities = vxyz
