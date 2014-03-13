@@ -139,6 +139,7 @@ class PartTypeX(HDF5Group):
         vcenter = kwargs.get('vcenter', None)
         centering = kwargs.get('centering', None)
         view = kwargs.get('view', None)
+        dlim = kwargs.pop('dens_lim', 1e9)
 
         if center:
             xyz =  analyze.center_box(xyz, center)
@@ -165,8 +166,15 @@ class PartTypeX(HDF5Group):
                 print "Warning: Not Re-centering particle Velocities!"
 
         if view:
-            xyz = visualize.set_view(xyz, view)
-            vxyz = visualize.set_view(vxyz, view)
+            if view == 'face':
+                try:
+                    dens = self.get_number_density()
+                except AttributeError:
+                    raise KeyError("Cannot density-center dark matter!")
+                xyz, vxyz = visualize.set_view(view, xyz, velocity=vxyz,
+                                               density=dens, dens_lim=dlim)
+            else:
+                xyz, vxyz = visualize.set_view(view, xyz, vxyz)
 
         self.coordinates = xyz
         self.velocities = vxyz
