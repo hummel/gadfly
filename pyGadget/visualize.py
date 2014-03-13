@@ -141,18 +141,41 @@ def py_scalar_map(y,x,scalar_field,hsml,width,pps,zshape):
     return zi
 
 #===============================================================================
-def set_view(pos, view):
-    if view == 'xy':
+def set_view(view, xyz, **kwargs):
+    uvw = kwargs.pop('velocity', None)
+    dens = kwargs.pop('density', None)
+    mass = kwargs.pop('mass', None)
+    dlim = kwargs.pop('dens_lim', 1e9)
+    if view ==  'face':
+        if uvw is None or dens is None:
+            raise KeyError("setting face-on view requires density, "\
+                           "position and velocity!")
+        pos, vel = analyze.data_slice(dens > dlim, xyz, uvw)
+        axis, angle = analyze.faceon_rotation(pos, vel, mass)
+        xyz = coordinates.rotate(xyz, axis, angle)
+        uvw = coordinates.rotate(uvw, axis, angle)
+    elif view == 'xy':
         pass
     elif view == 'xz':
-        pos = coordinates.rotate(pos,'x', numpy.pi/2)
+        xyz = coordinates.rotate(xyz,'x', numpy.pi/2)
+        if uvw is not None:
+            uvw = coordinates.rotate(uvw,'x', numpy.pi/2)
     elif view == 'yz':
-        pos = coordinates.rotate(pos,'z', numpy.pi/2)
-        pos = coordinates.rotate(pos,'x', numpy.pi/2)
+        xyz = coordinates.rotate(xyz,'z', numpy.pi/2)
+        xyz = coordinates.rotate(xyz,'x', numpy.pi/2)
+        if uvw is not None:
+            uvw = coordinates.rotate(uvw,'z', numpy.pi/2)
+            uvw = coordinates.rotate(uvw,'x', numpy.pi/2)
     else:
         for rot in view:
-            pos = coordinates.rotate(pos, rot[0], rot[1])
-    return pos
+            xyz = coordinates.rotate(xyz, rot[0], rot[1])
+        if uvw is not None:
+            for rot in view:
+                uvw = coordinates.rotate(uvw, rot[0], rot[1])
+    if uvw is not None:
+        return xyz, uvw
+    else:
+        return xyz
 
 def trim_view(width, x, y, z, *args, **kwargs):
     depth = kwargs.pop('depth',1.0)
@@ -206,7 +229,7 @@ def project(snapshot, loadable, scale, view, **kwargs):
 
     print 'Calculating...'
     pos = analyze.center_box(pos,density=dens,**kwargs)
-    pos = set_view(pos, view)
+    pos = set_view(view, pos)
     x = pos[:,0]
     y = pos[:,1]
     z = pos[:,2]
