@@ -235,17 +235,6 @@ class AccretionDisk(object):
 
 #===============================================================================
 def disk_properties(snapshot, sink_id, **kwargs):
-    if 'vanilla' in snapshot.sim.name:
-        view = [('x', 0.29518), ('z', 0.825), ('x',numpy.pi/2)]
-    elif 'XR_sfr_1e-3' in snapshot.sim.name:
-        view = [('y', 0.6346), ('z', 2.03), ('x',numpy.pi/2)]
-    elif 'XR_sfr_1e-2' in snapshot.sim.name:
-        view = [('x', 1.865), ('z', 2.919), ('x',numpy.pi/2)]
-    elif 'XR_sfr_1e-1' in snapshot.sim.name:
-        view = [('x', 1.7136), ('z', 0.18), ('x',numpy.pi/2)]
-    else:
-        view = None
-
     r_start = kwargs.pop('r_start', 1.49597871e13)
     r_step = kwargs.pop('r_step', 1.49597871e14)
     r_multiplier = kwargs.pop('multiplier', 1.2)
@@ -268,14 +257,14 @@ def disk_properties(snapshot, sink_id, **kwargs):
             i += 1
     except IndexError:
         pos = snapshot.gas.get_coords(length_unit, system='spherical',
-                                      centering='max', view=view)
+                                      centering='max', view='face')
     else:
         sink = snapshot.sinks[i]
         sinkpos = (sink.x, sink.y, sink.z)
         sinkvel = (sink.vx, sink.vy, sink.vz)
         pos = snapshot.gas.get_coords(length_unit, system='spherical',
                                       center=sinkpos, vcenter=sinkvel, 
-                                      view=view)
+                                      view='face')
     vel = snapshot.gas.get_velocities(system='spherical')
     xyz = snapshot.gas.get_coords(system='cartesian')
     vxyz = snapshot.gas.get_velocities(system='cartesian')
