@@ -90,6 +90,13 @@ def moment_of_inertia(xyz, uvw, mass):
     I = (mass[:, numpy.newaxis] * rxL2).sum()
     return I
 
+def orbital_frequency(xyz, uvw, mass, L=None, I=None):
+    if L is None:
+        L = total_angular_momentum(xyz, uvw, mass)
+    if I is None:
+        I = moment_of_inertia(xyz, uvw, mass)
+    return L/I
+
 def faceon_rotation(xyz, uvw, mass=None):
     if mass is None:
         mass = numpy.ones(xyz.shape[0])
