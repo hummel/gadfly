@@ -78,12 +78,16 @@ def angular_momentum(xyz, uvw, mass):
     L = (mass[:, numpy.newaxis] * rxv)
     return L
 
-def total_angular_momentum(xyz, uvw, mass):
-    L = angular_momentum(xyz, uvw, mass)
+def total_angular_momentum(xyz, uvw, mass, L=None):
+    if L is None:
+        L = angular_momentum(xyz, uvw, mass)
     return L.sum(axis=0)
 
-def moment_of_inertia(xyz, uvw, mass):
-    L = total_angular_momentum(xyz, uvw, mass)
+def moment_of_inertia(xyz, uvw, mass, L=None):
+    if L is None:
+        L = total_angular_momentum(xyz, uvw, mass)
+    elif L.size > 3:
+        L = total_angular_momentum(xyz, uvw, mass, L)
     unitL = L / numpy.linalg.norm(L)
     rxL = numpy.cross(xyz, unitL)
     rxL2 = numpy.einsum('ij,ij->i',rxL,rxL)
