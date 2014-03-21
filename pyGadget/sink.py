@@ -8,10 +8,10 @@ import sys
 import warnings
 import numpy
 from astropy.io import ascii
-import units
 import sqlite3
 #from numba import autojit
 
+import units
 import analyze
 import constants
 #===============================================================================
@@ -238,110 +238,129 @@ class AccretionDisk(object):
 
 #===============================================================================
 def disk_properties(snapshot, sink_id, **kwargs):
-    r_start = kwargs.pop('r_start', 1.49597871e13)
+    r_start = kwargs.pop('r_start', 50*1.49597871e13)
     r_step = kwargs.pop('r_step', 1.49597871e14)
     r_multiplier = kwargs.pop('multiplier', 1.2)
     verbose = kwargs.pop('verbose', True)
     n_min = kwargs.pop('n_min', 32)
-    dens_lim = kwargs.pop('dens_lim', 1e8)
-    redshift = snapshot.header.Redshift
+    dens_lim = kwargs.pop('dens_lim', 1e6)
+    orb_crit = kwargs.pop('orb_crit', 1.)
+    disky_crit = kwargs.pop('disky_crit', .9)
+    kepler_crit = kwargs.pop('kepler_crit', .8)
 
+    redshift = snapshot.header.Redshift
     length_unit = 'cm'
     mass_unit = 'g'
     velocity_unit = 'cgs'
     snapshot.gas.units.set_velocity(velocity_unit)
     xyz = snapshot.gas.get_coords(length_unit)
-    vxyz = snapshot.gas.get_velocities()
-    snapshot.update_sink_frame_ofR(xyz, vxyz)
+    uvw = snapshot.gas.get_velocities()
+    snapshot.update_sink_frame_ofR(xyz, uvw)
+
+    dens = snapshot.gas.get_number_density('cgs')
+    mass = snapshot.gas.get_masses(mass_unit)
+    temp = snapshot.gas.get_temperature()
+    csound = snapshot.gas.get_sound_speed()
 
     i = 0
     try:
         while snapshot.sinks[i].pid != sink_id:
             i += 1
     except IndexError:
-        pos = snapshot.gas.get_coords(length_unit, system='spherical',
+        pos = snapshot.gas.get_coords(system='spherical',
                                       centering='max', view='face')
     else:
         sink = snapshot.sinks[i]
         sinkpos = (sink.x, sink.y, sink.z)
         sinkvel = (sink.vx, sink.vy, sink.vz)
-        pos = snapshot.gas.get_coords(length_unit, system='spherical',
-                                      center=sinkpos, vcenter=sinkvel, 
-                                      view='face')
+        pos = snapshot.gas.get_coords(system='spherical',view='face',
+                                      center=sinkpos, vcenter=sinkvel)
     vel = snapshot.gas.get_velocities(system='spherical')
-    xyz = snapshot.gas.get_coords(system='cartesian')
-    vxyz = snapshot.gas.get_velocities(system='cartesian')
-    dens = snapshot.gas.get_number_density('cgs')
-    mass = snapshot.gas.get_masses(mass_unit)
-    temp = snapshot.gas.get_temperature()
+    xyz = snapshot.gas.get_coords()
+    uvw = snapshot.gas.get_velocities()
+    snapshot.update_sink_frame_ofR(xyz, uvw)
+    pos = numpy.nan_to_num(pos)
+    vel = numpy.nan_to_num(vel)
 
+    L9 = analyze.total_angular_momentum(*analyze.data_slice(dens > 1e9,
+                                                            xyz,uvw,mass))
+    uL9 = L9 / numpy.linalg.norm(L9)
 
     if dens_lim:
-        arrs = [dens,pos,xyz,vxyz,mass,temp,vel]
-        dens,pos,xyz,vxyz,mass,temp,vel = analyze.data_slice(dens > dens_lim,
-                                                             *arrs)
-    r = pos[:,0]
-    vr = vel[:,0]
-    vphi = vel[:,2]
-    orbital_frequency = vphi/r
+        arrs = [dens,pos,vel,xyz,uvw,mass,temp,csound]
+        dslice = dens > dens_lim
+        dens,pos,vel,xyz,uvw,mass,temp,csound = analyze.data_slice(dslice,
+                                                                    *arrs)
+    L = analyze.angular_momentum(xyz,uvw,mass)
+    uL = L / numpy.linalg.norm(L, axis=1)[:, numpy.newaxis]
+    disky = numpy.where((numpy.abs(vel[:,2])/numpy.abs(vel[:,0]) > orb_crit)
+                    & (uL.dot(uL9) > disky_crit))[0]
+    print disky.size, '"disky" particles',
+    print '({}) percent'.format(float(disky.size)/dens.size * 100)
+
+    inf = numpy.where(numpy.abs(vel[:,0])
+                      / numpy.linalg.norm(vel, axis=1) > .5)[0]
+    print inf.size, 'infalling particles',
+    print '({}) percent'.format(float(inf.size)/dens.size * 100)
+
+    orb = numpy.where((numpy.abs(vel[:,2])/numpy.abs(vel[:,0]) > orb_crit)
+                   & (uL.dot(uL9) < disky_crit))[0]
+    print orb.size, '"orbiting" particles',
+    print '({}) percent'.format(float(orb.size)/dens.size * 100)
+
+    notorb = numpy.where(numpy.abs(vel[:,2]) < numpy.abs(vel[:,0]))[0]
+    print notorb.size, '"not orbiting" particles',
+    print '({}) percent'.format(float(notorb.size)/dens.size * 100)
 
     print 'Data loaded.  Analyzing...'
-    GRAVITY = 6.6726e-8 # dyne * cm**2 / g**2
     disk_properties = []
-    n = 0
-    old_n = 0
-    old_r = 0
-    density = 0
-    energy = 0
-    rmax = r_start
-    while n < r.size:
-        inR = numpy.where(r <= rmax)[0]
+    vrot = vk = 1.
+    n = old_n = r0 = 0
+    r1 = r_start
+    print "Starting at {:.2e} AU".format(r1/1.49e13)
+    r2d = numpy.sqrt(xyz[:,0]**2 + xyz[:,1]**2)
+    data = []
+    while vrot/vk > kepler_crit  and n < disky.size:
+        inR = numpy.where(pos[disky,0] <= r1)[0]
         n = inR.size
-        if n > old_n + n_min:
-            inShell = numpy.where((r > old_r) & (r <= rmax))[0]
-            rau = rmax/1.49597871e13
-            Mtot = mass[inR].sum()
-            Mshell = mass[inShell].sum()
-            Msun = Mtot/1.989e33
-            # Simple estimate
-            Omega = abs(orbital_frequency[inShell].mean())
-            # Robust, Angular Momentum / Moment if Inertia Calculation
-            col_mass = mass[inShell][:,numpy.newaxis]
-            rxv = numpy.cross(xyz[inShell],vxyz[inShell])
-            L = (col_mass*rxv).sum(axis=0)
-            unitL = L/numpy.linalg.norm(L)
-            rxL = numpy.cross(xyz[inShell],unitL)
-            rxL2 = numpy.einsum('ij,ij->i',rxL,rxL)
-            I = (mass[inShell]*rxL2).sum()
-            W = L/I
-            rxW = numpy.cross(xyz[inShell],W)
-            rxW2 = numpy.einsum('ij,ij->i',rxW,rxW)
-            vrot = numpy.sqrt((mass[inShell]*rxW2).sum()/Mshell)
-
-            density = dens[inShell].mean()
+        if n > old_n and n > n_min:
+            annulus = numpy.where((r2d[disky] > r0) & (r2d[disky] <= r1))[0]
+            annulus = disky[annulus]
+            radii = r2d[annulus]
+            radius = radii.mean()
+            vrot = vel[annulus, 2].mean()
+            T = analyze.reject_outliers(temp[annulus]).mean()
+            cs = analyze.reject_outliers(csound[annulus]).mean()
+            H = cs * radius / vrot
+            Mcyl = mass[annulus].sum()
+            zmax = numpy.abs(xyz[annulus,2]).max()
+            density = dens[annulus].mean()
             if numpy.isnan(density):
                 density = dens.max()
             mdensity = density * constants.m_H / constants.X_h
             tff = numpy.sqrt(3 * numpy.pi / 32 / constants.GRAVITY / mdensity)
-            T = analyze.reject_outliers(temp[inShell]).mean()
-            tavg = analyze.reject_outliers(temp[inR]).mean()
-            cs = numpy.sqrt(constants.k_B * T / constants.m_H)
-            Lj = cs*tff
-            Mj = mdensity * (4*numpy.pi/3) * Lj**3 / 1.989e33
 
-            vr = Omega*rmax
+            tavg = analyze.reject_outliers(temp[inR]).mean()
+            Mtot = mass[numpy.where(pos[:,0] <= radius)[0]].sum()
+            vk = numpy.sqrt(6.6726e-8 * Mtot / radius) / 1e5
+
+            Lj = cs*tff #Jeans Length
+            Mj = mdensity * (4*numpy.pi/3) * Lj**3 / 1.989e33 #Jeans Mass
+            H = cs * radius / vrot #Disk Scale Height
+
+            rau = radius/1.49597871e13
+            Msun = Mtot/1.989e33
+            vrot = vrot / 1e5
+            disk_properties.append((redshift,rau,density,Msun,Mcyl,
+                                    vrot,vk,tff,T,tavg,cs,H,Lj,Mj,n))
             if verbose:
                 print 'R = %.2e AU' %rau,
                 print 'Mass enclosed: %.2e' %Msun,
                 print 'density: %.3e' %density,
-                print 'vphi: %.3e' %vr,
                 print 'vrot: %.3e' %vrot,
                 print 'npart: {}'.format(n)
-            disk_properties.append((dens_lim,redshift,rau,density,Msun,Mshell,
-                                    vrot,tff,T,tavg,cs,Lj,Mj,n))
-
-            old_n = n
-            old_r = rmax
-        rmax *= r_multiplier
+        old_n = n
+        r0 = r1
+        r1 *= r_multiplier
     print 'snapshot', snapshot.number, 'analyzed.'
     return disk_properties
