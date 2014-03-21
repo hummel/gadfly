@@ -47,13 +47,13 @@ class File:
         for s in self.sinks:
             s.update_coordinates(x,y,z)
 
-    def update_sink_velocities(self, vx,vy,vz):
+    def update_sink_velocities(self, u,v,w):
         for s in self.sinks:
-            s.update_velocities(vx,vy,vz)
+            s.update_velocities(u,v,w)
 
-    def update_sink_frame_ofR(self, xyz, vxyz):
+    def update_sink_frame_ofR(self, xyz, uvw):
         self.update_sink_coordinates(xyz[:,0], xyz[:,1], xyz[:,2])
-        self.update_sink_velocities(vxyz[:,0], vxyz[:,1], vxyz[:,2])
+        self.update_sink_velocities(uvw[:,0], uvw[:,1], uvw[:,2])
         
     def keys(self):
         for key in self.file_id.keys():
