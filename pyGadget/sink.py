@@ -46,6 +46,9 @@ class Sink(object):
         self.vy = y[self.index]
         self.vz = z[self.index]
 
+    def update_index(self, index):
+        self.index = index
+
 class SinkData(object):
     def __init__(self,path):
         super(SinkData,self).__init__()
