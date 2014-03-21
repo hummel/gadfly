@@ -198,36 +198,38 @@ class AccretionDisk(object):
         print "Saving table containing", len(diskprops), "entries to database."
         table = 'snapshot{:0>4}'.format(snap)
         create = ("CREATE TABLE " + table +
-                  "(density_limit real, "\
-                  "redshift real, "\
+                  "(redshift real, "\
                   "radius real, "\
                   "density real, "\
                   "total_mass real, "\
-                  "shell_mass real, "\
+                  "mass real, "\
                   "vrot real, "\
+                  "vkepler real, "\
                   "tff real, "\
-                  "Tshell real, "\
+                  "T real, "\
                   "Tavg real, "\
                   "cs real, "\
+                  "H real, "\
                   "Lj real, "\
                   "Mj real, "\
                   "npart integer)")
         insert = ("INSERT INTO " + table +
-                  "(density_limit, "\
-                  "redshift, "\
-                      "radius, "\
-                      "density, "\
-                      "total_mass, "\
-                      "shell_mass, "\
-                      "vrot, "\
-                      "tff, "\
-                      "Tshell, "\
-                      "Tavg, "\
-                      "cs, "\
-                      "Lj, "\
-                      "Mj, "\
-                      "npart) "\
-                      "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+                  "(redshift, "\
+                  "radius, "\
+                  "density, "\
+                  "total_mass, "\
+                  "mass, "\
+                  "vrot, "\
+                  "vkepler, "\
+                  "tff, "\
+                  "T, "\
+                  "Tavg, "\
+                  "cs, "\
+                  "H, "\
+                  "Lj, "\
+                  "Mj, "\
+                  "npart) "\
+                  "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
         try:
             self.c.execute(create)
         except sqlite3.OperationalError:
