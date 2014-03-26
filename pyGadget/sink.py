@@ -191,7 +191,9 @@ class AccretionDisk(object):
         self.sim.units.set_length('cm')
         self.sim.units.set_mass('g')
         self.sim.units.set_velocity('cgs')
-        snapshot = self.sim.load_snapshot(snap, track_sinks=True)
+        snapshot = kwargs.pop('snapshot', None)
+        if snapshot is None:
+            snapshot = self.sim.load_snapshot(snap, track_sinks=True)
         diskprops = disk_properties(snapshot, self.sink.sink_id, **kwargs)
         snapshot.gas.cleanup()
         snapshot.close()
