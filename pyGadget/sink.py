@@ -269,8 +269,7 @@ def disk_properties(snapshot, sink_id, **kwargs):
         while snapshot.sinks[i].pid != sink_id:
             i += 1
     except IndexError:
-        pos = snapshot.gas.get_coords(system='spherical',
-                                      centering='max', view='face')
+        raise IndexError("Sink {} has not yet formed!".format(sink_id))
     else:
         sink = snapshot.sinks[i]
         sinkpos = (sink.x, sink.y, sink.z)
