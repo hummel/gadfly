@@ -191,9 +191,7 @@ class AccretionDisk(object):
         self.sim.units.set_length('cm')
         self.sim.units.set_mass('g')
         self.sim.units.set_velocity('cgs')
-        snapshot = kwargs.pop('snapshot', None)
-        if snapshot is None:
-            snapshot = self.sim.load_snapshot(snap, track_sinks=True)
+        snapshot = self.sim.load_snapshot(snap, track_sinks=True)
         diskprops = disk_properties(snapshot, self.sink.sink_id, **kwargs)
         snapshot.gas.cleanup()
         snapshot.close()
@@ -284,7 +282,6 @@ def disk_properties(snapshot, sink_id, **kwargs):
     snapshot.update_sink_frame_ofR(xyz, uvw)
     pos = numpy.nan_to_num(pos)
     vel = numpy.nan_to_num(vel)
-    snapshot.close()
 
     L9 = analyze.total_angular_momentum(*analyze.data_slice(dens > 1e9,
                                                             xyz,uvw,mass))
@@ -367,5 +364,4 @@ def disk_properties(snapshot, sink_id, **kwargs):
         r0 = r1
         r1 *= r_multiplier
     print 'snapshot', snapshot.number, 'analyzed.'
-    snapshot.gas.cleanup()
     return disk_properties
