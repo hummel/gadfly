@@ -284,6 +284,7 @@ def disk_properties(snapshot, sink_id, **kwargs):
     snapshot.update_sink_frame_ofR(xyz, uvw)
     pos = numpy.nan_to_num(pos)
     vel = numpy.nan_to_num(vel)
+    snapshot.close()
 
     L9 = analyze.total_angular_momentum(*analyze.data_slice(dens > 1e9,
                                                             xyz,uvw,mass))
