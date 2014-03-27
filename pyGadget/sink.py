@@ -367,4 +367,5 @@ def disk_properties(snapshot, sink_id, **kwargs):
         r0 = r1
         r1 *= r_multiplier
     print 'snapshot', snapshot.number, 'analyzed.'
+    snapshot.gas.cleanup()
     return disk_properties
