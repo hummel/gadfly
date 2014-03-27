@@ -160,7 +160,9 @@ class AccretionDisk(object):
         self.db = sqlite3.connect(dbfile)
         self.c = self.db.cursor()
 
-    def load(self, snap, *dprops):
+    def load(self, snap, *dprops, **kwargs):
+        verbose = kwargs.pop('verbose', False)
+        kwargs['verbose'] = verbose
         fields = ''
         if dprops:
             for dprop in dprops[:-1]:
@@ -176,14 +178,14 @@ class AccretionDisk(object):
         except sqlite3.OperationalError:
             print "Warning: Error loading requested accretion disk data!"
             print "Recalculating..."
-            self.populate(snap, verbose=False)
+            self.populate(snap, **kwargs)
             self.c.execute(command)
 
         self.data = numpy.asarray(self.c.fetchall())
         if self.data.size < 1:
             print "Warning: Requested accretion disk data does not exist!"
             print "Calculating..."
-            self.populate(snap, verbose=False)
+            self.populate(snap, **kwargs)
             self.c.execute(command)
             self.data = numpy.asarray(self.c.fetchall())
 
@@ -334,7 +336,10 @@ def disk_properties(snapshot, sink_id, **kwargs):
             cs = analyze.reject_outliers(csound[annulus]).mean()
             H = cs * radius / vrot
             Mcyl = mass[annulus].sum()
-            zmax = numpy.abs(xyz[annulus,2]).max()
+            if annulus.size > 0:
+                zmax = numpy.abs(xyz[annulus,2]).max()
+            else:
+                zmax = 0.0
             density = dens[annulus].mean()
             if numpy.isnan(density):
                 density = dens.max()
