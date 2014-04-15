@@ -20,15 +20,15 @@ def find_center(x, y, z, dens=None, **kwargs):
     verbose = kwargs.get('verbose', True)
     if centering in ['avg', 'max']:
         if dens is not None:
-            dens_limit = kwargs.pop('dens_limit', 1e11)
-            nparticles = kwargs.pop('centering_npart', 10)
+            dens_limit = kwargs.pop('dens_limit', 1e8)
+            nparticles = kwargs.pop('centering_npart', 100)
             if centering == 'avg':
                 hidens = numpy.where(dens >= dens_limit)[0]
                 while hidens.size < nparticles:
                     dens_limit /= 2
                     hidens = numpy.where(dens >= dens_limit)[0]
                 if verbose:
-                    print ('Center averaged over %d particles' %nparticles)
+                    print ('Center averaged over %d particles' %hidens.size)
                     print ('Center averaged over all particles with density '\
                                'greater than %.2e particles/cc' %dens_limit)
                 #Center on highest density clump, rejecting outliers:
