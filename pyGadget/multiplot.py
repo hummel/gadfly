@@ -113,7 +113,7 @@ class Phase(Plot):
         ax.set_xscale('log')
         ax.set_yscale('log')
         ax.set_xlim(2e-3, 1e12)
-        ax.set_ylim(2e-12, 9e-2)
+        ax.set_ylim(2e-11, 5e-2)
         ax.set_xlabel('n [cm$^{-3}$]')
         ax.set_ylabel('f$_{e^-}$')
         pyplot.draw()
