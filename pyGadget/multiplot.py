@@ -65,8 +65,7 @@ class Phase(Plot):
     def temp(snapshot, ax, **kwargs):
         dens = snapshot.gas.get_number_density()
         temp = snapshot.gas.get_temperature()
-        if kwargs.pop('parallel', False):
-            snapshot.gas.cleanup('ndensity','temp')
+
         ax = Phase._hexbin(ax, dens, temp, **kwargs)
         ax.set_xscale('log')
         ax.set_yscale('log')
@@ -107,8 +106,7 @@ class Phase(Plot):
     def electron_frac(snapshot, ax, **kwargs):
         dens = snapshot.gas.get_number_density()
         efrac = snapshot.gas.get_electron_fraction()
-        if kwargs.pop('parallel', False):
-            snapshot.gas.cleanup('ndensity','electron_frac')
+
         ax = Phase._hexbin(ax, dens, efrac, **kwargs)
         ax.set_xscale('log')
         ax.set_yscale('log')
@@ -123,8 +121,7 @@ class Phase(Plot):
     def h2frac(snapshot, ax, **kwargs):
         dens = snapshot.gas.get_number_density()
         h2frac = snapshot.gas.get_H2_fraction()
-        if kwargs.pop('parallel', False):
-            snapshot.gas.cleanup('ndensity','h2frac')
+
         ax = Phase._hexbin(ax, dens, h2frac, **kwargs)
         ax.set_xscale('log')
         ax.set_yscale('log')
@@ -139,8 +136,7 @@ class Phase(Plot):
     def HDfrac(snapshot, ax, **kwargs):
         dens = snapshot.gas.get_number_density()
         HDfrac = snapshot.gas.get_HD_fraction()
-        if kwargs.pop('parallel', False):
-            snapshot.gas.cleanup('ndensity','HDfrac')
+
         ax = Phase._hexbin(ax, dens,HDfrac, **kwargs)
         ax.set_xscale('log')
         ax.set_yscale('log')
