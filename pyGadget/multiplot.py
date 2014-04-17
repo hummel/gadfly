@@ -65,6 +65,10 @@ class Phase(Plot):
     def temp(snapshot, ax, **kwargs):
         dens = snapshot.gas.get_number_density()
         temp = snapshot.gas.get_temperature()
+        select = kwargs.pop('select', None)
+        if select is not None:
+            dens = dens[select]
+            temp = temp[select]
 
         ax = Phase._hexbin(ax, dens, temp, **kwargs)
         ax.set_xscale('log')
@@ -83,6 +87,11 @@ class Phase(Plot):
         snapshot.gas.calculate_spherical_coords(unit='pc', centering='avg')
         r = snapshot.gas.spherical_coords[:,0]
         temp = snapshot.gas.get_temperature()
+        select = kwargs.pop('select', None)
+        if select is not None:
+            r = r[select]
+            temp = temp[select]
+
         virialized = numpy.where(r <= 70.)[0]
         r = r[virialized]
         temp = temp[virialized]
@@ -106,6 +115,10 @@ class Phase(Plot):
     def electron_frac(snapshot, ax, **kwargs):
         dens = snapshot.gas.get_number_density()
         efrac = snapshot.gas.get_electron_fraction()
+        select = kwargs.pop('select', None)
+        if select is not None:
+            dens = dens[select]
+            efrac = efrac[select]
 
         ax = Phase._hexbin(ax, dens, efrac, **kwargs)
         ax.set_xscale('log')
@@ -121,6 +134,10 @@ class Phase(Plot):
     def h2frac(snapshot, ax, **kwargs):
         dens = snapshot.gas.get_number_density()
         h2frac = snapshot.gas.get_H2_fraction()
+        select = kwargs.pop('select', None)
+        if select is not None:
+            dens = dens[select]
+            h2frac = h2frac[select]
 
         ax = Phase._hexbin(ax, dens, h2frac, **kwargs)
         ax.set_xscale('log')
@@ -136,6 +153,10 @@ class Phase(Plot):
     def HDfrac(snapshot, ax, **kwargs):
         dens = snapshot.gas.get_number_density()
         HDfrac = snapshot.gas.get_HD_fraction()
+        select = kwargs.pop('select', None)
+        if select is not None:
+            dens = dens[select]
+            HDfrac = HDfrac[select]
 
         ax = Phase._hexbin(ax, dens,HDfrac, **kwargs)
         ax.set_xscale('log')
