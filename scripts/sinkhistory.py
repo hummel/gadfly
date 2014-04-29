@@ -9,7 +9,7 @@ import pyGadget
 def get_sinkdata(key, sinkdata):
     snap = sim.load_snapshot(key)
     print "Snapshot {}: z={:.3f}".format(key, snap.header.Redshift)
-    t = snap.header.Time
+    t = snap.header.Time * pyGadget.units.Time_yr - sim.tsink
     for s in snap.sinks:
         try:
             sinkdata[s.pid].append((t, s.mass, s.x, s.y, s.z, s.vx, s.vy, s.vz))
@@ -30,9 +30,10 @@ if __name__ == '__main__':
 
     data = {}
     for key in sinkdata.keys():
-        data[key] = pd.DataFrame(sinkdata[key], columns=('time', 'mass',
-                                                         'x', 'y', 'z',
-                                                         'u', 'v', 'w'))
+        data[key] = pd.DataFrame(sinkdata[key],
+                                 columns=('time', 'mass', 'x', 'y', 'z',
+                                          'u', 'v', 'w'))
+        data[key].set_index('time', inplace=True)
     sd = pd.Panel(data)
     store = pd.HDFStore(sim.plotpath+'sinkdata.hdf5')
     store[sim.name] = sd
