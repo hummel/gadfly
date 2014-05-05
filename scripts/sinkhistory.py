@@ -11,10 +11,7 @@ def get_sinkdata(key, sinkdata):
     print "Snapshot {}: z={:.3f}".format(key, snap.header.Redshift)
     t = snap.header.Time * pyGadget.units.Time_yr - sim.tsink
     for s in snap.sinks:
-        try:
-            sinkdata[s.pid].append((t, s.mass, s.x, s.y, s.z, s.vx, s.vy, s.vz))
-        except KeyError:
-            sinkdata[s.pid] = [(t, s.mass, s.x, s.y, s.z, s.vx, s.vy, s.vz)]
+        sinkdata.append((s.pid, t, s.mass, s.x, s.y, s.z, s.vx, s.vy, s.vz))
     snap.gas.cleanup()
     snap.close()
     return sinkdata
@@ -24,17 +21,13 @@ if __name__ == '__main__':
     sim = pyGadget.sim.Simulation(simname, track_sinks=True)
     keys = sim.snapfiles.keys()
     keys.sort()
-    sinkdata = {}
+    sinkdata = []
     for key in keys:
         sinkdata = get_sinkdata(key, sinkdata)
 
-    data = {}
-    for key in sinkdata.keys():
-        data[key] = pd.DataFrame(sinkdata[key],
-                                 columns=('time', 'mass', 'x', 'y', 'z',
-                                          'u', 'v', 'w'))
-        data[key].set_index('time', inplace=True)
-    sd = pd.Panel(data)
+    data = pd.DataFrame(sinkdata, columns=('ID', 'time', 'mass', 'x', 'y', 'z',
+                                           'u', 'v', 'w'))
+
     store = pd.HDFStore(sim.plotpath+'sinkdata.hdf5')
-    store[sim.name] = sd
+    store[sim.name] = data
     store.close()
