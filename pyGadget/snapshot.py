@@ -13,7 +13,6 @@ import numpy
 import hdf5
 import nbody
 import sph
-import plotting
 import multiplot
 
 class File:
@@ -114,7 +113,7 @@ def plot_radial_temp(snapshot,wpath=None):
         fig.save(fpath+'{:0>4}-temp.png'.format(snapshot.number))
 
 def plot_gas_fraction(snapshot,wpath=None):
-    fig = plotting.Quad(snapshot)
+    fig = multiplot.Quad(snapshot)
     fig.plot('temp','electron_frac','h2frac','HDfrac')
     if wpath:
         fpath = wpath + '/gas/frac/'
@@ -123,7 +122,7 @@ def plot_gas_fraction(snapshot,wpath=None):
         fig.save(fpath+'{:0>4}-frac.png'.format(snapshot.number))
 
 def disk_density_structure(snapshot, wpath=None):
-    fig = plotting.Image(snapshot, track_sinks=True)
+    fig = multiplot.Image(snapshot, track_sinks=True)
     if snapshot.sim.batch_viewscale:
         scale = snapshot.sim.batch_viewscale
     else:
@@ -137,7 +136,7 @@ def disk_density_structure(snapshot, wpath=None):
             fig.save(fpath+'{:0>4}-disk-{}.png'.format(snapshot.number, view))
 
 def halo_density_structure(snapshot, wpath=None):
-    fig = plotting.Image(snapshot)
+    fig = multiplot.Image(snapshot)
     if snapshot.sim.batch_viewscale:
         scale = snapshot.sim.batch_viewscale
     else:
@@ -151,7 +150,7 @@ def halo_density_structure(snapshot, wpath=None):
 
 def box_structure(snapshot, wpath=None):
     snapshot.sim.set_coordinate_system('comoving')
-    fig = plotting.Image(snapshot)
+    fig = multiplot.Image(snapshot)
     if snapshot.sim.batch_viewscale:
         scale = snapshot.sim.batch_viewscale
     else:
@@ -164,7 +163,7 @@ def box_structure(snapshot, wpath=None):
         fig.save(fpath+'{:0>4}-box.png'.format(snapshot.number))
 
 def disk_rotation(snapshot, view, rot_axis, n, wpath=None):
-    fig = plotting.Image(snapshot, track_sinks=True)
+    fig = multiplot.Image(snapshot, track_sinks=True)
     if snapshot.sim.batch_viewscale:
         scale = snapshot.sim.batch_viewscale
     else:
