@@ -16,27 +16,7 @@ class PartTypeSPH(hdf5.PartTypeX):
     """
     def __init__(self, file_id, units, **kwargs):
         super(PartTypeSPH,self).__init__(file_id,0, units)
-
-        sph_loaders = {'density':self.get_density,
-                       'ndensity':self.get_number_density,
-                       'energy':self.get_internal_energy,
-                       'gamma':self.get_gamma,
-                       'abundances':self.get_abundances,
-                       'sink_value':self.get_sinks,
-                       'smoothing_length':self.get_smoothing_length,
-                       'electron_frac':self.get_electron_fraction,
-                       'h2frac':self.get_H2_fraction,
-                       'HDfrac':self.get_HD_fraction}
-        sph_derived = {'temp':self.get_temperature,
-                       'c_s':self.get_sound_speed,
-                       't_ff':self.get_freefall_time,
-                       'jeans_length':self.get_jeans_length,
-                       'tau':self.get_optical_depth}
-        self._load_dict.update(sph_loaders)
-        self._load_dict.update(sph_derived)
-        self.loadable_keys = self._load_dict.keys()
-        self._calculated.append(sph_derived.keys())
-
+        self.__init_load_dict__()
         self._refined = None
         self.refine = kwargs.pop('refine_gas', True)
         if self.refine:
@@ -61,7 +41,35 @@ class PartTypeSPH(hdf5.PartTypeX):
         del result['_SmoothingLength']
         del result['_InternalEnergy']
         del result['_load_dict']
+        del result['loadable_keys']
+        del result['_calculated']
         return result
+
+    def __setstate__(self, in_dict):
+        self.__dict__ = in_dict
+        self.__init_load_dict__()
+
+    def __init_load_dict__(self):
+        super(PartTypeSPH,self).__init_load_dict__()
+        sph_loaders = {'density':self.get_density,
+                       'ndensity':self.get_number_density,
+                       'energy':self.get_internal_energy,
+                       'gamma':self.get_gamma,
+                       'abundances':self.get_abundances,
+                       'sink_value':self.get_sinks,
+                       'smoothing_length':self.get_smoothing_length,
+                       'electron_frac':self.get_electron_fraction,
+                       'h2frac':self.get_H2_fraction,
+                       'HDfrac':self.get_HD_fraction}
+        sph_derived = {'temp':self.get_temperature,
+                       'c_s':self.get_sound_speed,
+                       't_ff':self.get_freefall_time,
+                       'jeans_length':self.get_jeans_length,
+                       'tau':self.get_optical_depth}
+        self._load_dict.update(sph_loaders)
+        self._load_dict.update(sph_derived)
+        self.loadable_keys = self._load_dict.keys()
+        self._calculated.append(sph_derived.keys())
 
     def locate_refined_particles(self):
         mass = self.get_masses()

@@ -52,7 +52,24 @@ class PartTypeX(HDF5Group):
         for item in group.items():
             key = '_'+item[0].replace(' ', '_')
             vars(self)[key] = item[1]
+        self.__init_load_dict__()
 
+    def __getstate__(self):
+        result = self.__dict__.copy()
+        del result['_Coordinates']
+        del result['_ParticleIDs']
+        del result['_Velocities']
+        del result['_Masses']
+        del result['_load_dict']
+        del result['loadable_keys']
+        del result['_calculated']
+        return result
+
+    def __setstate__(self, in_dict):
+        self.__dict__ = in_dict
+        self.__init_load_dict__()
+
+    def __init_load_dict__(self):
         self._load_dict = {'masses':self.get_masses,
                            'coordinates':self.get_coords,
                            'velocities':self.get_velocities,
@@ -62,16 +79,6 @@ class PartTypeX(HDF5Group):
         self._load_dict.update(derived)
         self.loadable_keys = self._load_dict.keys()
         self._calculated = derived.keys()
-
-    def __getstate__(self):
-        result = self.__dict__.copy()
-        del result['_Coordinates']
-        del result['_ParticleIDs']
-        del result['_Velocities']
-        del result['_Masses']
-        del result['_load_dict']
-        return result
-
 
     def load_masses(self, unit=None):
         """
