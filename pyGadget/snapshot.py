@@ -128,6 +128,7 @@ def disk_density_structure(snapshot, wpath=None):
         scale = snapshot.sim.batch_viewscale
     else:
         scale = '5000AU'
+    snapshot.gas.orient_box(centering='avg', view='face')
     for view in ['xy', 'xz', 'yz']:
         fig.density(scale, view, clim=(8,12), centering='avg')
         if wpath:

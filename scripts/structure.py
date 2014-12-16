@@ -47,6 +47,8 @@ if __name__ == '__main__':
         sim.set_coordinate_system('comoving')
                  
     data = ['ndensity','coordinates', 'smoothing_length']
+    if key == 'face':
+        data.append('velocities')
     if len(sys.argv) == 5:
         snap = int(sys.argv[4])
         snapshot = sim.load_snapshot(snap,*data)
