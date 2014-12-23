@@ -45,8 +45,11 @@ if __name__ == '__main__':
     col_names.extend(rkeys)
     df = pd.DataFrame(index=keys, columns=col_names)
     for key in keys:
-        mdata = get_cdgm(sim, key)
-        df.loc[key] = mdata
+        try:
+            mdata = get_cdgm(sim, key)
+            df.loc[key] = mdata
+        except(IOError):
+            pass
 
     store = pd.HDFStore(sim.plotpath+'mass_history.hdf5')
     store[sim.name] = df
