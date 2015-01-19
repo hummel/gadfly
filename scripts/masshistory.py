@@ -37,14 +37,14 @@ if __name__ == '__main__':
     sim = pyGadget.sim.Simulation(simname, length='pc', track_sinks=True)
     keys = sim.snapfiles.keys()
     keys.sort()
-    nkeys = ['n > 10cc', 'n > 100cc', 'n > 1e4cc', 'n > 1e8cc', 'n > 1e10cc']
-    rkeys = ['r < 100pc', 'r < 10pc', 'r < 1c', 'r < .1pc',
-             'r < 1e4AU', 'r < 5e3AU', 'r < 1e3AU']
+    ikeys = keys[:500] + keys[500::2]
+    nkeys = ['10cc', '100cc', '1e4cc', '1e8cc', '1e10cc']
+    rkeys = ['100pc', '10pc', '1pc', '.1pc', '1e4AU', '5e3AU', '1e3AU']
     col_names = ['z', 'time']
     col_names.extend(nkeys)
     col_names.extend(rkeys)
-    df = pd.DataFrame(index=keys, columns=col_names)
-    for key in keys:
+    df = pd.DataFrame(index=ikeys, columns=col_names)
+    for key in ikeys:
         try:
             mdata = get_cdgm(sim, key)
             df.loc[key] = mdata
