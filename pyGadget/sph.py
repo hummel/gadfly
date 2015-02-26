@@ -308,7 +308,8 @@ class PartTypeSPH(hdf5.PartTypeX):
         """
         # Chemical Abundances--> 0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
         abundances = self.get_abundances()
-        self.electron_frac = abundances[:,1] + abundances[:,4] + abundances[:,5]
+        self.electron_frac = abundances[:,1] + abundances[:,2]
+        self.electron_frac += abundances[:,4] + 2*abundances[:,5]
 
     def get_electron_fraction(self):
         """
