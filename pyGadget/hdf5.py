@@ -4,33 +4,15 @@
 This module contains classes for reading Gadget2 HDF5 snapshot data.
 """
 import numpy
+from pandas import DataFrame
+
 import units
 import constants
 import coordinates
 import analyze
 import visualize
-
-class HDF5Group(object):
-    """
-    Base Class for HDF5 groups
-    """
-    def __init__(self):
-        super(HDF5Group,self).__init__()
         
-    def keys(self):
-        """
-        Print keys for all arrays in the hdf5 group.
-        """
-        for key in vars(self):
-            print key
-
-    def get(self,key):
-        """
-        Return the raw values of the array from the HDF5 group.
-        """
-        return vars(self)[key]
-        
-class Header(HDF5Group):
+class Header(object):
     """
     Class for header information from Gadget2 HDF5 snapshots.
     """
@@ -40,18 +22,18 @@ class Header(HDF5Group):
             vars(self)[key[0]] = key[1]
         self.ScaleFactor = self.Time
             
-class PartTypeX(HDF5Group):
+class PartTypeX(DataFrame):
     """
     Class for generic particle info.
     """
     def __init__(self, file_id, ptype, unit):
-        super(PartTypeX,self).__init__()
-        self._header = Header(file_id)
-        self.units = unit
         group = file_id['PartType'+str(ptype)]
         for item in group.items():
             key = '_'+item[0].replace(' ', '_')
             vars(self)[key] = item[1]
+        super(PartTypeX,self).__init__()
+        self._header = Header(file_id)
+        self.units = unit
         self.__init_load_dict__()
 
     def __getstate__(self):
@@ -80,6 +62,24 @@ class PartTypeX(HDF5Group):
         self.loadable_keys = self._load_dict.keys()
         self._calculated = derived.keys()
 
+    def load_PIDs(self):
+        """
+        Load Particle ID numbers
+        """
+        self['particleIDs'] = self._ParticleIDs.value
+        if self._refined is not None:
+            self.particleIDs = self.particleIDs[self._refined]
+
+    def get_PIDs(self):
+        """
+        Return Particle ID numbers
+        """
+        try:
+            return self.particleIDs
+        except AttributeError:
+            self.load_PIDs()
+            return self.particleIDs
+
     def load_masses(self, unit=None):
         """
         Load Particle Masses in units of M_sun (default set in units class)
@@ -87,7 +87,7 @@ class PartTypeX(HDF5Group):
         """
         if unit:
             self.units.set_mass(unit)
-        self.masses = self._Masses.value * self.units.mass_conv
+        self['masses'] = self._Masses.value * self.units.mass_conv
         if self.units.remove_h:
             h = self._header.HubbleParam
             self.masses /= h
@@ -115,21 +115,41 @@ class PartTypeX(HDF5Group):
         """
         if unit:
             self.units._set_coord_length(unit)
-        self.coordinates = self._Coordinates.value * self.units.length_conv
+        xyz = self._Coordinates.value * self.units.length_conv
         if self.units.remove_h:
             h = self._header.HubbleParam
-            self.coordinates /= h
+            xyz /= h
         if self.units.coordinate_system == 'physical':
             a = self._header.ScaleFactor
-            self.coordinates *= a
+            xyz *= a
         if self._refined is not None:
-            self.coordinates = self.coordinates[self._refined]
+            xyz = xyz[self._refined]
+        self['coord_x'] = xyz[:,0]
+        self['coord_y'] = xyz[:,1]
+        self['coord_z'] = xyz[:,2]
+
+    def load_velocities(self, unit=None):
+        """
+        Load Particle Velocities in units of km/s (default set in units class)
+        unit: unit conversion from code units
+        """
+        if unit:
+            self.units.set_velocity(unit)
+        vxyz = self._Velocities.value * self.units.velocity_conv
+        if self.units.coordinate_system == 'physical':
+            a = self._header.ScaleFactor
+            vxyz *= numpy.sqrt(a)
+        if self._refined is not None:
+            vxyz = vxyz[self._refined]
+        self['velocity_x'] = vxyz[:,0]
+        self['velocity_y'] = vxyz[:,1]
+        self['velocity_z'] = vxyz[:,2]
 
     def orient_box(self, **kwargs):
         """
-        Center and rotate box coordinates AND velocities according to received kwargs 'center' and 'view'.
-        If 'center' unspecified, looks for 'centering' kwargs and attempts to 
-        auto-center the box.
+        Center and rotate box coordinates AND velocities according to 
+        received kwargs 'center' and 'view'. If 'center' unspecified,
+        looks for 'centering' kwargs and attempts to auto-center the box.
         """
         try:
             xyz = self.coordinates
@@ -271,20 +291,6 @@ class PartTypeX(HDF5Group):
             raise KeyError("Coordinate system options: 'cartesian' "\
                            "'spherical' 'cylindrical'")
 
-    def load_velocities(self, unit=None):
-        """
-        Load Particle Velocities in units of km/s (default set in units class)
-        unit: unit conversion from code units
-        """
-        if unit:
-            self.units.set_velocity(unit)
-        self.velocities = self._Velocities.value * self.units.velocity_conv
-        if self.units.coordinate_system == 'physical':
-            a = self._header.ScaleFactor
-            self.velocities *= numpy.sqrt(a)
-        if self._refined is not None:
-            self.velocities = self.velocities[self._refined]
-
     def get_velocities(self, unit=None, **kwargs):
         """
         Return Particle Velocities in units of km/s (default set in units class)
@@ -327,24 +333,6 @@ class PartTypeX(HDF5Group):
         else:
             raise KeyError("Coordinate system options: 'cartesian' "\
                            "'spherical' 'cylindrical'")
-
-    def load_PIDs(self):
-        """
-        Load Particle ID numbers
-        """
-        self.particleIDs = self._ParticleIDs.value
-        if self._refined is not None:
-            self.particleIDs = self.particleIDs[self._refined]
-
-    def get_PIDs(self):
-        """
-        Load Particle ID numbers
-        """
-        try:
-            return self.particleIDs
-        except AttributeError:
-            self.load_PIDs()
-            return self.particleIDs
 
     def load_quantity(self, *keys):
         """
