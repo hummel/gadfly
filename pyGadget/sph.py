@@ -54,7 +54,7 @@ class PartTypeSPH(hdf5.PartTypeX):
         sph_loaders = {'density':self.get_density,
                        'ndensity':self.get_number_density,
                        'energy':self.get_internal_energy,
-                       'gamma':self.get_gamma,
+                       'adiabatic_index':self.get_adiabatic_index,
                        'abundances':self.get_abundances,
                        'sink_value':self.get_sinks,
                        'smoothing_length':self.get_smoothing_length,
@@ -143,7 +143,7 @@ class PartTypeSPH(hdf5.PartTypeX):
             pass
         if unit:
             self.units.set_density(unit)
-        self.ndensity = self._Density.value * self.units.density_conv
+        self['ndensity'] = self._Density.value * self.units.density_conv
         self.ndensity = self.ndensity * constants.X_h / constants.m_H
         if self.units.remove_h:
             h = self._header.HubbleParam
@@ -176,9 +176,9 @@ class PartTypeSPH(hdf5.PartTypeX):
         """
         if unit:
             self.units.set_energy(unit)
-        self.energy = self._InternalEnergy.value * self.units.energy_conv
+        self['internalenergy'] = self._InternalEnergy.value * self.units.energy_conv
         if self._refined is not None:
-            self.energy = self.energy[self._refined]
+            self.internalenergy = self.internalenergy[self._refined]
 
 
     def get_internal_energy(self, unit=None):
@@ -190,29 +190,63 @@ class PartTypeSPH(hdf5.PartTypeX):
             if unit != self.units.energy_unit:
                 self.load_internal_energy(unit)
         try:
-            return self.energy
+            return self.internalenergy
         except AttributeError:
             self.load_internal_energy(unit)
-            return self.energy
+            return self.internalenergy
 
-    def load_gamma(self):
+    def load_adiabatic_index(self):
         """
         Load particle adiabatic index.
         """
-        self.gamma = self._Adiabatic_index.value
+        self['adiabatic_index'] = self._Adiabatic_index.value
         if self._refined is not None:
-            self.gamma = self.gamma[self._refined]
+            self.adiabatic_index = self.adiabatic_index[self._refined]
 
 
-    def get_gamma(self):
+    def get_adiabatic_index(self):
         """
         Return particle adiabatic index.
         """
         try:
-            return self.gamma
+            return self.adiabatic_index
         except AttributeError:
-            self.load_gamma()
-            return self.gamma
+            self.load_adiabatic_index()
+            return self.adiabatic_index
+
+    def load_smoothing_length(self, unit=None):
+        """
+        Load Particle Smoothing Lengths in units of kpc.
+        (default set in units class)
+        unit: unit conversion from code units
+        """
+        if unit:
+            self.units._set_smoothing_length(unit)
+        self['smoothing_length'] \
+            = self._SmoothingLength.value * self.units.length_conv
+        if self.units.remove_h:
+            h = self._header.HubbleParam
+            self.smoothing_length /= h
+        if self.units.coordinate_system == 'physical':
+            a = self._header.ScaleFactor
+            self.smoothing_length *= a
+        if self._refined is not None:
+            self.smoothing_length = self.smoothing_length[self._refined]
+
+    def get_smoothing_length(self, unit=None):
+        """
+        Return Particle Smoothing Lengths in units of kpc.
+        (default set in units class)
+        unit: unit conversion from code units
+        """
+        if unit:
+            if unit != self.units._smoothing_unit:
+                self.load_smoothing_length(unit)
+        try:
+            return self.smoothing_length
+        except AttributeError:
+            self.load_smoothing_length(unit)
+            return self.smoothing_length
 
     def load_abundances(self):
         """
@@ -249,18 +283,36 @@ class PartTypeSPH(hdf5.PartTypeX):
                 abunds.append(abundances[:,abundance_dict[sp]])
             return abunds
 
+    def load_electron_fraction(self):
+        """
+        Load the free electron fraction.
+        """
+        # Chemical Abundances--> 0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
+        abundances = self.get_abundances()
+        self['electron_fraction'] = abundances[:,1] + abundances[:,4] + abundances[:,5]
+
+    def get_electron_fraction(self):
+        """
+        Return the free electron fraction.
+        """
+        try:
+            return self.electron_fraction
+        except AttributeError:
+            self.load_electron_fraction()
+            return self.electron_fraction
+
     def load_sinks(self):
         """
-        Load particle sink values.
+        Load particle by particle sink flag values.
         """
-        self.sink_value = self._SinkValue.value
+        self['sink_value'] = self._SinkValue.value
         if self._refined is not None:
             self.sink_value = self.sink_value[self._refined]
 
 
     def get_sinks(self):
         """
-        Return particle sink values.
+        Return particle by particle sink flag values.
         """
         try:
             return self.sink_value
@@ -268,65 +320,13 @@ class PartTypeSPH(hdf5.PartTypeX):
             self.load_sinks()
             return self.sink_value
 
-    def load_smoothing_length(self, unit=None):
-        """
-        Load Particle Smoothing Lengths in units of kpc.
-        (default set in units class)
-        unit: unit conversion from code units
-        """
-        if unit:
-            self.units._set_smoothing_length(unit)
-        self.smoothing_length \
-            = self._SmoothingLength.value * self.units.length_conv
-        if self.units.remove_h:
-            h = self._header.HubbleParam
-            self.smoothing_length /= h
-        if self.units.coordinate_system == 'physical':
-            a = self._header.ScaleFactor
-            self.smoothing_length *= a
-        if self._refined is not None:
-            self.smoothing_length = self.smoothing_length[self._refined]
-
-    def get_smoothing_length(self, unit=None):
-        """
-        Return Particle Smoothing Lengths in units of kpc.
-        (default set in units class)
-        unit: unit conversion from code units
-        """
-        if unit:
-            if unit != self.units._smoothing_unit:
-                self.load_smoothing_length(unit)
-        try:
-            return self.smoothing_length
-        except AttributeError:
-            self.load_smoothing_length(unit)
-            return self.smoothing_length
-
-    def load_electron_fraction(self):
-        """
-        Load the free electron fraction.
-        """
-        # Chemical Abundances--> 0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
-        abundances = self.get_abundances()
-        self.electron_frac = abundances[:,1] + abundances[:,4] + abundances[:,5]
-
-    def get_electron_fraction(self):
-        """
-        Return the free electron fraction.
-        """
-        try:
-            return self.electron_frac
-        except AttributeError:
-            self.load_electron_fraction()
-            return self.electron_frac
-
     def load_H2_fraction(self):
         """
         Load the molecular hydrogen fraction.
         """
         # Chemical Abundances--> 0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
         abundances = self.get_abundances()
-        self.h2frac = 2*abundances[:,0]
+        self['h2frac'] = 2*abundances[:,0]
 
     def get_H2_fraction(self):
         """
@@ -344,7 +344,7 @@ class PartTypeSPH(hdf5.PartTypeX):
         """
         # Chemical Abundances--> 0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
         abundances = self.get_abundances()
-        self.HDfrac = 2*abundances[:,3]
+        self['HDfrac'] = 2*abundances[:,3]
 
     def get_HD_fraction(self):
         """
@@ -360,22 +360,22 @@ class PartTypeSPH(hdf5.PartTypeX):
         """
         Calculate Particle Temperatures in degrees Kelvin.
         """
-        gamma = self.get_gamma()
+        gamma = self.get_adiabatic_index()
         energy = self.get_internal_energy('specific cgs')
         h2frac = self.get_H2_fraction()
         mu = (0.24/4.0) + ((1.0-h2frac)*0.76) + (h2frac*.76/2.0)
         mu = 1 / mu # mean molecular weight
-        self.temp = (mu * constants.m_H / constants.k_B) * energy * (gamma-1)
+        self['temperature'] = (mu * constants.m_H / constants.k_B) * energy * (gamma-1)
 
     def get_temperature(self):
         """
         Return Particle Temperatures in degrees Kelvin.
         """
         try:
-            return self.temp
+            return self.temperature
         except AttributeError:
             self.calculate_temperature()
-            return self.temp
+            return self.temperature
 
     def calculate_sound_speed(self):
         """
