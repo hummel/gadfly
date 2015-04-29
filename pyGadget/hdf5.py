@@ -21,6 +21,20 @@ class Header(object):
         for key in group.attrs.items():
             vars(self)[key[0]] = key[1]
         self.ScaleFactor = self.Time
+
+    def keys(self):
+        """
+        Print keys for all items in the header.
+        """
+        for key in vars(self):
+            print key
+
+    def get(self,key):
+        """
+        Return the value for 'key' in the header.
+        """
+        return vars(self)[key]
+
             
 class PartTypeX(DataFrame):
     """
@@ -52,10 +66,10 @@ class PartTypeX(DataFrame):
         self.__init_load_dict__()
 
     def __init_load_dict__(self):
-        self._load_dict = {'masses':self.get_masses,
-                           'coordinates':self.get_coords,
-                           'velocities':self.get_velocities,
-                           'particleIDs':self.get_PIDs}
+        self._load_dict = {'masses':self.load_masses,
+                           'coordinates':self.load_coords,
+                           'velocities':self.load_velocities,
+                           'particleIDs':self.load_PIDs}
         derived = {'spherical_coords':self.calculate_spherical_coords,
                    'cylindrical_coords':self.calculate_cylindrical_coords}
         self._load_dict.update(derived)
