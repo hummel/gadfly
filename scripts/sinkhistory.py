@@ -19,6 +19,7 @@ def get_sinkdata(key, sinkdata):
 if __name__ == '__main__':
     simname = sys.argv[1]
     sim = pyGadget.sim.Simulation(simname, track_sinks=True)
+    print sim.name, len(sim.snapfiles)
     keys = sim.snapfiles.keys()
     keys.sort()
     sinkdata = []

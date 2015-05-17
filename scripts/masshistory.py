@@ -37,7 +37,8 @@ if __name__ == '__main__':
     sim = pyGadget.sim.Simulation(simname, length='pc', track_sinks=True)
     keys = sim.snapfiles.keys()
     keys.sort()
-    ikeys = keys[:500] + keys[500::2]
+#    ikeys = keys[:500] + keys[500::2]
+    ikeys = keys
     nkeys = ['10cc', '100cc', '1e4cc', '1e8cc', '1e10cc']
     rkeys = ['100pc', '10pc', '1pc', '.1pc', '1e4AU', '5e3AU', '1e3AU']
     col_names = ['z', 'time']
