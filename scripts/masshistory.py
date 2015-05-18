@@ -10,7 +10,10 @@ def get_cdgm(sim, key):
     snap = sim.load_snapshot(key, 'masses', 'coordinates', 'velocities',
                              'ndensity')
     z = snap.header.Redshift
-    t = snap.header.Time * pyGadget.units.Time_yr - sim.tsink
+    if sim.tsink:
+        t = snap.header.Time * pyGadget.units.Time_yr - sim.tsink
+    else:
+        t = snap.header.Time * pyGadget.units.Time_yr
     if t > 0:
         print "Snapshot {}: z={:.3f}".format(key, z),
         print "t_sink={:.1f}".format(t)
