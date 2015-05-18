@@ -201,7 +201,7 @@ class Image(Plot):
         ax.cla()
         ax.set_axis_off()
         img = ax.imshow(z, extent=[x.min(),x.max(),y.min(),y.max()],
-                        cmap=pyplot.cm.RdGy_r,origin='lower')
+                        cmap=pyplot.cm.bone, origin='lower')
         clim = kwargs.pop('clim',None)
         if clim:
             img.set_clim(clim[0],clim[1])
