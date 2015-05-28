@@ -56,8 +56,9 @@ class Phase(Plot):
         xscale = kwargs.pop('xscale','log')
         yscale = kwargs.pop('yscale','log')
         mincnt = kwargs.pop('mincnt',1)
+        cmap = kwargs.pop('cmap', pyplot.cm.Blues_r)
         ax.hexbin(x, y, gridsize=grid, bins=bins, xscale=xscale,
-                  yscale=yscale, mincnt=mincnt, cmap=pyplot.cm.Blues_r, **kwargs)
+                  yscale=yscale, mincnt=mincnt, cmap=cmap, **kwargs)
         pyplot.draw()
         return ax
 
