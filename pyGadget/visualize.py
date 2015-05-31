@@ -5,6 +5,7 @@
 import os
 import sys
 import numpy
+from numba import jit
 from scipy import weave
 from scipy.weave import converters
 
@@ -137,6 +138,41 @@ def py_scalar_map(y,x,scalar_field,hsml,width,pps,zshape):
                                 W_x = 2.0 * (1.0 - r)**3
                             zi[i][j] += weight[n] * scalar_field[n] * W_x
                             nzi[i][j] += weight[n] * W_x
+    zi = numpy.where(nzi > 0, zi/nzi, zi)
+    return zi
+
+#===============================================================================
+@jit(nopython=True, nogil=True)
+def numba_loop(y,x,scalar_field,hsml,zi,nzi,weight,npart,width,pps,i_min,i_max,j_min,j_max):
+    for n in xrange(npart):
+        for i in xrange(pps):
+            if(i >= i_min[n] and i <= i_max[n]):
+                center_i = -width/2.0 + (i+0.5) * width/pps
+                for j in xrange(pps):
+                    if(j >= j_min[n] and j <= j_max[n]):
+                        center_j = -width/2.0 + (j+0.5) * width/pps
+                        r2 = ((x[n] - center_i)**2
+                              + (y[n] - center_j)**2) / hsml[n] / hsml[n]
+                        if(r2 <= 1.0):
+                            r = numpy.sqrt(r2)
+                            if(r <= 0.5):
+                                W_x = 1.0 - 6.0 * r**2 + 6.0 * r**3
+                            else:
+                                W_x = 2.0 * (1.0 - r)**3
+                            zi[i][j] += weight[n] * scalar_field[n] * W_x
+                            nzi[i][j] += weight[n] * W_x
+    return zi, nzi
+def numba_scalar_map(y,x,scalar_field,hsml,width,pps,zshape):
+    zi = numpy.zeros(zshape)
+    nzi = numpy.zeros_like(zi)
+    i_min = (x - hsml + width/2.0) / width*pps
+    i_max = (x + hsml + width/2.0) / width*pps
+    j_min = (y - hsml + width/2.0) / width*pps
+    j_max = (y + hsml + width/2.0) / width*pps
+    weight = scalar_field*scalar_field
+    npart = scalar_field.size
+    zi,nzi = numba_loop(y,x,hsml,scalar_field,zi,nzi,weight,
+                        npart,width,pps,i_min,i_max,j_min,j_max)
     zi = numpy.where(nzi > 0, zi/nzi, zi)
     return zi
 

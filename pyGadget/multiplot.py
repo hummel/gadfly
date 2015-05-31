@@ -56,8 +56,9 @@ class Phase(Plot):
         xscale = kwargs.pop('xscale','log')
         yscale = kwargs.pop('yscale','log')
         mincnt = kwargs.pop('mincnt',1)
+        cmap = kwargs.pop('cmap', pyplot.cm.Blues_r)
         ax.hexbin(x, y, gridsize=grid, bins=bins, xscale=xscale,
-                  yscale=yscale, mincnt=mincnt, cmap=pyplot.cm.Blues_r, **kwargs)
+                  yscale=yscale, mincnt=mincnt, cmap=cmap, **kwargs)
         pyplot.draw()
         return ax
 
@@ -66,6 +67,7 @@ class Phase(Plot):
         dens = snapshot.gas.get_number_density()
         temp = snapshot.gas.get_temperature()
         select = kwargs.pop('select', None)
+        cmbline = kwargs.pop('cmbline', True)
         if select is not None:
             dens = dens[select]
             temp = temp[select]
@@ -75,8 +77,10 @@ class Phase(Plot):
         ax.set_yscale('log')
         ax.set_xlim(2e-3, 1e12)
         ax.set_ylim(10, 2e4)
-        ax.axhline(2.725 * (snapshot.header.Redshift + 1),
-                   linestyle='--', color='k')
+
+        if cmbline:
+            ax.axhline(2.725 * (snapshot.header.Redshift + 1),
+                       linestyle='--', color='k')
         ax.set_xlabel('n [cm$^{-3}$]')
         ax.set_ylabel('Temperature [K]')
         pyplot.draw()

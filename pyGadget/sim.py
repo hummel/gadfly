@@ -150,7 +150,7 @@ class Simulation(object):
         done = False
         while not done:
             try:
-                snap = data_queue.get(timeout=30)
+                snap = data_queue.get()
             except Queue.Empty:
                 break
             if snap is None:
