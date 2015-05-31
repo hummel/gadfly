@@ -289,7 +289,8 @@ class PartTypeSPH(hdf5.PartTypeX):
         """
         # Chemical Abundances--> 0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
         abundances = self.get_abundances()
-        self['electron_fraction'] = abundances[:,1] + abundances[:,4] + abundances[:,5]
+        self.electron_frac = abundances[:,1] + abundances[:,2]
+        self.electron_frac += abundances[:,4] + 2*abundances[:,5]
 
     def get_electron_fraction(self):
         """
@@ -308,7 +309,6 @@ class PartTypeSPH(hdf5.PartTypeX):
         self['sink_value'] = self._SinkValue.value
         if self._refined is not None:
             self.sink_value = self.sink_value[self._refined]
-
 
     def get_sinks(self):
         """

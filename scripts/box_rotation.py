@@ -7,6 +7,7 @@ mpl.rc('font', family='serif')
 mpl.rc('text', usetex=True)
 import pyGadget
 
+plt.ioff()
 sim = pyGadget.sim.Simulation('stampede/vanilla')
 sim.refine_by_mass(False)
 sim.set_coordinate_system('physical')
@@ -44,7 +45,7 @@ for theta in np.linspace(0,2*np.pi, 250):
         y = imlist[i][1]
         im = imlist[i][2]
         ax = grid[i]
-        img = ax.imshow(im, cmap=plt.cm.RdGy_r, origin='lower')
+        img = ax.imshow(im, cmap=plt.cm.bone, origin='lower')
         ax.xaxis.set_visible(False)
         ax.yaxis.set_visible(False)
         img.set_clim(clims[i])
@@ -79,7 +80,7 @@ for theta in np.linspace(0,2*np.pi, 250):
             elif zoom[i] == 'left':
                 ax.add_line(plt.Line2D([mid-s/2, axmin], [mid+s/2, axmax], c=zc, lw=zlw, ls=zls))
                 ax.add_line(plt.Line2D([mid-s/2, axmin], [mid-s/2, axmin], c=zc, lw=zlw, ls=zls))
-    plt.show()
+
     fig.savefig(sim.plotpath+'/'+sim.name+'/rotations/box/{:0>4}-zoom.png'.format(count), 
                 bbox_inches='tight', dpi=100)
     count += 1
