@@ -139,9 +139,9 @@ class PartTypeX(DataFrame):
             xyz *= a
         if self._refined is not None:
             xyz = xyz[self._refined]
-        self['coord_x'] = xyz[:, 0]
-        self['coord_y'] = xyz[:, 1]
-        self['coord_z'] = xyz[:, 2]
+        self['pos_x'] = xyz[:, 0]
+        self['pos_y'] = xyz[:, 1]
+        self['pos_z'] = xyz[:, 2]
 
     def load_velocities(self, unit=None):
         """
@@ -370,6 +370,10 @@ class PartTypeX(DataFrame):
         Clean up loaded data to save memory.
         exclude: properties to leave loaded.
         """
+        if 'coordinates' in exclude:
+            exclude += ('pos_x', 'pos_y', 'pos_z')
+        if 'velocities' in exclude:
+            exclude += ('velocity_x', 'velocity_y', 'velocity_z')
         to_drop = [key for key in self.columns if key not in exclude]
         self.drop(to_drop, axis=1, inplace=True)
 

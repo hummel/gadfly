@@ -53,7 +53,7 @@ class PartTypeSPH(hdf5.PartTypeX):
         super(PartTypeSPH,self).__init_load_dict__()
         sph_loaders = {'density':self.get_density,
                        'ndensity':self.get_number_density,
-                       'energy':self.get_internal_energy,
+                       'internalenergy':self.get_internal_energy,
                        'adiabatic_index':self.get_adiabatic_index,
                        'abundances':self.get_abundances,
                        'sink_value':self.get_sinks,
