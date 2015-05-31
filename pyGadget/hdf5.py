@@ -11,7 +11,8 @@ import constants
 import coordinates
 import analyze
 import visualize
-        
+
+
 class Header(object):
     """
     Class for header information from Gadget2 HDF5 snapshots.
@@ -29,13 +30,13 @@ class Header(object):
         for key in vars(self):
             print key
 
-    def get(self,key):
+    def get(self, key):
         """
         Return the value for 'key' in the header.
         """
         return vars(self)[key]
 
-            
+
 class PartTypeX(DataFrame):
     """
     Class for generic particle info.
@@ -45,7 +46,7 @@ class PartTypeX(DataFrame):
         for item in group.items():
             key = '_'+item[0].replace(' ', '_')
             vars(self)[key] = item[1]
-        super(PartTypeX,self).__init__()
+        super(PartTypeX, self).__init__()
         self._header = Header(file_id)
         self.units = unit
         self.__init_load_dict__()
@@ -66,12 +67,12 @@ class PartTypeX(DataFrame):
         self.__init_load_dict__()
 
     def __init_load_dict__(self):
-        self._load_dict = {'masses':self.load_masses,
-                           'coordinates':self.load_coords,
-                           'velocities':self.load_velocities,
-                           'particleIDs':self.load_PIDs}
-        derived = {'spherical_coords':self.calculate_spherical_coords,
-                   'cylindrical_coords':self.calculate_cylindrical_coords}
+        self._load_dict = {'masses': self.load_masses,
+                           'coordinates': self.load_coords,
+                           'velocities': self.load_velocities,
+                           'particleIDs': self.load_PIDs}
+        derived = {'spherical_coords': self.calculate_spherical_coords,
+                   'cylindrical_coords': self.calculate_cylindrical_coords}
         self._load_dict.update(derived)
         self.loadable_keys = self._load_dict.keys()
         self._calculated = derived.keys()
@@ -138,9 +139,9 @@ class PartTypeX(DataFrame):
             xyz *= a
         if self._refined is not None:
             xyz = xyz[self._refined]
-        self['coord_x'] = xyz[:,0]
-        self['coord_y'] = xyz[:,1]
-        self['coord_z'] = xyz[:,2]
+        self['coord_x'] = xyz[:, 0]
+        self['coord_y'] = xyz[:, 1]
+        self['coord_z'] = xyz[:, 2]
 
     def load_velocities(self, unit=None):
         """
@@ -155,13 +156,13 @@ class PartTypeX(DataFrame):
             vxyz *= numpy.sqrt(a)
         if self._refined is not None:
             vxyz = vxyz[self._refined]
-        self['velocity_x'] = vxyz[:,0]
-        self['velocity_y'] = vxyz[:,1]
-        self['velocity_z'] = vxyz[:,2]
+        self['velocity_x'] = vxyz[:, 0]
+        self['velocity_y'] = vxyz[:, 1]
+        self['velocity_z'] = vxyz[:, 2]
 
     def orient_box(self, **kwargs):
         """
-        Center and rotate box coordinates AND velocities according to 
+        Center and rotate box coordinates AND velocities according to
         received kwargs 'center' and 'view'. If 'center' unspecified,
         looks for 'centering' kwargs and attempts to auto-center the box.
         """
@@ -183,9 +184,9 @@ class PartTypeX(DataFrame):
         dlim = kwargs.pop('dens_lim', 1e9)
 
         if center:
-            xyz =  analyze.center_box(xyz, center)
+            xyz = analyze.center_box(xyz, center)
         else:
-            if centering in ['avg','max']:
+            if centering in ['avg', 'max']:
                 try:
                     dens = self.get_number_density()
                 except AttributeError:
@@ -195,9 +196,9 @@ class PartTypeX(DataFrame):
                 xyz = analyze.center_box(xyz, **kwargs)
 
         if vcenter:
-            vxyz =  analyze.center_box(vxyz, vcenter)
+            vxyz = analyze.center_box(vxyz, vcenter)
         else:
-            if centering in ['avg','max']:
+            if centering in ['avg', 'max']:
                 try:
                     dens = self.get_number_density()
                 except AttributeError:
@@ -234,19 +235,19 @@ class PartTypeX(DataFrame):
         self.orient_box(**kwargs)
 
         xyz = self.coordinates
-        r,theta,phi = coordinates.cartesian_to_spherical(xyz[:,0],
-                                                         xyz[:,1],
-                                                         xyz[:,2])
-        self.spherical_coords = numpy.column_stack((r,theta,phi))
+        r, theta, phi = coordinates.cartesian_to_spherical(xyz[:, 0],
+                                                           xyz[:, 1],
+                                                           xyz[:, 2])
+        self.spherical_coords = numpy.column_stack((r, theta, phi))
 
         vxyz = self.velocities
-        vr,vtheta,vphi = coordinates.cartesian_to_spherical_velocities(xyz,vxyz)
-        self.spherical_velocities = numpy.column_stack((vr,vtheta,vphi))
+        vsph = coordinates.cartesian_to_spherical_velocities(xyz, vxyz)
+        self.spherical_velocities = numpy.column_stack(vsph)
 
     def calculate_cylindrical_coords(self, c_unit=None, v_unit=None, **kwargs):
         """
-        Load particle positions in cylindrical coordinates with default units of
-        kpc (default set in units class)
+        Load particle positions in cylindrical coordinates with default units
+        of kpc (default set in units class)
         unit: unit conversion from code units
         """
         if (c_unit or v_unit):
@@ -256,22 +257,23 @@ class PartTypeX(DataFrame):
                 self.load_velocities(v_unit)
         self.orient_box(**kwargs)
         xyz = self.coordinates
-        r,theta,z = coordinates.cartesian_to_cylindrical(xyz[:,0],
-                                                         xyz[:,1],
-                                                         xyz[:,2])
-        self.cylindrical_coords = numpy.column_stack((r,theta,z))
+        r, theta, z = coordinates.cartesian_to_cylindrical(xyz[:, 0],
+                                                           xyz[:, 1],
+                                                           xyz[:, 2])
+        self.cylindrical_coords = numpy.column_stack((r, theta, z))
 
         vel = self.velocities
 
     def get_coords(self, unit=None, **kwargs):
         """
-        Return Particle Coordinates in units of kpc (default set in units class)
+        Return Particle Coordinates in units of kpc
+        (default set in units class)
         unit: unit conversion from code units
         system: coordinate system to use.  Options are cartesian or spherical.
                 Note that spherical coordinates require a cartesian coordinate
                 'center' point to be calculated by analyze.find_center()
         """
-        system = kwargs.pop('system','cartesian')
+        system = kwargs.pop('system', 'cartesian')
         if (unit or len(kwargs) > 0):
             if (unit != self.units._coord_unit or len(kwargs) > 0):
                 if system == 'cartesian':
@@ -302,7 +304,7 @@ class PartTypeX(DataFrame):
                 self.calculate_cylindrical_coords(c_unit=unit, **kwargs)
                 return self.cylindrical_coords
         else:
-            raise KeyError("Coordinate system options: 'cartesian' "\
+            raise KeyError("Coordinate system options: 'cartesian' "
                            "'spherical' 'cylindrical'")
 
     def get_velocities(self, unit=None, **kwargs):
@@ -314,7 +316,7 @@ class PartTypeX(DataFrame):
                 Note that calculating a spherical/cylindrical coordinates
                 require a center point.
         """
-        system = kwargs.pop('system','cartesian')
+        system = kwargs.pop('system', 'cartesian')
         if (unit or len(kwargs) > 0):
             if (unit != self.units.velocity_unit or len(kwargs) > 0):
                 if system == 'cartesian':
@@ -345,7 +347,7 @@ class PartTypeX(DataFrame):
                 self.calculate_cylindrical_coords(v_unit=unit, **kwargs)
                 return self.cylindrical_velocities
         else:
-            raise KeyError("Coordinate system options: 'cartesian' "\
+            raise KeyError("Coordinate system options: 'cartesian' "
                            "'spherical' 'cylindrical'")
 
     def load_quantity(self, *keys):
@@ -375,7 +377,7 @@ class PartTypeX(DataFrame):
     def load_data(self, *properties, **kwargs):
         """
         Load a selection of keys and refine to highest resolution particles.
-        Cleans up unrequested properties loaded for calculation of other 
+        Cleans up unrequested properties loaded for calculation of other
         requested properties when finished.
 
         properties: arbitrary number of keys from the list.
