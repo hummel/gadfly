@@ -371,7 +371,6 @@ class PartTypeX(DataFrame):
         exclude: properties to leave loaded.
         """
         to_drop = [key for key in self.columns if key not in exclude]
-        print to_drop
         self.drop(to_drop, axis=1, inplace=True)
 
     def load_data(self, *properties, **kwargs):
