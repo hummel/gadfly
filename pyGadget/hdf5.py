@@ -368,11 +368,9 @@ class PartTypeX(DataFrame):
         Clean up loaded data to save memory.
         exclude: properties to leave loaded.
         """
-        keys = vars(self).keys()
-        for key in keys:
-            if key in self.loadable_keys:
-                if key not in exclude:
-                    del vars(self)[key]
+        to_drop = [key for key in self.columns if key not in exclude]
+        print to_drop
+        self.drop(to_drop, axis=1, inplace=True)
 
     def load_data(self, *properties, **kwargs):
         """
