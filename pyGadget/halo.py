@@ -123,10 +123,10 @@ def analyze_halo(redshift, r, gasr, mass, gmass, temp,
             gasinShell = numpy.where((gasr > old_r) & (gasr <= rmax))[0]
             rpc = rmax/3.08568e18
             Mtot = mass[inR].sum()
-	    Mshell = mass[inShell].sum()
+            Mshell = mass[inShell].sum()
             Msun = Mtot/1.989e33
             gMtot = gmass[gasinR].sum()
-	    gMshell = gmass[gasinShell].sum()
+            gMshell = gmass[gasinShell].sum()
             gMsun = gMtot/1.989e33
             density = 3 * Mtot / (4*numpy.pi * rmax**3)
             gdensity = 3 * gMtot / (4*numpy.pi * rmax**3)
@@ -134,14 +134,14 @@ def analyze_halo(redshift, r, gasr, mass, gmass, temp,
             rhoShell = Mshell / shell_vol
             grhoShell = gMshell / shell_vol
             delta = density/background_density
-	    tshell = analyze.reject_outliers(temp[gasinShell]).mean()
-	    tavg = analyze.reject_outliers(temp[gasinR]).mean()
-	    tff = numpy.sqrt(3*numpy.pi/32/GRAVITY/density)
-	    cs = numpy.sqrt(k_B * tavg / m_H)
-	    cshell = numpy.sqrt(k_B * tshell / m_H)
-	    Lj = cs*tff
-	    Mj = density * (4*numpy.pi/3) * Lj**3 / 1.989e33
-	    energy += GRAVITY * Mtot * Mshell / rmax
+            tshell = analyze.reject_outliers(temp[gasinShell]).mean()
+            tavg = analyze.reject_outliers(temp[gasinR]).mean()
+            tff = numpy.sqrt(3*numpy.pi/32/GRAVITY/density)
+            cs = numpy.sqrt(k_B * tavg / m_H)
+            cshell = numpy.sqrt(k_B * tshell / m_H)
+            Lj = cs*tff
+            Mj = density * (4*numpy.pi/3) * Lj**3 / 1.989e33
+            energy += GRAVITY * Mtot * Mshell / rmax
             if verbose:
                 print 'R = %.2e pc' %rpc,
                 print 'Mass enclosed: %.2e' %Msun,
@@ -152,6 +152,6 @@ def analyze_halo(redshift, r, gasr, mass, gmass, temp,
                                     grhoShell,tff,tavg,tshell,cs,cshell,
                                     Lj,Mj,-energy,n))
             old_n = n
-	    old_r = rmax
+            old_r = rmax
         rmax *= r_multiplier
     return halo_properties
