@@ -171,6 +171,7 @@ class PartTypeX(HDF5Group):
         xyz = numpy.column_stack((x,y,z))
         uvw = numpy.column_stack((u,v,w))
         if view:
+            print 'Rotating Box...'
             if view == 'face':
                 try:
                     dens = self.get_number_density()
@@ -180,6 +181,7 @@ class PartTypeX(HDF5Group):
                                                density=dens, dens_lim=dlim)
             else:
                 xyz, uvw = visualize.set_view(view, xyz, velocity=uvw)
+            print 'Rotation complete.'
         self.coordinates = xyz
         self.velocities = uvw
 
@@ -197,14 +199,17 @@ class PartTypeX(HDF5Group):
         self.orient_box(**kwargs)
 
         xyz = self.coordinates
+        print 'Converting to spherical coordinates...'
         r,theta,phi = coordinates.cartesian_to_spherical(xyz[:,0],
                                                          xyz[:,1],
                                                          xyz[:,2])
         self.spherical_coords = numpy.column_stack((r,theta,phi))
 
         vxyz = self.velocities
+        print 'Converting to spherical coordinate velocities...'
         vr,vtheta,vphi = coordinates.cartesian_to_spherical_velocities(xyz,vxyz)
         self.spherical_velocities = numpy.column_stack((vr,vtheta,vphi))
+        print 'Done.'
 
     def calculate_cylindrical_coords(self, c_unit=None, v_unit=None, **kwargs):
         """
