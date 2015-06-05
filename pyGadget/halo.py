@@ -78,8 +78,10 @@ def radial_properties(snapshot, **kwargs):
     redshift = snapshot.header.Redshift
     dens = snapshot.gas.get_density('cgs')
     xyz = snapshot.gas.get_coords(length_unit)
-    center = analyze.find_center(xyz[:,0],xyz[:,1],xyz[:,2], dens,
-                                 centering='max')
+    uvw = snapshot.gas.get_velocities()
+    center, vcenter = analyze.find_center(xyz[:,0],xyz[:,1],xyz[:,2],
+                                          uvw[:,0],uvw[:,1],uvw[:,2],
+                                          dens, centering='max')
     gas_pos = snapshot.gas.get_coords(length_unit, system='spherical',
                                       center=center)
     dm_pos = snapshot.dm.get_coords(length_unit, system='spherical',

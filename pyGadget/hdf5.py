@@ -137,10 +137,10 @@ class PartTypeX(HDF5Group):
             self.load_coords()
             xyz = self.coordinates
         try:
-            vxyz = self.velocities
+            uvw = self.velocities
         except AttributeError:
             self.load_velocities()
-            vxyz = self.velocities
+            uvw = self.velocities
 
         center = kwargs.get('center', None)
         vcenter = kwargs.get('vcenter', None)
@@ -148,43 +148,40 @@ class PartTypeX(HDF5Group):
         view = kwargs.get('view', None)
         dlim = kwargs.pop('dens_lim', 1e9)
 
+        x = xyz[:,0]
+        y = xyz[:,1]
+        z = xyz[:,2]
+        u = uvw[:,0]
+        v = uvw[:,1]
+        w = uvw[:,2]
         if center:
-            xyz =  analyze.center_box(xyz, center)
-        else:
-            if centering in ['avg','max']:
-                try:
-                    dens = self.get_number_density()
-                except AttributeError:
-                    raise KeyError("Cannot density-center dark matter!")
-                xyz = analyze.center_box(xyz, density=dens, **kwargs)
-            elif centering == 'box':
-                xyz = analyze.center_box(xyz, **kwargs)
-
-        if vcenter:
-            vxyz =  analyze.center_box(vxyz, vcenter)
-        else:
-            if centering in ['avg','max']:
-                try:
-                    dens = self.get_number_density()
-                except AttributeError:
-                    raise KeyError("Cannot density-center dark matter!")
-                vxyz = analyze.center_box(vxyz, density=dens, **kwargs)
-            else:
+            if vcenter is None:
                 print "Warning: Not Re-centering particle Velocities!"
+            x,y,z,u,v,w = analyze.center_box(x,y,z,u,v,w, center, vcenter)
+        else:
+            if centering in ['avg','max']:
+                try:
+                    dens = self.get_number_density()
+                except AttributeError:
+                    raise KeyError("Cannot density-center dark matter!")
+                x,y,z,u,v,w = analyze.center_box(x,y,z,u,v,w, density=dens, **kwargs)
+            elif centering == 'box':
+                x,y,z,u,v,w = analyze.center_box(x,y,z,u,v,w, **kwargs)
 
+        xyz = numpy.column_stack((x,y,z))
+        uvw = numpy.column_stack((u,v,w))
         if view:
             if view == 'face':
                 try:
                     dens = self.get_number_density()
                 except AttributeError:
                     raise KeyError("Cannot density-center dark matter!")
-                xyz, vxyz = visualize.set_view(view, xyz, velocity=vxyz,
+                xyz, uvw = visualize.set_view(view, xyz, velocity=uvw,
                                                density=dens, dens_lim=dlim)
             else:
-                xyz, vxyz = visualize.set_view(view, xyz, velocity=vxyz)
-
+                xyz, uvw = visualize.set_view(view, xyz, velocity=uvw)
         self.coordinates = xyz
-        self.velocities = vxyz
+        self.velocities = uvw
 
     def calculate_spherical_coords(self, c_unit=None, v_unit=None, **kwargs):
         """
