@@ -33,6 +33,8 @@ def radial_properties(sim, snap, **kwargs):
     vel = snapshot.gas.get_velocities(system='spherical')
     dm_pos = snapshot.dm.get_coords(length_unit, system='spherical',
                                     center=center, vcenter=vcenter)
+    snapshot.gas.cleanup()
+    snapshot.dm.cleanup()
     snapshot.close()
 
     gasr = gas_pos[:,0]
@@ -125,12 +127,10 @@ if __name__ == '__main__':
 
     keys = sim.snapfiles.keys()
     keys.sort()
-    all_frames = []
+    hprops = pd.DataFrame()
     for chunk in chunks(keys,25):
         frames = [radial_properties(sim,snap) for snap in chunk]
-        all_frames += frames
-        hprops = pd.concat(all_frames)
-
+        hprops = pd.concat([hprops] + frames)
         store = pd.HDFStore(sim.plotpath +'/'+ sim.name+'/radial_properties.hdf5')
         store[sim.name] = hprops
         store.close()
