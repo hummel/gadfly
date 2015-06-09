@@ -264,8 +264,8 @@ def project(snapshot, loadable, scale, view, **kwargs):
         dens = scalar
 
     print 'Calculating...'
-    pos = analyze.center_box(pos,density=dens,**kwargs)
-    pos = set_view(view, pos)
+    x,y,z = analyze.center_box(pos[:,0],pos[:,1],pos[:,2],density=dens,**kwargs)
+    pos = set_view(view, numpy.column_stack((x,y,z)))
     x = pos[:,0]
     y = pos[:,1]
     z = pos[:,2]
