@@ -125,9 +125,15 @@ if __name__ == '__main__':
     sim.units.set_velocity('cgs')
     sim.units.set_density('cgs')
 
+    store = pd.HDFStore(sim.plotpath +'/'+ sim.name+'/radial_properties.hdf5')
+    try:
+        hprops = store[sim.name]
+    except KeyError:
+        hprops = pd.DataFrame()
+    store.close()
+
     keys = sim.snapfiles.keys()
     keys.sort()
-    hprops = pd.DataFrame()
     for chunk in chunks(keys,25):
         frames = [radial_properties(sim,snap) for snap in chunk]
         hprops = pd.concat([hprops] + frames)
