@@ -118,14 +118,14 @@ def center_box(x, y, z, u=None, v=None, w=None, center=None, vcenter=None, **kwa
         if center_velocity:
             (cx,cy,cz), (cu,cv,cw) = find_center_vcenter(x,y,z,u,v,w, dens, **kwargs)
         else:
-            (cx,cy,cz) = find_center_vcenter(x,y,z, dens, **kwargs)
+            (cx,cy,cz) = find_center(x,y,z, dens, **kwargs)
     else:
         print "WARNING! NO CENTER OR CENTERING ALGORITHM SPECIFIED!"
         print "Attempting simple box centering..."
         if center_velocity:
             (cx,cy,cz), (cu,cv,cw) = find_center_vcenter(x,y,z,u,v,w, dens, **kwargs)
         else:
-            (cx,cy,cz) = find_center_vcenter(x,y,z, dens, **kwargs)
+            (cx,cy,cz) = find_center(x,y,z, dens, **kwargs)
 
     x -= cx
     y -= cy
