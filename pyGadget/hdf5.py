@@ -166,15 +166,17 @@ class PartTypeX(DataFrame):
         looks for 'centering' kwargs and attempts to auto-center the box.
         """
         try:
-            xyz = self.coordinates
+            x = self.pos_x
         except AttributeError:
             self.load_coords()
-            xyz = self.coordinates
+            y = self.pos_y
+            z = self.pos_z
         try:
-            uvw = self.velocities
+            u = self.velocity_x
         except AttributeError:
             self.load_velocities()
-            uvw = self.velocities
+            v = self.velocity_y
+            w = self.velocity_z
 
         center = kwargs.get('center', None)
         vcenter = kwargs.get('vcenter', None)
@@ -182,12 +184,6 @@ class PartTypeX(DataFrame):
         view = kwargs.get('view', None)
         dlim = kwargs.pop('dens_lim', 1e9)
 
-        x = xyz[:,0]
-        y = xyz[:,1]
-        z = xyz[:,2]
-        u = uvw[:,0]
-        v = uvw[:,1]
-        w = uvw[:,2]
         if center:
             if vcenter is None:
                 print "Warning: Not Re-centering particle Velocities!"
@@ -202,8 +198,8 @@ class PartTypeX(DataFrame):
             elif centering == 'box':
                 x,y,z,u,v,w = analyze.center_box(x,y,z,u,v,w, **kwargs)
 
-        xyz = numpy.column_stack((x,y,z))
-        uvw = numpy.column_stack((u,v,w))
+        xyz = self[['pos_x', 'pos_y', 'pos_z']]
+        uvw = self[['velocity_x', 'velocity_y', 'velocity_z']]
         if view:
             print 'Rotating Box...'
             if view == 'face':
@@ -216,8 +212,8 @@ class PartTypeX(DataFrame):
             else:
                 xyz, uvw = visualize.set_view(view, xyz, velocity=uvw)
             print 'Rotation complete.'
-        self.coordinates = xyz
-        self.velocities = uvw
+        self[['pos_x', 'pos_y', 'pos_z']] = xyz
+        self[['velocity_x', 'velocity_y', 'velocity_z']] = uvw
 
     def calculate_spherical_coords(self, c_unit=None, v_unit=None, **kwargs):
         """
@@ -232,14 +228,14 @@ class PartTypeX(DataFrame):
                 self.load_velocities(v_unit)
         self.orient_box(**kwargs)
 
-        xyz = self.coordinates
+        xyz = self[['pos_x', 'pos_y', 'pos_z']]
         print 'Converting to spherical coordinates...'
         r,theta,phi = coordinates.cartesian_to_spherical(xyz[:,0],
                                                          xyz[:,1],
                                                          xyz[:,2])
         self.spherical_coords = numpy.column_stack((r,theta,phi))
 
-        vxyz = self.velocities
+        vxyz = self[['velocity_x', 'velocity_y', 'velocity_z']]
         print 'Converting to spherical coordinate velocities...'
         vr,vtheta,vphi = coordinates.cartesian_to_spherical_velocities(xyz,vxyz)
         self.spherical_velocities = numpy.column_stack((vr,vtheta,vphi))
@@ -257,13 +253,13 @@ class PartTypeX(DataFrame):
                 self.load_coords(c_unit)
                 self.load_velocities(v_unit)
         self.orient_box(**kwargs)
-        xyz = self.coordinates
+        xyz = self[['pos_x', 'pos_y', 'pos_z']]
         r,theta,z = coordinates.cartesian_to_cylindrical(xyz[:,0],
                                                          xyz[:,1],
                                                          xyz[:,2])
         self.cylindrical_coords = numpy.column_stack((r,theta,z))
 
-        vel = self.velocities
+        vel = self[['velocity_x', 'velocity_y', 'velocity_z']]
 
     def get_coords(self, unit=None, **kwargs):
         """
@@ -286,21 +282,21 @@ class PartTypeX(DataFrame):
 
         if system == 'cartesian':
             try:
-                return self.coordinates
-            except AttributeError:
+                return self[['pos_x', 'pos_y', 'pos_z']]
+            except KeyError:
                 self.load_coords(unit)
                 self.orient_box(**kwargs)
-                return self.coordinates
+                return self[['pos_x', 'pos_y', 'pos_z']]
         elif system == 'spherical':
             try:
                 return self.spherical_coords
-            except AttributeError:
+            except KeyError:
                 self.calculate_spherical_coords(c_unit=unit, **kwargs)
                 return self.spherical_coords
         elif system == 'cylindrical':
             try:
                 return self.cylindrical_coords
-            except AttributeError:
+            except KeyError:
                 self.calculate_cylindrical_coords(c_unit=unit, **kwargs)
                 return self.cylindrical_coords
         else:
@@ -329,21 +325,21 @@ class PartTypeX(DataFrame):
 
         if system == 'cartesian':
             try:
-                return self.velocities
-            except AttributeError:
+                return self[['velocity_x', 'velocity_y', 'velocity_z']]
+            except KeyError:
                 self.load_velocities(unit)
                 self.orient_box(**kwargs)
-                return self.velocities
+                return self[['velocity_x', 'velocity_y', 'velocity_z']]
         elif system == 'spherical':
             try:
                 return self.spherical_velocities
-            except AttributeError:
+            except KeyError:
                 self.calculate_spherical_coords(v_unit=unit, **kwargs)
                 return self.spherical_velocities
         elif system == 'cylindrical':
             try:
                 return self.cylindrical_velocities
-            except AttributeError:
+            except KeyError:
                 self.calculate_cylindrical_coords(v_unit=unit, **kwargs)
                 return self.cylindrical_velocities
         else:
