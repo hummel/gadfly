@@ -9,13 +9,6 @@ import constants
 def reject_outliers(data, m=2):
     return data[numpy.abs(data - numpy.mean(data)) < m * numpy.std(data)]
 
-def data_slice(expr, *args):
-    arrs = [i for i in args]
-    slice_ = numpy.where(expr)[0]
-    for i,array in enumerate(arrs):
-        arrs[i] = array[slice_]
-    return arrs
-
 def find_center(pos_vel, density=None, **kwargs):
     centering = kwargs.pop('centering','box')
     verbose = kwargs.get('verbose', True)

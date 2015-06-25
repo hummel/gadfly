@@ -5,6 +5,7 @@
 import os
 import sys
 import numpy
+import pandas
 from numba import jit
 from scipy import weave
 from scipy.weave import converters
@@ -186,7 +187,14 @@ def set_view(view, xyz, **kwargs):
         if uvw is None or dens is None:
             raise KeyError("setting face-on view requires density, "\
                            "position and velocity!")
-        pos, vel = analyze.data_slice(dens > dlim, xyz, uvw)
+        pos_vel = pandas.concat([xyz,uvw,dens,mass], axis=1)
+        pos_vel = pos_vel[pos_vel[dens.name] > dlim]
+        pos = pos_vel[['pos_x', 'pos_y', 'pos_z']]
+        vel = pos_vel[['velocity_x', 'velocity_y', 'velocity_z']]
+        try:
+            mass = pos_vel[mass.name]
+        except AttributeError:
+            pass
         axis, angle = analyze.faceon_rotation(pos, vel, mass)
         xyz = coordinates.rotate(xyz, axis, angle)
         uvw = coordinates.rotate(uvw, axis, angle)
