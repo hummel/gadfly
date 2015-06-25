@@ -165,41 +165,35 @@ class PartTypeX(DataFrame):
         received kwargs 'center' and 'view'. If 'center' unspecified,
         looks for 'centering' kwargs and attempts to auto-center the box.
         """
-        try:
-            x = self.pos_x
-        except AttributeError:
-            self.load_coords()
-            y = self.pos_y
-            z = self.pos_z
-        try:
-            u = self.velocity_x
-        except AttributeError:
-            self.load_velocities()
-            v = self.velocity_y
-            w = self.velocity_z
-
         center = kwargs.get('center', None)
         vcenter = kwargs.get('vcenter', None)
         centering = kwargs.get('centering', None)
         view = kwargs.get('view', None)
         dlim = kwargs.pop('dens_lim', 1e9)
+        xyz = ['pos_x', 'pos_y', 'pos_z']
+        uvw = ['velocity_x', 'velocity_y', 'velocity_z']
+        try:
+            pos_vel = self[xyz + uvw]
+        except KeyError:
+            self.load_coords()
+            self.load_velocities()
+            pos_vel = self[xyz + uvw]
 
         if center:
             if vcenter is None:
                 print "Warning: Not Re-centering particle Velocities!"
-            x,y,z,u,v,w = analyze.center_box(x,y,z,u,v,w, center, vcenter)
+            pos_vel = analyze.center_box(pos_vel, center, vcenter)
         else:
             if centering in ['avg','max']:
                 try:
                     dens = self.get_number_density()
                 except AttributeError:
                     raise KeyError("Cannot density-center dark matter!")
-                x,y,z,u,v,w = analyze.center_box(x,y,z,u,v,w, density=dens, **kwargs)
+                pos_vel = analyze.center_box(pos_vel, density=dens, **kwargs)
             elif centering == 'box':
-                x,y,z,u,v,w = analyze.center_box(x,y,z,u,v,w, **kwargs)
+                pos_vel = analyze.center_box(pos_vel, **kwargs)
+        self[pos_vel.keys()] = pos_vel
 
-        xyz = self[['pos_x', 'pos_y', 'pos_z']]
-        uvw = self[['velocity_x', 'velocity_y', 'velocity_z']]
         if view:
             print 'Rotating Box...'
             if view == 'face':
@@ -207,10 +201,10 @@ class PartTypeX(DataFrame):
                     dens = self.get_number_density()
                 except AttributeError:
                     raise KeyError("Cannot density-center dark matter!")
-                xyz, uvw = visualize.set_view(view, xyz, velocity=uvw,
+                xyz, uvw = visualize.set_view(view, self[xyz], velocity=self[uvw],
                                                density=dens, dens_lim=dlim)
             else:
-                xyz, uvw = visualize.set_view(view, xyz, velocity=uvw)
+                xyz, uvw = visualize.set_view(view, self[xyz], velocity=self[uvw])
             print 'Rotation complete.'
         self[['pos_x', 'pos_y', 'pos_z']] = xyz
         self[['velocity_x', 'velocity_y', 'velocity_z']] = uvw
