@@ -14,7 +14,7 @@ import hdf5
 import nbody
 import sph
 
-class File:
+class File(object):
     """
     Class for Gadget2 HDF5 snapshot files.
     """
