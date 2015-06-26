@@ -17,7 +17,7 @@ class PartTypeSPH(hdf5.PartTypeX):
     def __init__(self, file_id, units, **kwargs):
         super(PartTypeSPH,self).__init__(file_id,0, units)
         self.__init_load_dict__()
-        self._refined = None
+        self._drop_ids = None
         self.refine = kwargs.pop('refine_gas', True)
         if self.refine:
             print 'Turning on gas particle refinement.'
@@ -71,13 +71,13 @@ class PartTypeSPH(hdf5.PartTypeX):
         self._calculated.append(sph_derived.keys())
 
     def locate_refined_particles(self):
-        mass = self.get_masses()
-        sinks = self.get_sinks()
-        minimum = numpy.amin(mass)
-        self._refined = numpy.where((mass <= minimum) | (sinks != 0.))[0]
-        self.masses = self.masses[self._refined]
-        self.sink_value = self.sink_value[self._refined]
-        print 'There are', self._refined.size, 'highest resolution particles.'
+        self.load_masses()
+        self.load_sinks()
+        m_min = self.masses.min()
+        drop_ids = self[(self.masses > m_min) & (self.sink_value == 0.)].index
+        self._drop_ids = drop_ids
+        self.drop(drop_ids, inplace=True)
+        print 'There are', self.index.size, 'highest resolution particles.'
 
     def locate_sink_particles(self):
         sinks = self.get_sinks()
@@ -114,8 +114,8 @@ class PartTypeSPH(hdf5.PartTypeX):
         if self.units.coordinate_system == 'physical':
             ainv = self._header.Redshift + 1 # 1/(scale factor)
             self.density = self.density * ainv**3
-        if self._refined is not None:
-            self.density = self.density[self._refined]
+        if self._drop_ids is not None:
+            self.density = self.density[self._drop_ids]
 
     def get_density(self, unit=None):
         """
@@ -150,8 +150,8 @@ class PartTypeSPH(hdf5.PartTypeX):
         if self.units.coordinate_system == 'physical':
             ainv = self._header.Redshift + 1 # 1/(scale factor)
             self.ndensity = self.ndensity * ainv**3
-        if self._refined is not None:
-            self.ndensity = self.ndensity[self._refined]
+        if self._drop_ids is not None:
+            self.ndensity = self.ndensity[self._drop_ids]
 
     def get_number_density(self, unit=None):
         """
@@ -176,8 +176,8 @@ class PartTypeSPH(hdf5.PartTypeX):
         if unit:
             self.units.set_energy(unit)
         self['internalenergy'] = self._InternalEnergy.value * self.units.energy_conv
-        if self._refined is not None:
-            self.internalenergy = self.internalenergy[self._refined]
+        if self._drop_ids is not None:
+            self.internalenergy = self.internalenergy[self._drop_ids]
 
 
     def get_internal_energy(self, unit=None):
@@ -199,8 +199,8 @@ class PartTypeSPH(hdf5.PartTypeX):
         Load particle adiabatic index.
         """
         self['adiabatic_index'] = self._Adiabatic_index.value
-        if self._refined is not None:
-            self.adiabatic_index = self.adiabatic_index[self._refined]
+        if self._drop_ids is not None:
+            self.adiabatic_index = self.adiabatic_index[self._drop_ids]
 
 
     def get_adiabatic_index(self):
@@ -229,8 +229,8 @@ class PartTypeSPH(hdf5.PartTypeX):
         if self.units.coordinate_system == 'physical':
             a = self._header.ScaleFactor
             self.smoothing_length *= a
-        if self._refined is not None:
-            self.smoothing_length = self.smoothing_length[self._refined]
+        if self._drop_ids is not None:
+            self.smoothing_length = self.smoothing_length[self._drop_ids]
 
     def get_smoothing_length(self, unit=None):
         """
@@ -255,8 +255,8 @@ class PartTypeSPH(hdf5.PartTypeX):
         0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
         """
         self.abundances = self._ChemicalAbundances.value
-        if self._refined is not None:
-            self.abundances = self.abundances[self._refined]
+        if self._drop_ids is not None:
+            self.abundances = self.abundances[self._drop_ids]
 
 
     def get_abundances(self, species=None):
@@ -305,9 +305,12 @@ class PartTypeSPH(hdf5.PartTypeX):
         """
         Load particle by particle sink flag values.
         """
-        self['sink_value'] = self._SinkValue.value
-        if self._refined is not None:
-            self.sink_value = self.sink_value[self._refined]
+        sinks = self._SinkValue.value
+        if self._drop_ids is not None:
+            sinks= Series(sinks, index=self._ParticleIDs.value)
+            self['sink_value'] = sinks.drop(self._drop_ids)
+        else:
+            self['sink_value'] = sinks
 
     def get_sinks(self):
         """

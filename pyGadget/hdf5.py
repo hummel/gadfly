@@ -4,7 +4,7 @@
 This module contains classes for reading Gadget2 HDF5 snapshot data.
 """
 import numpy
-from pandas import DataFrame
+from pandas import Series, DataFrame
 
 import units
 import constants
@@ -45,7 +45,8 @@ class PartTypeX(DataFrame):
         for item in group.items():
             key = '_'+item[0].replace(' ', '_')
             vars(self)[key] = item[1]
-        super(PartTypeX,self).__init__()
+        super(PartTypeX,self).__init__(index=self._ParticleIDs.value)
+        self._drop_ids = None
         self._header = Header(file_id)
         self.units = unit
         self.__init_load_dict__()
@@ -80,9 +81,12 @@ class PartTypeX(DataFrame):
         """
         Load Particle ID numbers
         """
-        self['particleIDs'] = self._ParticleIDs.value
-        if self._refined is not None:
-            self.particleIDs = self.particleIDs[self._refined]
+        particleIDs = self._ParticleIDs.value
+        if self._drop_ids is not None:
+            particleIDs = Series(particleIDs, index=self._ParticleIDs.value)
+            self['particleIDs'] = particleIDs.drop(self._drop_ids)
+        else:
+            self['particleIDs'] = particleIDs
 
     def get_PIDs(self):
         """
@@ -101,12 +105,15 @@ class PartTypeX(DataFrame):
         """
         if unit:
             self.units.set_mass(unit)
-        self['masses'] = self._Masses.value * self.units.mass_conv
+        masses = self._Masses.value * self.units.mass_conv
         if self.units.remove_h:
             h = self._header.HubbleParam
-            self.masses /= h
-        if self._refined is not None:
-            self.masses = self.masses[self._refined]
+            masses /= h
+        if self._drop_ids is not None:
+            masses = Series(masses, index=self._ParticleIDs.value)
+            self['masses'] = masses.drop(self._drop_ids)
+        else:
+            self['masses'] = masses
 
     def get_masses(self, unit=None):
         """
@@ -136,8 +143,8 @@ class PartTypeX(DataFrame):
         if self.units.coordinate_system == 'physical':
             a = self._header.ScaleFactor
             xyz *= a
-        if self._refined is not None:
-            xyz = xyz[self._refined]
+        if self._drop_ids is not None:
+            xyz = xyz[self._drop_ids]
         self['pos_x'] = xyz[:, 0]
         self['pos_y'] = xyz[:, 1]
         self['pos_z'] = xyz[:, 2]
@@ -153,8 +160,8 @@ class PartTypeX(DataFrame):
         if self.units.coordinate_system == 'physical':
             a = self._header.ScaleFactor
             vxyz *= numpy.sqrt(a)
-        if self._refined is not None:
-            vxyz = vxyz[self._refined]
+        if self._drop_ids is not None:
+            vxyz = vxyz[self._drop_ids]
         self['velocity_x'] = vxyz[:,0]
         self['velocity_y'] = vxyz[:,1]
         self['velocity_z'] = vxyz[:,2]
