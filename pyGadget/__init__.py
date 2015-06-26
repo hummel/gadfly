@@ -4,15 +4,14 @@ from a modified version of the SPH code Gadget2.
 """
 import units
 import constants
-import sim
+import coordinates
+
 import hdf5
 import nbody
 import sph
 import snapshot
+
 import visualize
 import analyze
-import plotting
-import multiplot
-import sink
-import halo
-import coordinates
+
+from sim import *
