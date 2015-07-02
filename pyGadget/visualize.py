@@ -189,8 +189,8 @@ def set_view(view, xyz, **kwargs):
                            "position and velocity!")
         pos_vel = pandas.concat([xyz,uvw,dens,mass], axis=1)
         pos_vel = pos_vel[pos_vel[dens.name] > dlim]
-        pos = pos_vel[['pos_x', 'pos_y', 'pos_z']]
-        vel = pos_vel[['velocity_x', 'velocity_y', 'velocity_z']]
+        pos = pos_vel[['x', 'y', 'z']]
+        vel = pos_vel[['u', 'v', 'w']]
         try:
             mass = pos_vel[mass.name]
         except AttributeError:

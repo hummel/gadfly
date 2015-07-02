@@ -145,9 +145,9 @@ class PartTypeX(DataFrame):
             xyz *= a
         if self._drop_ids is not None:
             xyz = xyz[self._drop_ids]
-        self['pos_x'] = xyz[:, 0]
-        self['pos_y'] = xyz[:, 1]
-        self['pos_z'] = xyz[:, 2]
+        self['x'] = xyz[:, 0]
+        self['y'] = xyz[:, 1]
+        self['z'] = xyz[:, 2]
 
     def load_velocities(self, unit=None):
         """
@@ -162,9 +162,9 @@ class PartTypeX(DataFrame):
             vxyz *= numpy.sqrt(a)
         if self._drop_ids is not None:
             vxyz = vxyz[self._drop_ids]
-        self['velocity_x'] = vxyz[:,0]
-        self['velocity_y'] = vxyz[:,1]
-        self['velocity_z'] = vxyz[:,2]
+        self['u'] = vxyz[:,0]
+        self['v'] = vxyz[:,1]
+        self['w'] = vxyz[:,2]
 
     def orient_box(self, **kwargs):
         """
@@ -177,8 +177,8 @@ class PartTypeX(DataFrame):
         centering = kwargs.get('centering', None)
         view = kwargs.get('view', None)
         dlim = kwargs.pop('dens_lim', 1e9)
-        xyz = ['pos_x', 'pos_y', 'pos_z']
-        uvw = ['velocity_x', 'velocity_y', 'velocity_z']
+        xyz = ['x', 'y', 'z']
+        uvw = ['u', 'v', 'w']
         try:
             pos_vel = self[xyz + uvw]
         except KeyError:
@@ -213,8 +213,8 @@ class PartTypeX(DataFrame):
             else:
                 xyz, uvw = visualize.set_view(view, self[xyz], velocity=self[uvw])
             print 'Rotation complete.'
-        self[['pos_x', 'pos_y', 'pos_z']] = xyz
-        self[['velocity_x', 'velocity_y', 'velocity_z']] = uvw
+        self[['x', 'y', 'z']] = xyz
+        self[['u', 'v', 'w']] = uvw
 
     def calculate_spherical_coords(self, c_unit=None, v_unit=None, **kwargs):
         """
@@ -229,14 +229,14 @@ class PartTypeX(DataFrame):
                 self.load_velocities(v_unit)
         self.orient_box(**kwargs)
 
-        xyz = self[['pos_x', 'pos_y', 'pos_z']]
+        xyz = self[['x', 'y', 'z']]
         print 'Converting to spherical coordinates...'
         r,theta,phi = coordinates.cartesian_to_spherical(xyz[:,0],
                                                          xyz[:,1],
                                                          xyz[:,2])
         self.spherical_coords = numpy.column_stack((r,theta,phi))
 
-        vxyz = self[['velocity_x', 'velocity_y', 'velocity_z']]
+        vxyz = self[['u', 'v', 'w']]
         print 'Converting to spherical coordinate velocities...'
         vr,vtheta,vphi = coordinates.cartesian_to_spherical_velocities(xyz,vxyz)
         self.spherical_velocities = numpy.column_stack((vr,vtheta,vphi))
@@ -254,13 +254,13 @@ class PartTypeX(DataFrame):
                 self.load_coords(c_unit)
                 self.load_velocities(v_unit)
         self.orient_box(**kwargs)
-        xyz = self[['pos_x', 'pos_y', 'pos_z']]
+        xyz = self[['x', 'y', 'z']]
         r,theta,z = coordinates.cartesian_to_cylindrical(xyz[:,0],
                                                          xyz[:,1],
                                                          xyz[:,2])
         self.cylindrical_coords = numpy.column_stack((r,theta,z))
 
-        vel = self[['velocity_x', 'velocity_y', 'velocity_z']]
+        vel = self[['u', 'v', 'w']]
 
     def get_coords(self, unit=None, **kwargs):
         """
@@ -283,11 +283,11 @@ class PartTypeX(DataFrame):
 
         if system == 'cartesian':
             try:
-                return self[['pos_x', 'pos_y', 'pos_z']]
+                return self[['x', 'y', 'z']]
             except KeyError:
                 self.load_coords(unit)
                 self.orient_box(**kwargs)
-                return self[['pos_x', 'pos_y', 'pos_z']]
+                return self[['x', 'y', 'z']]
         elif system == 'spherical':
             try:
                 return self.spherical_coords
@@ -326,11 +326,11 @@ class PartTypeX(DataFrame):
 
         if system == 'cartesian':
             try:
-                return self[['velocity_x', 'velocity_y', 'velocity_z']]
+                return self[['u', 'v', 'w']]
             except KeyError:
                 self.load_velocities(unit)
                 self.orient_box(**kwargs)
-                return self[['velocity_x', 'velocity_y', 'velocity_z']]
+                return self[['u', 'v', 'w']]
         elif system == 'spherical':
             try:
                 return self.spherical_velocities
@@ -368,9 +368,9 @@ class PartTypeX(DataFrame):
         exclude: properties to leave loaded.
         """
         if 'coordinates' in exclude:
-            exclude += ('pos_x', 'pos_y', 'pos_z')
+            exclude += ('x', 'y', 'z')
         if 'velocities' in exclude:
-            exclude += ('velocity_x', 'velocity_y', 'velocity_z')
+            exclude += ('u', 'v', 'w')
         to_drop = [key for key in self.columns if key not in exclude]
         self.drop(to_drop, axis=1, inplace=True)
 

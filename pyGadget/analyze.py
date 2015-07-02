@@ -36,26 +36,26 @@ def find_center(pos_vel, density=None, **kwargs):
     elif centering == 'box':
         center = (pos_vel.max() + pos_vel.min())/2
         try:
-            center[['velocity_x', 'velocity_y', 'velocity_z']] = 0
+            center[['u', 'v', 'w']] = 0
         except ValueError:
             pass
         print 'Simple box center:',
     else:
         raise KeyError("Centering options are 'avg', 'max', and 'box'")
-    print '%.3e %.3e %.3e' %(center.pos_x, center.pos_y, center.pos_z)
+    print '%.3e %.3e %.3e' %(center.x, center.y, center.z)
     return center
 
 def center_box(pos_vel, center=None, vcenter=None, **kwargs):
     dens = kwargs.pop('density', None)
     centering = kwargs.get('centering', None)
     if center:
-        center = pandas.Series(center, index=['pos_x', 'pos_y', 'pos_z'])
-        vc = pandas.Series([0,0,0], index=['velocity_x', 'velocity_y', 'velocity_z'])
+        center = pandas.Series(center, index=['x', 'y', 'z'])
+        vc = pandas.Series([0,0,0], index=['u', 'v', 'w'])
         center = pandas.concat([center, vc])
         if vcenter is not None:
-            center['velocity_x'] = vcenter[0]
-            center['velocity_y'] = vcenter[1]
-            center['velocity_z'] = vcenter[2]
+            center['u'] = vcenter[0]
+            center['v'] = vcenter[1]
+            center['w'] = vcenter[2]
     elif centering:
         center = find_center(pos_vel, dens, **kwargs)
     else:
