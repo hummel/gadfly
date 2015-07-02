@@ -77,6 +77,16 @@ class PartTypeX(DataFrame):
         self.loadable_keys = self._load_dict.keys()
         self._calculated = derived.keys()
 
+    def choose_subset(self, keys=None, criterion=None):
+        if keys is None:
+            keys = ['masses']
+        self.load_data(*keys)
+        if criterion is None:
+            criterion = (self.masses > self.masses.min())
+        self._drop_ids = self[criterion].index
+        self.drop(self._drop_ids, inplace=True)
+        print self.index.size, 'particles selected.'
+
     def load_PIDs(self):
         """
         Load Particle ID numbers

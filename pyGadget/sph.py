@@ -21,7 +21,7 @@ class PartTypeSPH(hdf5.PartTypeX):
         self.refine = kwargs.pop('refine_gas', True)
         if self.refine:
             print 'Turning on gas particle refinement.'
-            self.locate_refined_particles()
+            self.choose_subset()
 
         self.sink_tracking = kwargs.pop('track_sinks', False)
         if self.sink_tracking:
@@ -69,6 +69,16 @@ class PartTypeSPH(hdf5.PartTypeX):
         self._load_dict.update(sph_derived)
         self.loadable_keys = self._load_dict.keys()
         self._calculated.append(sph_derived.keys())
+
+    def choose_subset(self, keys=None, criterion=None):
+        if keys is None:
+            keys = ['masses', 'sink_value']
+        self.load_data(*keys)
+        if criterion is None:
+            criterion = (self.masses > self.masses.min()) & (self.sink_value == 0.)
+        self._drop_ids = self[criterion].index
+        self.drop(self._drop_ids, inplace=True)
+        print self.index.size, 'particles selected.'
 
     def locate_refined_particles(self):
         self.load_masses()
