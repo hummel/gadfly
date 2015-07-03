@@ -77,10 +77,11 @@ class PartTypeX(DataFrame):
         self.loadable_keys = self._load_dict.keys()
         self._calculated = derived.keys()
 
-    def choose_subset(self, keys=None, criterion=None):
+    def choose_subset(self, *keys, **kwargs):
         if keys is None:
             keys = ['masses']
         self.load_data(*keys)
+        criterion = kwargs.pop('criterion', None)
         if criterion is None:
             criterion = (self.masses > self.masses.min())
         self._drop_ids = self[criterion].index
@@ -153,11 +154,11 @@ class PartTypeX(DataFrame):
         if self.units.coordinate_system == 'physical':
             a = self._header.ScaleFactor
             xyz *= a
+        xyz = DataFrame(xyz, index=self._ParticleIDs.value, columns=['x', 'y', 'z'])
         if self._drop_ids is not None:
-            xyz = xyz[self._drop_ids]
-        self['x'] = xyz[:, 0]
-        self['y'] = xyz[:, 1]
-        self['z'] = xyz[:, 2]
+            xyz.drop(self._drop_ids, inplace=True)
+        for coordinate in ['x', 'y', 'z']:
+            self[coordinate] = xyz[coordinate]
 
     def load_velocities(self, unit=None):
         """
@@ -166,15 +167,15 @@ class PartTypeX(DataFrame):
         """
         if unit:
             self.units.set_velocity(unit)
-        vxyz = self._Velocities.value * self.units.velocity_conv
+        uvw = self._Velocities.value * self.units.velocity_conv
         if self.units.coordinate_system == 'physical':
             a = self._header.ScaleFactor
-            vxyz *= numpy.sqrt(a)
+            uvw *= numpy.sqrt(a)
+        uvw = DataFrame(uvw, index=self._ParticleIDs.value, columns=['u', 'v', 'w'])
         if self._drop_ids is not None:
-            vxyz = vxyz[self._drop_ids]
-        self['u'] = vxyz[:,0]
-        self['v'] = vxyz[:,1]
-        self['w'] = vxyz[:,2]
+            uvw.drop(self._drop_ids, inplace=True)
+        for coordinate in ['u', 'v', 'w']:
+            self[coordinate] = uvw[coordinate]
 
     def orient_box(self, **kwargs):
         """
@@ -246,9 +247,9 @@ class PartTypeX(DataFrame):
                                                          xyz[:,2])
         self.spherical_coords = numpy.column_stack((r,theta,phi))
 
-        vxyz = self[['u', 'v', 'w']]
+        uvw = self[['u', 'v', 'w']]
         print 'Converting to spherical coordinate velocities...'
-        vr,vtheta,vphi = coordinates.cartesian_to_spherical_velocities(xyz,vxyz)
+        vr,vtheta,vphi = coordinates.cartesian_to_spherical_velocities(xyz,uvw)
         self.spherical_velocities = numpy.column_stack((vr,vtheta,vphi))
         print 'Done.'
 
