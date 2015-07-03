@@ -225,8 +225,8 @@ class PartTypeX(DataFrame):
             else:
                 xyz, uvw = visualize.set_view(view, self[xyz], velocity=self[uvw])
             print 'Rotation complete.'
-        self[['x', 'y', 'z']] = xyz
-        self[['u', 'v', 'w']] = uvw
+            self[['x', 'y', 'z']] = xyz
+            self[['u', 'v', 'w']] = uvw
 
     def calculate_spherical_coords(self, c_unit=None, v_unit=None, **kwargs):
         """
