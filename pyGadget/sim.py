@@ -27,7 +27,9 @@ class Simulation(object):
         self.plotpath = simargs.pop('plotpath',
                                     os.getenv('HOME') + '/data/simplots/')
                                      
-        self.hires = simargs.pop('refine', True)
+        self.refine_gas = simargs.pop('refine_gas', True)
+        self.refine_nbody = simargs.pop('refine_nbody', False)
+
         self.sink_tracking = simargs.pop('track_sinks', False)
         self.coordinates = simargs.pop('coordinates', 'physical')
         self.batch_viewscale = None
@@ -58,7 +60,8 @@ class Simulation(object):
                         self.sinks.append(s)
 
     def refine_by_mass(self, boolean=True):
-        self.hires = boolean
+        self.refine_gas = boolean
+        self.refine_nbody = boolean
 
     def set_coordinate_system(self,coordinates):
         self.units.set_coordinate_system(coordinates)
@@ -94,8 +97,11 @@ class Simulation(object):
     def load_snapshot(self, num, *load_keys,**kwargs):
         if ((kwargs.pop('track_sinks',False)) or self.sink_tracking):
             kwargs['track_sinks'] = True
-        if not self.hires:
+        if not self.refine_gas:
             kwargs['refine_gas'] = False
+        if not self.refine_nbody:
+            kwargs['refine_nbody'] = False
+
         try:
             fname = self.snapfiles[num]
         except KeyError:

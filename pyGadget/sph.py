@@ -15,11 +15,13 @@ class PartTypeSPH(hdf5.PartTypeX):
     Extends class PartTypeX to include gas physics stuff.
     """
     def __init__(self, file_id, units, **kwargs):
-        super(PartTypeSPH,self).__init__(file_id,0, units)
+        kwargs.pop('refine_nbody', None)
+        super(PartTypeSPH,self).__init__(file_id,0, units, **kwargs)
         self.__init_load_dict__()
+
         self._drop_ids = None
-        self.refine = kwargs.pop('refine_gas', True)
-        if self.refine:
+        self.refined = kwargs.pop('refine_gas', True)
+        if self.refined:
             print 'Turning on gas particle refinement.'
             self.choose_subset()
 

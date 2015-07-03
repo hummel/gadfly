@@ -35,21 +35,24 @@ class Header(object):
         """
         return vars(self)[key]
 
-            
 class PartTypeX(DataFrame):
     """
     Class for generic particle info.
     """
-    def __init__(self, file_id, ptype, unit):
+    def __init__(self, file_id, ptype, unit, **kwargs):
         group = file_id['PartType'+str(ptype)]
         for item in group.items():
             key = '_'+item[0].replace(' ', '_')
             vars(self)[key] = item[1]
-        super(PartTypeX,self).__init__(index=self._ParticleIDs.value)
-        self._drop_ids = None
+        super(PartTypeX, self).__init__(index=self._ParticleIDs.value)
         self._header = Header(file_id)
         self.units = unit
         self.__init_load_dict__()
+        self._drop_ids = None
+        self.refined = kwargs.pop('refine_nbody', False)
+        if self.refined:
+            print 'Turning on particle refinement.'
+            self.choose_subset()
 
     def __getstate__(self):
         result = self.__dict__.copy()
@@ -78,12 +81,12 @@ class PartTypeX(DataFrame):
         self._calculated = derived.keys()
 
     def choose_subset(self, *keys, **kwargs):
-        if keys is None:
+        if len(keys) < 1:
             keys = ['masses']
         self.load_data(*keys)
         criterion = kwargs.pop('criterion', None)
         if criterion is None:
-            criterion = (self.masses > self.masses.min())
+	        criterion = (self.masses > self.masses.min())
         self._drop_ids = self[criterion].index
         self.drop(self._drop_ids, inplace=True)
         print self.index.size, 'particles selected.'
@@ -157,8 +160,7 @@ class PartTypeX(DataFrame):
         xyz = DataFrame(xyz, index=self._ParticleIDs.value, columns=['x', 'y', 'z'])
         if self._drop_ids is not None:
             xyz.drop(self._drop_ids, inplace=True)
-        for coordinate in ['x', 'y', 'z']:
-            self[coordinate] = xyz[coordinate]
+        self[['x', 'y', 'z']] = xyz
 
     def load_velocities(self, unit=None):
         """
@@ -174,8 +176,7 @@ class PartTypeX(DataFrame):
         uvw = DataFrame(uvw, index=self._ParticleIDs.value, columns=['u', 'v', 'w'])
         if self._drop_ids is not None:
             uvw.drop(self._drop_ids, inplace=True)
-        for coordinate in ['u', 'v', 'w']:
-            self[coordinate] = uvw[coordinate]
+        self[['u', 'v', 'w']] = uvw
 
     def orient_box(self, **kwargs):
         """
