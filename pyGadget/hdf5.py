@@ -240,19 +240,14 @@ class PartTypeX(DataFrame):
                 self.load_coords(c_unit)
                 self.load_velocities(v_unit)
         self.orient_box(**kwargs)
-
-        xyz = self[['x', 'y', 'z']]
         print 'Converting to spherical coordinates...'
-        r,theta,phi = coordinates.cartesian_to_spherical(xyz[:,0],
-                                                         xyz[:,1],
-                                                         xyz[:,2])
-        self.spherical_coords = numpy.column_stack((r,theta,phi))
+        coordinates.cartesian_to_spherical(self)
 
-        uvw = self[['u', 'v', 'w']]
-        print 'Converting to spherical coordinate velocities...'
-        vr,vtheta,vphi = coordinates.cartesian_to_spherical_velocities(xyz,uvw)
-        self.spherical_velocities = numpy.column_stack((vr,vtheta,vphi))
-        print 'Done.'
+        #uvw = self[['u', 'v', 'w']]
+        #print 'Converting to spherical coordinate velocities...'
+        #vr,vtheta,vphi = coordinates.cartesian_to_spherical_velocities(xyz,uvw)
+        #self.spherical_velocities = numpy.column_stack((vr,vtheta,vphi))
+        #print 'Done.'
 
     def calculate_cylindrical_coords(self, c_unit=None, v_unit=None, **kwargs):
         """
@@ -266,13 +261,8 @@ class PartTypeX(DataFrame):
                 self.load_coords(c_unit)
                 self.load_velocities(v_unit)
         self.orient_box(**kwargs)
-        xyz = self[['x', 'y', 'z']]
-        r,theta,z = coordinates.cartesian_to_cylindrical(xyz[:,0],
-                                                         xyz[:,1],
-                                                         xyz[:,2])
-        self.cylindrical_coords = numpy.column_stack((r,theta,z))
-
-        vel = self[['u', 'v', 'w']]
+        print 'Converting to cylindrical coordinates...'
+        coordinates.cartesian_to_cylindrical(self)
 
     def get_coords(self, unit=None, **kwargs):
         """

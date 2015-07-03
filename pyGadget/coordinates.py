@@ -3,11 +3,10 @@
 import numpy as np
 
 #===============================================================================
-def cartesian_to_spherical(x, y, z):
-    r = np.sqrt(np.square(x) + np.square(y) + np.square(z))
-    theta = np.arccos(z/r)
-    phi = np.arctan2(y,x)
-    return r,theta,phi
+def cartesian_to_spherical(coords):
+    coords['r_sph'] = np.sqrt(np.square(coords.x) + np.square(coords.y) + np.square(coords.z))
+    coords['theta_sph'] = np.arccos(coords.z/coords.r_sph)
+    coords['phi_sph'] = np.arctan2(coords.y,coords.x)
 
 def spherical_to_cartesian(r, theta, phi):
     x = r * np.sin(theta) * np.cos(phi)
@@ -15,10 +14,10 @@ def spherical_to_cartesian(r, theta, phi):
     z = r * np.cos(theta)
     return x,y,z
 
-def cartesian_to_cylindrical(x ,y, z):
-    r = np.sqrt(np.square(x) + np.square(y))
-    theta = np.arctan2(y,x)
-    return r,theta,z
+def cartesian_to_cylindrical(coords):
+    coords['r_cyl'] = np.sqrt(np.square(coords.x) + np.square(coords.y))
+    coords['theta_cyl'] = np.arctan2(coords.y,coords.x)
+    #return coords.drop(['x', 'y', 'z'], axis=1)
 
 def cylindrical_to_cartesian(r, theta, z):
     x = r * np.cos(theta)
@@ -34,13 +33,13 @@ def define_unit_vectors(pos):
     e3[...,2] = 1.
     return e1, e2, e3
 
-def cartesian_to_spherical_unit_vectors(xyz):
-    unit_x, unit_y, unit_z = define_unit_vectors(xyz)
-    r,theta,phi = cartesian_to_spherical(xyz[...,0],xyz[...,1],xyz[...,2])
+def cartesian_to_spherical_unit_vectors(coords):
+    unit_x, unit_y, unit_z = define_unit_vectors(coords)
+    r,theta,phi = cartesian_to_spherical(coords[...,0],coords[...,1],coords[...,2])
     r = r[...,np.newaxis]
     theta = theta[...,np.newaxis]
     phi = phi[..., np.newaxis]
-    unit_r = xyz / r
+    unit_r = coords / r
     unit_phi = unit_y * np.cos(phi) - unit_x * np.sin(phi)
     unit_theta = (unit_x * np.cos(theta) * np.cos(phi)
                   + unit_y * np.cos(theta) * np.sin(phi)
@@ -61,8 +60,8 @@ def spherical_to_cartesian_unit_vectors(sph):
     unit_z = unit_r * np.cos(theta) - unit_theta * np.sin(theta)
     return unit_x, unit_y, unit_z
 
-def cartesian_to_spherical_velocities(xyz, uvw):
-    unit_r, unit_theta, unit_phi = cartesian_to_spherical_unit_vectors(xyz)
+def cartesian_to_spherical_velocities(coords, uvw):
+    unit_r, unit_theta, unit_phi = cartesian_to_spherical_unit_vectors(coords)
     # np.einsum('ij,ij->i',...) is einstein notation for dot product.
     vr = np.einsum('ij,ij->i', uvw, unit_r)
     vtheta = np.einsum('ij,ij->i', uvw, unit_theta)
