@@ -70,24 +70,16 @@ class PartTypeSPH(hdf5.PartTypeX):
         self.loadable_keys = self._load_dict.keys()
         self._calculated.append(sph_derived.keys())
 
-    def choose_subset(self, keys=None, criterion=None):
-        if keys is None:
+    def choose_subset(self, *keys, **kwargs):
+        if len(keys) < 1:
             keys = ['masses', 'sink_value']
         self.load_data(*keys)
+        criterion = kwargs.pop('criterion', None)
         if criterion is None:
             criterion = (self.masses > self.masses.min()) & (self.sink_value == 0.)
         self._drop_ids = self[criterion].index
         self.drop(self._drop_ids, inplace=True)
         print self.index.size, 'particles selected.'
-
-    def locate_refined_particles(self):
-        self.load_masses()
-        self.load_sinks()
-        m_min = self.masses.min()
-        drop_ids = self[(self.masses > m_min) & (self.sink_value == 0.)].index
-        self._drop_ids = drop_ids
-        self.drop(drop_ids, inplace=True)
-        print 'There are', self.index.size, 'highest resolution particles.'
 
     def locate_sink_particles(self):
         sinks = self.get_sinks()
