@@ -2,24 +2,23 @@
 # Jacob Hummel
 """
 This module contains classes for reading Gadget2 SPH particle data.
-Extends: nbody.PartTypeNbody
 """
 import numpy
 from pandas import Series, DataFrame
 
+from nbody import PartTypeNbody
 import units
 import constants
-import nbody
 import sink
 
-class PartTypeSPH(nbody.PartTypeNbody):
+class PartTypeSPH(PartTypeNbody):
     """
     Class for SPH particles.
-    Extends class PartTypeX to include gas physics stuff.
+    Extends: nbody.PartTypeNbody
     """
     def __init__(self, file_id, units, **kwargs):
         kwargs.pop('refine_nbody', None)
-        super(nbody.PartTypeNbody,self).__init__(file_id,0, units, **kwargs)
+        super(PartTypeNbody,self).__init__(file_id,0, units, **kwargs)
         self.__init_load_dict__()
 
         self._drop_ids = None
@@ -82,7 +81,7 @@ class PartTypeSPH(nbody.PartTypeNbody):
         criterion = kwargs.pop('criterion', None)
         if criterion is None:
             criterion = (self.masses > self.masses.min()) & (self.sink_value == 0.)
-        super(nbody.PartTypeNbody, self).refine_dataset(criterion)
+        super(PartTypeNbody, self).refine_dataset(criterion)
 
     def locate_sink_particles(self):
         sinks = self.get_sinks()
