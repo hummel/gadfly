@@ -2,30 +2,31 @@
 # Jacob Hummel
 """
 This module contains classes for reading Gadget2 SPH particle data.
+Extends: nbody.PartTypeNbody
 """
 import numpy
 from pandas import Series, DataFrame
 
 import units
 import constants
-import hdf5
+import nbody
 import sink
 
-class PartTypeSPH(hdf5.PartTypeX):
+class PartTypeSPH(nbody.PartTypeNbody):
     """
     Class for SPH particles.
     Extends class PartTypeX to include gas physics stuff.
     """
     def __init__(self, file_id, units, **kwargs):
         kwargs.pop('refine_nbody', None)
-        super(PartTypeSPH,self).__init__(file_id,0, units, **kwargs)
+        super(nbody.PartTypeNbody,self).__init__(file_id,0, units, **kwargs)
         self.__init_load_dict__()
 
         self._drop_ids = None
-        self.refined = kwargs.pop('refine_gas', True)
+        self.refined = kwargs.pop('refine', False)
         if self.refined:
             print 'Turning on gas particle refinement.'
-            self.choose_subset()
+            self.refine_dataset()
 
         self.sink_tracking = kwargs.pop('track_sinks', False)
         if self.sink_tracking:
@@ -74,16 +75,14 @@ class PartTypeSPH(hdf5.PartTypeX):
         self.loadable_keys = self._load_dict.keys()
         self._calculated.append(sph_derived.keys())
 
-    def choose_subset(self, *keys, **kwargs):
+    def refine_dataset(self, *keys, **kwargs):
         if len(keys) < 1:
             keys = ['masses', 'sink_value']
-        self.load_data(*keys)
+            self.load_data(*keys)
         criterion = kwargs.pop('criterion', None)
         if criterion is None:
             criterion = (self.masses > self.masses.min()) & (self.sink_value == 0.)
-        self._drop_ids = self[criterion].index
-        self.drop(self._drop_ids, inplace=True)
-        print self.index.size, 'particles selected.'
+        super(nbody.PartTypeNbody, self).refine_dataset(criterion)
 
     def locate_sink_particles(self):
         sinks = self.get_sinks()

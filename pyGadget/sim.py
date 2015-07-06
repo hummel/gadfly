@@ -97,10 +97,10 @@ class Simulation(object):
     def load_snapshot(self, num, *load_keys,**kwargs):
         if ((kwargs.pop('track_sinks',False)) or self.sink_tracking):
             kwargs['track_sinks'] = True
-        if not self.refine_gas:
-            kwargs['refine_gas'] = False
-        if not self.refine_nbody:
-            kwargs['refine_nbody'] = False
+        if self.refine_gas:
+            kwargs['refine_gas'] = True
+        if self.refine_nbody:
+            kwargs['refine_nbody'] = True
 
         try:
             fname = self.snapfiles[num]
