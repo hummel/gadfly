@@ -4,6 +4,8 @@
 This module contains classes for reading Gadget2 SPH particle data.
 """
 import numpy
+from pandas import Series, DataFrame
+
 import units
 import constants
 import hdf5
@@ -59,11 +61,11 @@ class PartTypeSPH(hdf5.PartTypeX):
                        'adiabatic_index':self.get_adiabatic_index,
                        'abundances':self.get_abundances,
                        'sink_value':self.get_sinks,
-                       'smoothing_length':self.get_smoothing_length,
+                       'smoothing_length':self.get_smoothing_length}
+        sph_derived = {'h2frac':self.get_H2_fraction,
+                       'HDfrac':self.get_HD_fraction,
                        'electron_frac':self.get_electron_fraction,
-                       'h2frac':self.get_H2_fraction,
-                       'HDfrac':self.get_HD_fraction}
-        sph_derived = {'temp':self.get_temperature,
+                       'temp':self.get_temperature,
                        'c_s':self.get_sound_speed,
                        't_ff':self.get_freefall_time,
                        'jeans_length':self.get_jeans_length}
@@ -105,21 +107,20 @@ class PartTypeSPH(hdf5.PartTypeX):
         Load Particle Densities in cgs units (default set in units class)
         unit: unit conversion from code units
         """
-        try:
-            del self.ndensity
-        except AttributeError:
-            pass
         if unit:
             self.units.set_density(unit)
-        self.density = self._Density.value * self.units.density_conv
+        density = self._Density.value * self.units.density_conv
         if self.units.remove_h:
             h = self._header.HubbleParam
-            self.density = self.density * h*h
+            density *=  h**2
         if self.units.coordinate_system == 'physical':
             ainv = self._header.Redshift + 1 # 1/(scale factor)
-            self.density = self.density * ainv**3
+            density *= ainv**3
         if self._drop_ids is not None:
-            self.density = self.density[self._drop_ids]
+            density = Series(density, index=self._ParticleIDs.value)
+            self['density'] = density.drop(self._drop_ids)
+        else:
+            self['density'] = density
 
     def get_density(self, unit=None):
         """
@@ -140,22 +141,21 @@ class PartTypeSPH(hdf5.PartTypeX):
         Load Particle Number Densities in cgs units (default set in units class)
         unit: unit conversion from code units
         """
-        try:
-            del self.density
-        except AttributeError:
-            pass
         if unit:
             self.units.set_density(unit)
-        self['ndensity'] = self._Density.value * self.units.density_conv
-        self.ndensity = self.ndensity * constants.X_h / constants.m_H
+        ndensity = self._Density.value * self.units.density_conv \
+                   * constants.X_h / constants.m_H
         if self.units.remove_h:
             h = self._header.HubbleParam
-            self.ndensity = self.ndensity * h*h
+            ndensity *=  h**2
         if self.units.coordinate_system == 'physical':
             ainv = self._header.Redshift + 1 # 1/(scale factor)
-            self.ndensity = self.ndensity * ainv**3
+            ndensity *= ainv**3
         if self._drop_ids is not None:
-            self.ndensity = self.ndensity[self._drop_ids]
+            ndensity = Series(ndensity, index=self._ParticleIDs.value)
+            self['ndensity'] = ndensity.drop(self._drop_ids)
+        else:
+            self['ndensity'] = ndensity
 
     def get_number_density(self, unit=None):
         """
@@ -179,10 +179,12 @@ class PartTypeSPH(hdf5.PartTypeX):
         """
         if unit:
             self.units.set_energy(unit)
-        self['internalenergy'] = self._InternalEnergy.value * self.units.energy_conv
+        energy = self._InternalEnergy.value * self.units.energy_conv
         if self._drop_ids is not None:
-            self.internalenergy = self.internalenergy[self._drop_ids]
-
+            energy = Series(energy, index=self._ParticleIDs.value)
+            self['internalenergy'] = energy.drop(self._drop_ids)
+        else:
+            self['internalenergy'] = energy
 
     def get_internal_energy(self, unit=None):
         """
@@ -202,9 +204,12 @@ class PartTypeSPH(hdf5.PartTypeX):
         """
         Load particle adiabatic index.
         """
-        self['adiabatic_index'] = self._Adiabatic_index.value
+        gamma = self._Adiabatic_index.value
         if self._drop_ids is not None:
-            self.adiabatic_index = self.adiabatic_index[self._drop_ids]
+            gamma = Series(gamma, index=self._ParticleIDs.value)
+            self['adiabatic_index'] = gamma.drop(self._drop_ids)
+        else:
+            self['adiabatic_index'] = gamma
 
 
     def get_adiabatic_index(self):
@@ -225,16 +230,18 @@ class PartTypeSPH(hdf5.PartTypeX):
         """
         if unit:
             self.units._set_smoothing_length(unit)
-        self['smoothing_length'] \
-            = self._SmoothingLength.value * self.units.length_conv
+        hsml = self._SmoothingLength.value * self.units.length_conv
         if self.units.remove_h:
             h = self._header.HubbleParam
-            self.smoothing_length /= h
+            hsml /= h
         if self.units.coordinate_system == 'physical':
             a = self._header.ScaleFactor
-            self.smoothing_length *= a
+            hsml *= a
         if self._drop_ids is not None:
-            self.smoothing_length = self.smoothing_length[self._drop_ids]
+            hsml = Series(hsml, index=self._ParticleIDs.value)
+            self['smoothing_length'] = hsml.drop(self._drop_ids)
+        else:
+            self['smoothing_length'] = hsml
 
     def get_smoothing_length(self, unit=None):
         """
@@ -251,67 +258,13 @@ class PartTypeSPH(hdf5.PartTypeX):
             self.load_smoothing_length(unit)
             return self.smoothing_length
 
-    def load_abundances(self):
-        """
-        Load chemical abundances array.
-
-        There are six abundances tracked for each particle.
-        0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
-        """
-        self.abundances = self._ChemicalAbundances.value
-        if self._drop_ids is not None:
-            self.abundances = self.abundances[self._drop_ids]
-
-
-    def get_abundances(self, species=None):
-        """
-        Return chemical abundances array.
-
-        There are six abundances tracked for each particle.
-        0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
-        """
-        abundance_dict = {'H2':0, 'HII':1, 'DII':2, 'HD':3, 'HeII':4, 'HeIII':5}
-        try:
-            abundances = self.abundances
-        except AttributeError:
-            self.load_abundances()
-            abundances = self.abundances
-        if species is None:
-            return abundances
-        elif isinstance(species, basestring):
-            return abundances[:,abundance_dict[species]]
-        elif isinstance(species, list):
-            abunds = []
-            for sp in species:
-                abunds.append(abundances[:,abundance_dict[sp]])
-            return abunds
-
-    def load_electron_fraction(self):
-        """
-        Load the free electron fraction.
-        """
-        # Chemical Abundances--> 0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
-        abundances = self.get_abundances()
-        self.electron_frac = abundances[:,1] + abundances[:,2]
-        self.electron_frac += abundances[:,4] + 2*abundances[:,5]
-
-    def get_electron_fraction(self):
-        """
-        Return the free electron fraction.
-        """
-        try:
-            return self.electron_fraction
-        except AttributeError:
-            self.load_electron_fraction()
-            return self.electron_fraction
-
     def load_sinks(self):
         """
         Load particle by particle sink flag values.
         """
         sinks = self._SinkValue.value
         if self._drop_ids is not None:
-            sinks= Series(sinks, index=self._ParticleIDs.value)
+            sinks = Series(sinks, index=self._ParticleIDs.value)
             self['sink_value'] = sinks.drop(self._drop_ids)
         else:
             self['sink_value'] = sinks
@@ -326,13 +279,69 @@ class PartTypeSPH(hdf5.PartTypeX):
             self.load_sinks()
             return self.sink_value
 
-    def load_H2_fraction(self):
+    def load_abundances(self, tracked_species=None):
         """
-        Load the molecular hydrogen fraction.
+        Load chemical abundances array.
+
+        There are six abundances tracked for each particle.
+        0:H2 1:HII 2:DII 3:HD 4:HeII 5:HeIII
+        """
+        default_species = ['H2', 'HII', 'DII', 'HD', 'HeII', 'HeIII']
+        if tracked_species is None:
+            tracked_species = default_species
+        abundances = self._ChemicalAbundances.value
+        abundances = DataFrame(abundances, index=self._ParticleIDs.value,
+                               columns=tracked_species)
+        if self._drop_ids is not None:
+            abundances.drop(self._drop_ids)
+        self[tracked_species] = abundances
+
+    def get_abundances(self, *species, **kwargs):
+        """
+        Return requested species from chemical abundances array.
+
+        There are six abundances tracked for each particle.
+        0:H2 1:HII 2:DII 3:HD 4:HeII 5:HeIII
+        """
+        default_species = ['H2', 'HII', 'DII', 'HD', 'HeII', 'HeIII']
+        all_species = kwargs.get('tracked_species', default_species)
+        if len(species) < 1:
+            try:
+                return self[all_species]
+            except(KeyError):
+                self.load_abundances(**kwargs)
+                return self[all_species]
+        else:
+            try:
+                return self[list(species)]
+            except(KeyError):
+                self.load_abundances(**kwargs)
+                return self[list(species)]
+
+    def calculate_electron_fraction(self):
+        """
+        Calculate the free electron fraction.
         """
         # Chemical Abundances--> 0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
-        abundances = self.get_abundances()
-        self['h2frac'] = 2*abundances[:,0]
+        abundances = self.get_abundances('HII', 'DII', 'HeII', 'HeIII')
+        self['electron_fraction'] = abundances.HII + abundances.DII \
+                                    + abundances.HeII + 2*abundances.HeIII
+
+    def get_electron_fraction(self):
+        """
+        Return the free electron fraction.
+        """
+        try:
+            return self.electron_fraction
+        except AttributeError:
+            self.calculate_electron_fraction()
+            return self.electron_fraction
+
+    def calculate_H2_fraction(self):
+        """
+        Calculate the molecular hydrogen fraction.
+        """
+        self['h2frac'] = 2 * self.get_abundances('H2')
 
     def get_H2_fraction(self):
         """
@@ -341,16 +350,14 @@ class PartTypeSPH(hdf5.PartTypeX):
         try:
             return self.h2frac
         except AttributeError:
-            self.load_H2_fraction()
+            self.calculate_H2_fraction()
             return self.h2frac
 
-    def load_HD_fraction(self):
+    def calculate_HD_fraction(self):
         """
-        Load the molecular HD fraction.
+        Calculate the molecular HD fraction.
         """
-        # Chemical Abundances--> 0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
-        abundances = self.get_abundances()
-        self['HDfrac'] = 2*abundances[:,3]
+        self['HDfrac'] = 2 * self.get_abundances('HD')
 
     def get_HD_fraction(self):
         """
@@ -359,7 +366,7 @@ class PartTypeSPH(hdf5.PartTypeX):
         try:
             return self.HDfrac
         except AttributeError:
-            self.load_HD_fraction()
+            self.calculate_HD_fraction()
             return self.HDfrac
 
     def calculate_temperature(self):
