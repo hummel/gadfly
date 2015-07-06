@@ -62,35 +62,3 @@ class File(object):
     def close(self):
         self.file_id.close()
 
-#===============================================================================
-class Loader(threading.Thread):
-    def __init__(self, load_function, file_queue, data_queue):
-        self.file_queue = file_queue
-        self.data_queue = data_queue
-        self.load_function = load_function
-        threading.Thread.__init__(self)
-        
-    def run(self):
-        lock = threading.Lock()
-        while 1:
-            try:
-                args = self.file_queue.get(timeout=1)
-            except Queue.Empty:
-                break # reached end of queue
-            if args is None:
-                self.data_queue.put(None)
-            else:
-                fname = args[0]
-                lock.acquire()
-                print 'loading snapshot', fname
-                lock.release()
-                try:
-                    snapshot = self.load_function(*args)
-                    snapshot.close()
-                    self.data_queue.put(snapshot)
-                except IOError:
-                    lock.acquire()
-                    print 'Warning: snapshot '+str(fname)+' not found!'
-                    lock.release()
-                    pass
-
