@@ -10,9 +10,9 @@ import Queue
 import h5py
 import numpy
 
-import hdf5
-import nbody
-import sph
+from hdf5 import Header
+from nbody import PartTypeNbody
+from sph import PartTypeSPH
 
 class File(object):
     """
@@ -24,11 +24,11 @@ class File(object):
         f = filename.replace('.hdf5','')
         self.number = int(f.split('_')[-1])
         self.file_id = h5py.File(filename, 'r')
-        self.header = hdf5.Header(self.file_id)
+        self.header = Header(self.file_id)
         kwargs['refine'] = kwargs.pop('refine_nbody', False)
-        self.dm = nbody.PartTypeNbody(self.file_id, 1, sim.units, **kwargs)
+        self.dm = PartTypeNbody(self.file_id, 1, sim.units, **kwargs)
         kwargs['refine'] = kwargs.pop('refine_gas', False)
-        self.gas = sph.PartTypeSPH(self.file_id, sim.units, **kwargs)
+        self.gas = PartTypeSPH(self.file_id, sim.units, **kwargs)
         self.sinks = []
         if kwargs.get('track_sinks', False):
             self.sinks = self.gas.get_sink_properties()
