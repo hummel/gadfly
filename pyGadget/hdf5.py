@@ -35,7 +35,7 @@ class Header(object):
         """
         return vars(self)[key]
 
-class HDFgroup(DataFrame):
+class HDF5group(DataFrame):
     """
     Class for generic particle info.
     """
@@ -44,7 +44,7 @@ class HDFgroup(DataFrame):
         for item in group.items():
             key = '_'+item[0].replace(' ', '_')
             vars(self)[key] = item[1]
-        super(HDFgroup, self).__init__(index=self._ParticleIDs.value)
+        super(HDF5group, self).__init__(index=self._ParticleIDs.value)
         self._header = Header(file_id)
         self.units = unit
         self.__init_load_dict__()
