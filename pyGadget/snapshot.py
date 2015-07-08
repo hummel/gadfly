@@ -26,9 +26,9 @@ class File(object):
         self.file_id = h5py.File(filename, 'r')
         self.header = Header(self.file_id)
         kwargs['refine'] = kwargs.pop('refine_nbody', False)
-        self.dm = PartTypeNbody(self.file_id, 1, sim.units, **kwargs)
+        self.dm = PartTypeNbody(self.file_id, 1, sim, **kwargs)
         kwargs['refine'] = kwargs.pop('refine_gas', False)
-        self.gas = PartTypeSPH(self.file_id, sim.units, **kwargs)
+        self.gas = PartTypeSPH(self.file_id, sim, **kwargs)
         self.sinks = []
         if kwargs.get('track_sinks', False):
             self.sinks = self.gas.get_sink_properties()

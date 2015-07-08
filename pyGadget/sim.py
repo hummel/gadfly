@@ -54,7 +54,6 @@ class Simulation(object):
                             'abundances':'ChemicalAbundances',
                             'sink_value':'SinkValue'}
         self.hdf5_fields.update(name_dict)
-        print self.hdf5_fields
         self._internal_fields = {v:k for k,v in self.hdf5_fields.items()}
 
     def track_sinks(self, boolean=True):

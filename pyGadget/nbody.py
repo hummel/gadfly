@@ -17,8 +17,8 @@ class PartTypeNbody(PartType):
     Class for N-body particles. 
     Extends: hdf5.PartType
     """
-    def __init__(self, file_id, ptype, units, **kwargs):
-        super(PartTypeNbody,self).__init__(file_id, ptype, units, **kwargs)
+    def __init__(self, file_id, ptype, sim, **kwargs):
+        super(PartTypeNbody,self).__init__(file_id, ptype, sim, **kwargs)
         self.__init_load_dict__()
         self._drop_ids = None
         self.refined = kwargs.pop('refine', False)
@@ -28,10 +28,10 @@ class PartTypeNbody(PartType):
 
     def __getstate__(self):
         result = self.__dict__.copy()
-        del result['_Coordinates']
-        del result['_ParticleIDs']
-        del result['_Velocities']
-        del result['_Masses']
+        del result['_coordinates']
+        del result['_particleIDs']
+        del result['_velocities']
+        del result['_masses']
         del result['_load_dict']
         del result['loadable_keys']
         del result['_calculated']
@@ -68,12 +68,12 @@ class PartTypeNbody(PartType):
         """
         if unit:
             self.units.set_mass(unit)
-        masses = self._Masses.value * self.units.mass_conv
+        masses = self._masses.value * self.units.mass_conv
         if self.units.remove_h:
             h = self._header.HubbleParam
             masses /= h
         if self._drop_ids is not None:
-            masses = Series(masses, index=self._ParticleIDs.value)
+            masses = Series(masses, index=self._particleIDs.value)
             self['masses'] = masses.drop(self._drop_ids)
         else:
             self['masses'] = masses
@@ -99,14 +99,14 @@ class PartTypeNbody(PartType):
         """
         if unit:
             self.units._set_coord_length(unit)
-        xyz = self._Coordinates.value * self.units.length_conv
+        xyz = self._coordinates.value * self.units.length_conv
         if self.units.remove_h:
             h = self._header.HubbleParam
             xyz /= h
         if self.units.coordinate_system == 'physical':
             a = self._header.ScaleFactor
             xyz *= a
-        xyz = DataFrame(xyz, index=self._ParticleIDs.value, columns=['x', 'y', 'z'])
+        xyz = DataFrame(xyz, index=self._particleIDs.value, columns=['x', 'y', 'z'])
         if self._drop_ids is not None:
             xyz.drop(self._drop_ids, inplace=True)
         self[['x', 'y', 'z']] = xyz
@@ -118,11 +118,11 @@ class PartTypeNbody(PartType):
         """
         if unit:
             self.units.set_velocity(unit)
-        uvw = self._Velocities.value * self.units.velocity_conv
+        uvw = self._velocities.value * self.units.velocity_conv
         if self.units.coordinate_system == 'physical':
             a = self._header.ScaleFactor
             uvw *= numpy.sqrt(a)
-        uvw = DataFrame(uvw, index=self._ParticleIDs.value, columns=['u', 'v', 'w'])
+        uvw = DataFrame(uvw, index=self._particleIDs.value, columns=['u', 'v', 'w'])
         if self._drop_ids is not None:
             uvw.drop(self._drop_ids, inplace=True)
         self[['u', 'v', 'w']] = uvw

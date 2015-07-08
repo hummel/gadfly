@@ -39,27 +39,35 @@ class PartType(DataFrame):
     """
     Class for generic particle info.
     """
-    def __init__(self, file_id, ptype, unit, **kwargs):
+    def __init__(self, file_id, ptype, sim, **kwargs):
         group = file_id['PartType'+str(ptype)]
         for item in group.items():
-            key = '_'+item[0].replace(' ', '_')
-            vars(self)[key] = item[1]
-        super(PartType, self).__init__(index=self._ParticleIDs.value)
+            if item[0] in sim._internal_fields.keys():
+                key = '_'+sim._internal_fields[item[0]]
+                vars(self)[key] = item[1]
+            else:
+                key = '_'+item[0].replace(' ', '_')
+                vars(self)[key] = item[1]
+        super(PartType, self).__init__(index=self._particleIDs.value)
         self._header = Header(file_id)
-        self.units = unit
+        self.units = sim.units
         self.__init_load_dict__()
 
     def __getstate__(self):
         result = self.__dict__.copy()
-        del result['_Coordinates']
-        del result['_ParticleIDs']
-        del result['_Velocities']
-        del result['_Masses']
+        del result['_coordinates']
+        del result['_particleIDs']
+        del result['_velocities']
+        del result['_masses']
         return result
 
     def __setstate__(self, in_dict):
         self.__dict__ = in_dict
         self.__init_load_dict__()
+
+    def __init_load_dict__(self):
+        self._load_dict = {'particleIDs':self.load_PIDs}
+        self.loadable_keys = self._load_dict.keys()
 
     def refine_dataset(self, criterion):
         self._drop_ids = self[criterion].index
@@ -70,9 +78,9 @@ class PartType(DataFrame):
         """
         Load Particle ID numbers
         """
-        particleIDs = self._ParticleIDs.value
+        particleIDs = self._particleIDs.value
         if self._drop_ids is not None:
-            particleIDs = Series(particleIDs, index=self._ParticleIDs.value)
+            particleIDs = Series(particleIDs, index=self._particleIDs.value)
             self['particleIDs'] = particleIDs.drop(self._drop_ids)
         else:
             self['particleIDs'] = particleIDs

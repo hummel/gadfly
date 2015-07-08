@@ -16,9 +16,9 @@ class PartTypeSPH(PartTypeNbody):
     Class for SPH particles.
     Extends: nbody.PartTypeNbody
     """
-    def __init__(self, file_id, units, **kwargs):
+    def __init__(self, file_id, sim, **kwargs):
         kwargs.pop('refine_nbody', None)
-        super(PartTypeNbody,self).__init__(file_id,0, units, **kwargs)
+        super(PartTypeNbody,self).__init__(file_id,0, sim, **kwargs)
         self.__init_load_dict__()
 
         self._drop_ids = None
@@ -34,16 +34,16 @@ class PartTypeSPH(PartTypeNbody):
 
     def __getstate__(self):
         result = self.__dict__.copy()
-        del result['_Coordinates']
-        del result['_ParticleIDs']
-        del result['_Velocities']
-        del result['_Masses']
-        del result['_Adiabatic_index']
-        del result['_ChemicalAbundances']
-        del result['_Density']
-        del result['_SinkValue']
-        del result['_SmoothingLength']
-        del result['_InternalEnergy']
+        del result['_coordinates']
+        del result['_particleIDs']
+        del result['_velocities']
+        del result['_masses']
+        del result['_adiabatic_index']
+        del result['_abundances']
+        del result['_density']
+        del result['_sink_value']
+        del result['_smoothing_length']
+        del result['_internal_energy']
         del result['_load_dict']
         del result['loadable_keys']
         del result['_calculated']
@@ -57,7 +57,7 @@ class PartTypeSPH(PartTypeNbody):
         super(PartTypeSPH,self).__init_load_dict__()
         sph_loaders = {'density':self.get_density,
                        'ndensity':self.get_number_density,
-                       'internalenergy':self.get_internal_energy,
+                       'internal_energy':self.get_internal_energy,
                        'adiabatic_index':self.get_adiabatic_index,
                        'abundances':self.get_abundances,
                        'sink_value':self.get_sinks,
@@ -107,7 +107,7 @@ class PartTypeSPH(PartTypeNbody):
         """
         if unit:
             self.units.set_density(unit)
-        density = self._Density.value * self.units.density_conv
+        density = self._density.value * self.units.density_conv
         if self.units.remove_h:
             h = self._header.HubbleParam
             density *=  h**2
@@ -115,7 +115,7 @@ class PartTypeSPH(PartTypeNbody):
             ainv = self._header.Redshift + 1 # 1/(scale factor)
             density *= ainv**3
         if self._drop_ids is not None:
-            density = Series(density, index=self._ParticleIDs.value)
+            density = Series(density, index=self._particleIDs.value)
             self['density'] = density.drop(self._drop_ids)
         else:
             self['density'] = density
@@ -141,7 +141,7 @@ class PartTypeSPH(PartTypeNbody):
         """
         if unit:
             self.units.set_density(unit)
-        ndensity = self._Density.value * self.units.density_conv \
+        ndensity = self._density.value * self.units.density_conv \
                    * constants.X_h / constants.m_H
         if self.units.remove_h:
             h = self._header.HubbleParam
@@ -150,7 +150,7 @@ class PartTypeSPH(PartTypeNbody):
             ainv = self._header.Redshift + 1 # 1/(scale factor)
             ndensity *= ainv**3
         if self._drop_ids is not None:
-            ndensity = Series(ndensity, index=self._ParticleIDs.value)
+            ndensity = Series(ndensity, index=self._particleIDs.value)
             self['ndensity'] = ndensity.drop(self._drop_ids)
         else:
             self['ndensity'] = ndensity
@@ -177,12 +177,12 @@ class PartTypeSPH(PartTypeNbody):
         """
         if unit:
             self.units.set_energy(unit)
-        energy = self._InternalEnergy.value * self.units.energy_conv
+        energy = self._internal_energy.value * self.units.energy_conv
         if self._drop_ids is not None:
-            energy = Series(energy, index=self._ParticleIDs.value)
-            self['internalenergy'] = energy.drop(self._drop_ids)
+            energy = Series(energy, index=self._particleIDs.value)
+            self['internal_energy'] = energy.drop(self._drop_ids)
         else:
-            self['internalenergy'] = energy
+            self['internal_energy'] = energy
 
     def get_internal_energy(self, unit=None):
         """
@@ -193,18 +193,18 @@ class PartTypeSPH(PartTypeNbody):
             if unit != self.units.energy_unit:
                 self.load_internal_energy(unit)
         try:
-            return self.internalenergy
+            return self.internal_energy
         except AttributeError:
             self.load_internal_energy(unit)
-            return self.internalenergy
+            return self.internal_energy
 
     def load_adiabatic_index(self):
         """
         Load particle adiabatic index.
         """
-        gamma = self._Adiabatic_index.value
+        gamma = self._adiabatic_index.value
         if self._drop_ids is not None:
-            gamma = Series(gamma, index=self._ParticleIDs.value)
+            gamma = Series(gamma, index=self._particleIDs.value)
             self['adiabatic_index'] = gamma.drop(self._drop_ids)
         else:
             self['adiabatic_index'] = gamma
@@ -228,7 +228,7 @@ class PartTypeSPH(PartTypeNbody):
         """
         if unit:
             self.units._set_smoothing_length(unit)
-        hsml = self._SmoothingLength.value * self.units.length_conv
+        hsml = self._smoothing_length.value * self.units.length_conv
         if self.units.remove_h:
             h = self._header.HubbleParam
             hsml /= h
@@ -236,7 +236,7 @@ class PartTypeSPH(PartTypeNbody):
             a = self._header.ScaleFactor
             hsml *= a
         if self._drop_ids is not None:
-            hsml = Series(hsml, index=self._ParticleIDs.value)
+            hsml = Series(hsml, index=self._particleIDs.value)
             self['smoothing_length'] = hsml.drop(self._drop_ids)
         else:
             self['smoothing_length'] = hsml
@@ -260,9 +260,9 @@ class PartTypeSPH(PartTypeNbody):
         """
         Load particle by particle sink flag values.
         """
-        sinks = self._SinkValue.value
+        sinks = self._sink_value.value
         if self._drop_ids is not None:
-            sinks = Series(sinks, index=self._ParticleIDs.value)
+            sinks = Series(sinks, index=self._particleIDs.value)
             self['sink_value'] = sinks.drop(self._drop_ids)
         else:
             self['sink_value'] = sinks
@@ -287,8 +287,8 @@ class PartTypeSPH(PartTypeNbody):
         default_species = ['H2', 'HII', 'DII', 'HD', 'HeII', 'HeIII']
         if tracked_species is None:
             tracked_species = default_species
-        abundances = self._ChemicalAbundances.value
-        abundances = DataFrame(abundances, index=self._ParticleIDs.value,
+        abundances = self._abundances.value
+        abundances = DataFrame(abundances, index=self._particleIDs.value,
                                columns=tracked_species)
         if self._drop_ids is not None:
             abundances.drop(self._drop_ids)
