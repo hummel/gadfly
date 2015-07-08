@@ -49,6 +49,7 @@ class PartType(DataFrame):
                 key = '_'+item[0].replace(' ', '_')
                 vars(self)[key] = item[1]
         super(PartType, self).__init__(index=self._particleIDs.value)
+        self._drop_ids = None
         self._header = Header(file_id)
         self.units = sim.units
         self.__init_load_dict__()
@@ -95,16 +96,18 @@ class PartType(DataFrame):
             self.load_PIDs()
             return self.particleIDs
 
-
-
     def load_quantity(self, *keys):
         """
         Load key(s) from the list of loadable/derivable keys.
         keys: arbitrary number of keys from the list.
         """
         for key in keys:
-            load_func = self._load_dict[key]
-            load_func()
+            try:
+                load_func = self._load_dict[key]
+                load_func()
+            except(KeyError):
+                hdf5key = '_'+key.replace(' ', '_')
+                self[key] = vars(self)[hdf5key].value
 
     def load_all(self):
         """
