@@ -27,6 +27,7 @@ class Simulation(object):
                                     os.getenv('HOME') + '/data/sinks/')
         self.plotpath = simargs.pop('plotpath',
                                     os.getenv('HOME') + '/data/simplots/')
+        self.set_field_names(simargs.pop('field_names',{}))
                                      
         self.refine_gas = simargs.pop('refine_gas', True)
         self.refine_nbody = simargs.pop('refine_nbody', False)
@@ -40,6 +41,20 @@ class Simulation(object):
 
         self.snapfiles = self.find_snapshots()
         self.track_sinks(self.sink_tracking)
+
+    def set_field_names(self, name_dict={}):
+        default_names = {'particleIDs':'ParticleIDs',
+                         'masses':'Masses',
+                         'coordinates':'Coordinates',
+                         'velocities':'Velocities',
+                         'smoothing_length':'SmoothingLength',
+                         'density':'Density',
+                         'internal_energy':'InternalEnergy',
+                         'adiabatic_index':'Adiabatic index',
+                         'abundances''ChemicalAbundances',
+                         'sink_value':'SinkValue'}
+        self.hdf5_fields = default_names.update(name_dict)
+        self._internal_fields = {v:k for k,v in self.hdf5_fields.items()}
 
     def track_sinks(self, boolean=True):
         self.sink_tracking = boolean
