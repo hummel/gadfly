@@ -7,15 +7,15 @@ particle data.
 import numpy
 from pandas import Series, DataFrame
 
-from hdf5 import HDF5group
+from hdf5 import PartType
 import units
 import constants
 import coordinates
 
-class PartTypeNbody(HDF5group):
+class PartTypeNbody(PartType):
     """
     Class for N-body particles. 
-    Extends: hdf5.HDF5group
+    Extends: hdf5.PartType
     """
     def __init__(self, file_id, ptype, units, **kwargs):
         super(PartTypeNbody,self).__init__(file_id, ptype, units, **kwargs)
