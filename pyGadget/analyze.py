@@ -13,11 +13,11 @@ def find_center(pos_vel, density=None, **kwargs):
     centering = kwargs.pop('centering','box')
     verbose = kwargs.get('verbose', True)
     if centering in ['avg', 'max']:
-        if dens is not None:
+        if density is not None:
             dens_limit = kwargs.pop('dens_limit', 1e8)
             nparticles = kwargs.pop('centering_npart', 100)
             if centering == 'avg':
-                hidens = numpy.where(dens >= dens_limit)[0]
+                hidens = numpy.where(density >= dens_limit)[0]
                 while hidens.size < nparticles:
                     dens_limit /= 2
                     hidens = numpy.where(density >= dens_limit)[0]
@@ -29,7 +29,7 @@ def find_center(pos_vel, density=None, **kwargs):
                 center = reject_outliers(pos_vel).mean()
                 print 'Density averaged box center:',
             elif centering == 'max':
-                center = pos_vel.iloc[dens.argmax()]
+                center = pos_vel.iloc[density.argmax()]
                 print 'Density maximum box center:',
         else:
             raise KeyError("'avg' and 'max' centering require gas density")
@@ -46,7 +46,7 @@ def find_center(pos_vel, density=None, **kwargs):
     return center
 
 def center_box(pos_vel, center=None, vcenter=None, **kwargs):
-    dens = kwargs.pop('density', None)
+    density = kwargs.pop('density', None)
     centering = kwargs.get('centering', None)
     if center:
         center = pandas.Series(center, index=['x', 'y', 'z'])
@@ -57,11 +57,11 @@ def center_box(pos_vel, center=None, vcenter=None, **kwargs):
             center['v'] = vcenter[1]
             center['w'] = vcenter[2]
     elif centering:
-        center = find_center(pos_vel, dens, **kwargs)
+        center = find_center(pos_vel, density, **kwargs)
     else:
         print "WARNING! NO CENTER OR CENTERING ALGORITHM SPECIFIED!"
         print "Attempting simple box centering..."
-        center = find_center(pos_vel, dens, **kwargs)
+        center = find_center(pos_vel, density, **kwargs)
     pos_vel -= center
     return pos_vel
 
