@@ -51,7 +51,7 @@ class Simulation(object):
                          'density':'Density',
                          'internal_energy':'InternalEnergy',
                          'adiabatic_index':'Adiabatic index',
-                         'abundances''ChemicalAbundances',
+                         'abundances':'ChemicalAbundances',
                          'sink_value':'SinkValue'}
         self.hdf5_fields = default_names.update(name_dict)
         self._internal_fields = {v:k for k,v in self.hdf5_fields.items()}
