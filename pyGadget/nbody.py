@@ -11,6 +11,8 @@ from hdf5 import PartType
 import units
 import constants
 import coordinates
+import analyze
+import visualize
 
 class PartTypeNbody(PartType):
     """
