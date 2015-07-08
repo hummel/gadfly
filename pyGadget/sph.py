@@ -16,12 +16,11 @@ class PartTypeSPH(PartTypeNbody):
     Class for SPH particles.
     Extends: nbody.PartTypeNbody
     """
-    def __init__(self, file_id, sim, **kwargs):
+    def __init__(self, file_id, ptype, sim, **kwargs):
         kwargs.pop('refine_nbody', None)
-        super(PartTypeNbody,self).__init__(file_id,0, sim, **kwargs)
+        super(PartTypeNbody,self).__init__(file_id, ptype, sim, **kwargs)
         self.__init_load_dict__()
 
-        self._drop_ids = None
         self.refined = kwargs.pop('refine', False)
         if self.refined:
             print 'Turning on gas particle refinement.'
@@ -61,14 +60,16 @@ class PartTypeSPH(PartTypeNbody):
                        'adiabatic_index':self.get_adiabatic_index,
                        'abundances':self.get_abundances,
                        'sink_value':self.get_sinks,
-                       'smoothing_length':self.get_smoothing_length}
+                       'smoothing_length':self.get_smoothing_length
+                       }
         sph_derived = {'h2frac':self.get_H2_fraction,
                        'HDfrac':self.get_HD_fraction,
                        'electron_frac':self.get_electron_fraction,
                        'temp':self.get_temperature,
                        'c_s':self.get_sound_speed,
                        't_ff':self.get_freefall_time,
-                       'jeans_length':self.get_jeans_length}
+                       'jeans_length':self.get_jeans_length
+                       }
         self._load_dict.update(sph_loaders)
         self._load_dict.update(sph_derived)
         self.loadable_keys = self._load_dict.keys()
@@ -208,7 +209,6 @@ class PartTypeSPH(PartTypeNbody):
             self['adiabatic_index'] = gamma.drop(self._drop_ids)
         else:
             self['adiabatic_index'] = gamma
-
 
     def get_adiabatic_index(self):
         """

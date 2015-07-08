@@ -20,7 +20,6 @@ class PartTypeNbody(PartType):
     def __init__(self, file_id, ptype, sim, **kwargs):
         super(PartTypeNbody,self).__init__(file_id, ptype, sim, **kwargs)
         self.__init_load_dict__()
-        self._drop_ids = None
         self.refined = kwargs.pop('refine', False)
         if self.refined:
             print 'Turning on N-body particle refinement.'

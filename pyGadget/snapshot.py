@@ -28,7 +28,7 @@ class File(object):
         kwargs['refine'] = kwargs.pop('refine_nbody', False)
         self.dm = PartTypeNbody(self.file_id, 1, sim, **kwargs)
         kwargs['refine'] = kwargs.pop('refine_gas', False)
-        self.gas = PartTypeSPH(self.file_id, sim, **kwargs)
+        self.gas = PartTypeSPH(self.file_id, 0, sim, **kwargs)
         self.sinks = []
         if kwargs.get('track_sinks', False):
             self.sinks = self.gas.get_sink_properties()
