@@ -43,17 +43,18 @@ class Simulation(object):
         self.track_sinks(self.sink_tracking)
 
     def set_field_names(self, name_dict={}):
-        default_names = {'particleIDs':'ParticleIDs',
-                         'masses':'Masses',
-                         'coordinates':'Coordinates',
-                         'velocities':'Velocities',
-                         'smoothing_length':'SmoothingLength',
-                         'density':'Density',
-                         'internal_energy':'InternalEnergy',
-                         'adiabatic_index':'Adiabatic index',
-                         'abundances':'ChemicalAbundances',
-                         'sink_value':'SinkValue'}
-        self.hdf5_fields = default_names.update(name_dict)
+        self.hdf5_fields = {'particleIDs':'ParticleIDs',
+                            'masses':'Masses',
+                            'coordinates':'Coordinates',
+                            'velocities':'Velocities',
+                            'smoothing_length':'SmoothingLength',
+                            'density':'Density',
+                            'internal_energy':'InternalEnergy',
+                            'adiabatic_index':'Adiabatic index',
+                            'abundances':'ChemicalAbundances',
+                            'sink_value':'SinkValue'}
+        self.hdf5_fields.update(name_dict)
+        print self.hdf5_fields
         self._internal_fields = {v:k for k,v in self.hdf5_fields.items()}
 
     def track_sinks(self, boolean=True):
