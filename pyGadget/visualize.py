@@ -254,7 +254,7 @@ def build_grid(width,pps):
     yvals = numpy.arange(-width/2,width/2,yres)
     return numpy.meshgrid(xvals,yvals)
 
-def project(snapshot, loadable, scale, view, **kwargs):
+def project(snapshot, scale, view, **kwargs):
     pps = kwargs.pop('pps',500)
     sm = kwargs.pop('sm',1.7)
     shiftx = kwargs.pop('shiftx',None)
@@ -263,20 +263,17 @@ def project(snapshot, loadable, scale, view, **kwargs):
     dens_lim = kwargs.pop('dens_lim', None)
     boxsize = float("".join(ch if ch.isdigit() else "" for ch in scale))
     unit = "".join(ch if not ch.isdigit() else "" for ch in scale)
-    scalar = snapshot.gas._load_dict[loadable]()
-    pos = snapshot.gas.get_coords(unit)
+    dens = snapshot.gas.get_number_density()
+    xyz = snapshot.gas.get_coords(unit)
+    uvw = snapshot.gas.get_velocities()
     hsml = snapshot.gas.get_smoothing_length(unit)
-    if loadable not in ['density', 'ndensity']:
-        dens = snapshot.gas.get_number_density()
-    else:
-        dens = scalar
 
     print 'Calculating...'
-    x,y,z = analyze.center_box(pos[:,0],pos[:,1],pos[:,2],density=dens,**kwargs)
-    pos = set_view(view, numpy.column_stack((x,y,z)))
-    x = pos[:,0]
-    y = pos[:,1]
-    z = pos[:,2]
+    xyz = analyze.center_box(xyz, velocity=uvw, density=dens, **kwargs)
+    xyz = set_view(view, xyz)
+    x = xyz.x
+    y = xyz.y
+    z = xyz.z
     if shiftx:
         x += shiftx
     if shifty:
@@ -287,18 +284,11 @@ def project(snapshot, loadable, scale, view, **kwargs):
     # Artificially shrink sink smoothing lengths.
     for s in snapshot.sinks:
         hsml[s.index] *= .5
-    arrs = [scalar, hsml]
-    if loadable in ['density', 'ndensity']:
-        x,y,z,scalar,hsml = trim_view(boxsize, x,y,z,scalar,hsml,**kwargs)
-        if dens_lim:
-            arrs = [scalar,x,y,z,hsml]
-            scalar,x,y,z,hsml = analyze.data_slice(scalar > dens_lim, *arrs)
-    else:
-        arrs.append(dens)
-        x,y,z,scalar,hsml,dens = trim_view(boxsize, x,y,z, *arrs, **kwargs)
-        if dens_lim:
-            arrs = [dens,x,y,z,scalar,hsml]
-            dens,x,y,z,scalar,hsml = analyze.data_slice(dens > dens_lim, *arrs)
+    data = snap.gas['x', 'y', 'z', 'ndensity', 'smoothing_length'].copy(deep=True)
+    data = trim_view(boxsize, data, **kwargs)
+    if dens_lim:
+        arrs = [scalar,x,y,z,hsml]
+        scalar,x,y,z,hsml = analyze.data_slice(scalar > dens_lim, *arrs)
     hsml = numpy.fmax(sm * hsml, boxsize/pps/2)
     xi,yi = build_grid(boxsize,pps)
     zi = scalar_map(x,y,scalar,hsml,boxsize,pps,xi.shape)

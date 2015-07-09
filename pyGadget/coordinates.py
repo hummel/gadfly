@@ -110,4 +110,5 @@ def rotate(coords, axis, angle, verbose=False):
         print "Rotating about the {}-axis by {:6.3f} radians.".format(axis,angle)
         print "Rotation Matrix:"
         print rot
-    return np.dot(coords,rot)
+    coords[coords.columns] = np.dot(coords,rot)
+    return coords
