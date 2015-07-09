@@ -242,16 +242,16 @@ class PartTypeNbody(PartType):
                 return self[['x', 'y', 'z']]
         elif system == 'spherical':
             try:
-                return self.spherical_coords
+                return self[['r_sph', 'theta_sph', 'phi_sph']]
             except KeyError:
                 self.calculate_spherical_coords(c_unit=unit, **kwargs)
-                return self.spherical_coords
+                return self[['r_sph', 'theta_sph', 'phi_sph']]
         elif system == 'cylindrical':
             try:
-                return self.cylindrical_coords
+                return self['r_cyl', 'theta_cyl', 'z']
             except KeyError:
                 self.calculate_cylindrical_coords(c_unit=unit, **kwargs)
-                return self.cylindrical_coords
+                return self['r_cyl', 'theta_cyl', 'z']
         else:
             raise KeyError("Coordinate system options: 'cartesian' "\
                            "'spherical' 'cylindrical'")
