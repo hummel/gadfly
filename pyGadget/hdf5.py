@@ -153,4 +153,5 @@ class PartType(DataFrame):
                 vars(self)[prop] = vars(self)[prop][::stride]
 
         # Cleanup to save memory
-        self.cleanup(*properties)
+        if kwargs.pop('cleanup', False):
+            self.cleanup(*properties)
