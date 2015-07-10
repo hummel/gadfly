@@ -29,7 +29,7 @@ class Simulation(object):
                                     os.getenv('HOME') + '/data/simplots/')
         self.set_field_names(simargs.pop('field_names',{}))
                                      
-        self.refine_gas = simargs.pop('refine_gas', True)
+        self.refine_gas = simargs.pop('refine_gas', False)
         self.refine_nbody = simargs.pop('refine_nbody', False)
 
         self.sink_tracking = simargs.pop('track_sinks', False)
@@ -113,9 +113,9 @@ class Simulation(object):
     def load_snapshot(self, num, *load_keys,**kwargs):
         if ((kwargs.pop('track_sinks',False)) or self.sink_tracking):
             kwargs['track_sinks'] = True
-        if self.refine_gas:
+        if ((kwargs.pop('refine_gas',False)) or self.refine_gas):
             kwargs['refine_gas'] = True
-        if self.refine_nbody:
+        if ((kwargs.pop('refine_nbody',False)) or self.refine_nbody):
             kwargs['refine_nbody'] = True
 
         try:
