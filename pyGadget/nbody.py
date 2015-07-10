@@ -60,7 +60,7 @@ class PartTypeNbody(PartType):
         criterion = kwargs.pop('criterion', None)
         if criterion is None:
 	        criterion = (self.masses > self.masses.min())
-	        super(PartTypeNbody, self).refine_dataset(criterion)
+        super(PartTypeNbody, self).refine_dataset(criterion)
 
     def load_masses(self, unit=None):
         """
