@@ -4,24 +4,27 @@
 This module contains classes for reading Gadget2 SPH particle data.
 """
 import numpy
+from pandas import Series, DataFrame
+
+from nbody import PartTypeNbody
 import units
 import constants
-import hdf5
 import sink
 
-class PartTypeSPH(hdf5.PartTypeX):
+class PartTypeSPH(PartTypeNbody):
     """
     Class for SPH particles.
-    Extends class PartTypeX to include gas physics stuff.
+    Extends: nbody.PartTypeNbody
     """
-    def __init__(self, file_id, units, **kwargs):
-        super(PartTypeSPH,self).__init__(file_id,0, units)
+    def __init__(self, file_id, ptype, sim, **kwargs):
+        kwargs.pop('refine_nbody', None)
+        super(PartTypeNbody,self).__init__(file_id, ptype, sim, **kwargs)
         self.__init_load_dict__()
-        self._refined = None
-        self.refine = kwargs.pop('refine_gas', True)
-        if self.refine:
+
+        self.refined = kwargs.pop('refine', False)
+        if self.refined:
             print 'Turning on gas particle refinement.'
-            self.locate_refined_particles()
+            self.refine_dataset()
 
         self.sink_tracking = kwargs.pop('track_sinks', False)
         if self.sink_tracking:
@@ -30,16 +33,16 @@ class PartTypeSPH(hdf5.PartTypeX):
 
     def __getstate__(self):
         result = self.__dict__.copy()
-        del result['_Coordinates']
-        del result['_ParticleIDs']
-        del result['_Velocities']
-        del result['_Masses']
-        del result['_Adiabatic_index']
-        del result['_ChemicalAbundances']
-        del result['_Density']
-        del result['_SinkValue']
-        del result['_SmoothingLength']
-        del result['_InternalEnergy']
+        del result['_coordinates']
+        del result['_particleIDs']
+        del result['_velocities']
+        del result['_masses']
+        del result['_adiabatic_index']
+        del result['_abundances']
+        del result['_density']
+        del result['_sink_value']
+        del result['_smoothing_length']
+        del result['_internal_energy']
         del result['_load_dict']
         del result['loadable_keys']
         del result['_calculated']
@@ -53,32 +56,33 @@ class PartTypeSPH(hdf5.PartTypeX):
         super(PartTypeSPH,self).__init_load_dict__()
         sph_loaders = {'density':self.get_density,
                        'ndensity':self.get_number_density,
-                       'energy':self.get_internal_energy,
-                       'gamma':self.get_gamma,
+                       'internal_energy':self.get_internal_energy,
+                       'adiabatic_index':self.get_adiabatic_index,
                        'abundances':self.get_abundances,
                        'sink_value':self.get_sinks,
-                       'smoothing_length':self.get_smoothing_length,
+                       'smoothing_length':self.get_smoothing_length
+                       }
+        sph_derived = {'h2frac':self.get_H2_fraction,
+                       'HDfrac':self.get_HD_fraction,
                        'electron_frac':self.get_electron_fraction,
-                       'h2frac':self.get_H2_fraction,
-                       'HDfrac':self.get_HD_fraction}
-        sph_derived = {'temp':self.get_temperature,
+                       'temp':self.get_temperature,
                        'c_s':self.get_sound_speed,
                        't_ff':self.get_freefall_time,
-                       'jeans_length':self.get_jeans_length,
-                       'tau':self.get_optical_depth}
+                       'jeans_length':self.get_jeans_length
+                       }
         self._load_dict.update(sph_loaders)
         self._load_dict.update(sph_derived)
         self.loadable_keys = self._load_dict.keys()
         self._calculated.append(sph_derived.keys())
 
-    def locate_refined_particles(self):
-        mass = self.get_masses()
-        sinks = self.get_sinks()
-        minimum = numpy.amin(mass)
-        self._refined = numpy.where((mass <= minimum) | (sinks != 0.))[0]
-        self.masses = self.masses[self._refined]
-        self.sink_value = self.sink_value[self._refined]
-        print 'There are', self._refined.size, 'highest resolution particles.'
+    def refine_dataset(self, *keys, **kwargs):
+        if len(keys) < 1:
+            keys = ['masses', 'sink_value']
+            self.load_data(*keys)
+        criterion = kwargs.pop('criterion', None)
+        if criterion is None:
+            criterion = (self.masses > self.masses.min()) & (self.sink_value == 0.)
+        super(PartTypeNbody, self).refine_dataset(criterion)
 
     def locate_sink_particles(self):
         sinks = self.get_sinks()
@@ -102,21 +106,20 @@ class PartTypeSPH(hdf5.PartTypeX):
         Load Particle Densities in cgs units (default set in units class)
         unit: unit conversion from code units
         """
-        try:
-            del self.ndensity
-        except AttributeError:
-            pass
         if unit:
             self.units.set_density(unit)
-        self.density = self._Density.value * self.units.density_conv
+        density = self._density.value * self.units.density_conv
         if self.units.remove_h:
             h = self._header.HubbleParam
-            self.density = self.density * h*h
+            density *=  h**2
         if self.units.coordinate_system == 'physical':
             ainv = self._header.Redshift + 1 # 1/(scale factor)
-            self.density = self.density * ainv**3
-        if self._refined is not None:
-            self.density = self.density[self._refined]
+            density *= ainv**3
+        if self._drop_ids is not None:
+            density = Series(density, index=self._particleIDs.value)
+            self['density'] = density.drop(self._drop_ids)
+        else:
+            self['density'] = density
 
     def get_density(self, unit=None):
         """
@@ -137,22 +140,21 @@ class PartTypeSPH(hdf5.PartTypeX):
         Load Particle Number Densities in cgs units (default set in units class)
         unit: unit conversion from code units
         """
-        try:
-            del self.density
-        except AttributeError:
-            pass
         if unit:
             self.units.set_density(unit)
-        self.ndensity = self._Density.value * self.units.density_conv
-        self.ndensity = self.ndensity * constants.X_h / constants.m_H
+        ndensity = self._density.value * self.units.density_conv \
+                   * constants.X_h / constants.m_H
         if self.units.remove_h:
             h = self._header.HubbleParam
-            self.ndensity = self.ndensity * h*h
+            ndensity *=  h**2
         if self.units.coordinate_system == 'physical':
             ainv = self._header.Redshift + 1 # 1/(scale factor)
-            self.ndensity = self.ndensity * ainv**3
-        if self._refined is not None:
-            self.ndensity = self.ndensity[self._refined]
+            ndensity *= ainv**3
+        if self._drop_ids is not None:
+            ndensity = Series(ndensity, index=self._particleIDs.value)
+            self['ndensity'] = ndensity.drop(self._drop_ids)
+        else:
+            self['ndensity'] = ndensity
 
     def get_number_density(self, unit=None):
         """
@@ -176,10 +178,12 @@ class PartTypeSPH(hdf5.PartTypeX):
         """
         if unit:
             self.units.set_energy(unit)
-        self.energy = self._InternalEnergy.value * self.units.energy_conv
-        if self._refined is not None:
-            self.energy = self.energy[self._refined]
-
+        energy = self._internal_energy.value * self.units.energy_conv
+        if self._drop_ids is not None:
+            energy = Series(energy, index=self._particleIDs.value)
+            self['internal_energy'] = energy.drop(self._drop_ids)
+        else:
+            self['internal_energy'] = energy
 
     def get_internal_energy(self, unit=None):
         """
@@ -190,83 +194,31 @@ class PartTypeSPH(hdf5.PartTypeX):
             if unit != self.units.energy_unit:
                 self.load_internal_energy(unit)
         try:
-            return self.energy
+            return self.internal_energy
         except AttributeError:
             self.load_internal_energy(unit)
-            return self.energy
+            return self.internal_energy
 
-    def load_gamma(self):
+    def load_adiabatic_index(self):
         """
         Load particle adiabatic index.
         """
-        self.gamma = self._Adiabatic_index.value
-        if self._refined is not None:
-            self.gamma = self.gamma[self._refined]
+        gamma = self._adiabatic_index.value
+        if self._drop_ids is not None:
+            gamma = Series(gamma, index=self._particleIDs.value)
+            self['adiabatic_index'] = gamma.drop(self._drop_ids)
+        else:
+            self['adiabatic_index'] = gamma
 
-
-    def get_gamma(self):
+    def get_adiabatic_index(self):
         """
         Return particle adiabatic index.
         """
         try:
-            return self.gamma
+            return self.adiabatic_index
         except AttributeError:
-            self.load_gamma()
-            return self.gamma
-
-    def load_abundances(self):
-        """
-        Load chemical abundances array.
-
-        There are six abundances tracked for each particle.
-        0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
-        """
-        self.abundances = self._ChemicalAbundances.value
-        if self._refined is not None:
-            self.abundances = self.abundances[self._refined]
-
-
-    def get_abundances(self, species=None):
-        """
-        Return chemical abundances array.
-
-        There are six abundances tracked for each particle.
-        0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
-        """
-        abundance_dict = {'H2':0, 'HII':1, 'DII':2, 'HD':3, 'HeII':4, 'HeIII':5}
-        try:
-            abundances = self.abundances
-        except AttributeError:
-            self.load_abundances()
-            abundances = self.abundances
-        if species is None:
-            return abundances
-        elif isinstance(species, basestring):
-            return abundances[:,abundance_dict[species]]
-        elif isinstance(species, list):
-            abunds = []
-            for sp in species:
-                abunds.append(abundances[:,abundance_dict[sp]])
-            return abunds
-
-    def load_sinks(self):
-        """
-        Load particle sink values.
-        """
-        self.sink_value = self._SinkValue.value
-        if self._refined is not None:
-            self.sink_value = self.sink_value[self._refined]
-
-
-    def get_sinks(self):
-        """
-        Return particle sink values.
-        """
-        try:
-            return self.sink_value
-        except AttributeError:
-            self.load_sinks()
-            return self.sink_value
+            self.load_adiabatic_index()
+            return self.adiabatic_index
 
     def load_smoothing_length(self, unit=None):
         """
@@ -276,16 +228,18 @@ class PartTypeSPH(hdf5.PartTypeX):
         """
         if unit:
             self.units._set_smoothing_length(unit)
-        self.smoothing_length \
-            = self._SmoothingLength.value * self.units.length_conv
+        hsml = self._smoothing_length.value * self.units.length_conv
         if self.units.remove_h:
             h = self._header.HubbleParam
-            self.smoothing_length /= h
+            hsml /= h
         if self.units.coordinate_system == 'physical':
             a = self._header.ScaleFactor
-            self.smoothing_length *= a
-        if self._refined is not None:
-            self.smoothing_length = self.smoothing_length[self._refined]
+            hsml *= a
+        if self._drop_ids is not None:
+            hsml = Series(hsml, index=self._particleIDs.value)
+            self['smoothing_length'] = hsml.drop(self._drop_ids)
+        else:
+            self['smoothing_length'] = hsml
 
     def get_smoothing_length(self, unit=None):
         """
@@ -302,32 +256,90 @@ class PartTypeSPH(hdf5.PartTypeX):
             self.load_smoothing_length(unit)
             return self.smoothing_length
 
-    def load_electron_fraction(self):
+    def load_sinks(self):
         """
-        Load the free electron fraction.
+        Load particle by particle sink flag values.
+        """
+        sinks = self._sink_value.value
+        if self._drop_ids is not None:
+            sinks = Series(sinks, index=self._particleIDs.value)
+            self['sink_value'] = sinks.drop(self._drop_ids)
+        else:
+            self['sink_value'] = sinks
+
+    def get_sinks(self):
+        """
+        Return particle by particle sink flag values.
+        """
+        try:
+            return self.sink_value
+        except AttributeError:
+            self.load_sinks()
+            return self.sink_value
+
+    def load_abundances(self, tracked_species=None):
+        """
+        Load chemical abundances array.
+
+        There are six abundances tracked for each particle.
+        0:H2 1:HII 2:DII 3:HD 4:HeII 5:HeIII
+        """
+        default_species = ['H2', 'HII', 'DII', 'HD', 'HeII', 'HeIII']
+        if tracked_species is None:
+            tracked_species = default_species
+        abundances = self._abundances.value
+        abundances = DataFrame(abundances, index=self._particleIDs.value,
+                               columns=tracked_species)
+        if self._drop_ids is not None:
+            abundances.drop(self._drop_ids)
+        self[tracked_species] = abundances
+
+    def get_abundances(self, *species, **kwargs):
+        """
+        Return requested species from chemical abundances array.
+
+        There are six abundances tracked for each particle.
+        0:H2 1:HII 2:DII 3:HD 4:HeII 5:HeIII
+        """
+        default_species = ['H2', 'HII', 'DII', 'HD', 'HeII', 'HeIII']
+        all_species = kwargs.get('tracked_species', default_species)
+        if len(species) < 1:
+            try:
+                return self[all_species]
+            except(KeyError):
+                self.load_abundances(**kwargs)
+                return self[all_species]
+        else:
+            try:
+                return self[list(species)]
+            except(KeyError):
+                self.load_abundances(**kwargs)
+                return self[list(species)]
+
+    def calculate_electron_fraction(self):
+        """
+        Calculate the free electron fraction.
         """
         # Chemical Abundances--> 0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
-        abundances = self.get_abundances()
-        self.electron_frac = abundances[:,1] + abundances[:,2]
-        self.electron_frac += abundances[:,4] + 2*abundances[:,5]
+        abundances = self.get_abundances('HII', 'DII', 'HeII', 'HeIII')
+        self['electron_fraction'] = abundances.HII + abundances.DII \
+                                    + abundances.HeII + 2*abundances.HeIII
 
     def get_electron_fraction(self):
         """
         Return the free electron fraction.
         """
         try:
-            return self.electron_frac
+            return self.electron_fraction
         except AttributeError:
-            self.load_electron_fraction()
-            return self.electron_frac
+            self.calculate_electron_fraction()
+            return self.electron_fraction
 
-    def load_H2_fraction(self):
+    def calculate_H2_fraction(self):
         """
-        Load the molecular hydrogen fraction.
+        Calculate the molecular hydrogen fraction.
         """
-        # Chemical Abundances--> 0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
-        abundances = self.get_abundances()
-        self.h2frac = 2*abundances[:,0]
+        self['h2frac'] = 2 * self.get_abundances('H2')
 
     def get_H2_fraction(self):
         """
@@ -336,16 +348,14 @@ class PartTypeSPH(hdf5.PartTypeX):
         try:
             return self.h2frac
         except AttributeError:
-            self.load_H2_fraction()
+            self.calculate_H2_fraction()
             return self.h2frac
 
-    def load_HD_fraction(self):
+    def calculate_HD_fraction(self):
         """
-        Load the molecular HD fraction.
+        Calculate the molecular HD fraction.
         """
-        # Chemical Abundances--> 0:H2I 1:HII 2:DII 3:HDI 4:HeII 5:HeIII
-        abundances = self.get_abundances()
-        self.HDfrac = 2*abundances[:,3]
+        self['HDfrac'] = 2 * self.get_abundances('HD')
 
     def get_HD_fraction(self):
         """
@@ -354,29 +364,29 @@ class PartTypeSPH(hdf5.PartTypeX):
         try:
             return self.HDfrac
         except AttributeError:
-            self.load_HD_fraction()
+            self.calculate_HD_fraction()
             return self.HDfrac
 
     def calculate_temperature(self):
         """
         Calculate Particle Temperatures in degrees Kelvin.
         """
-        gamma = self.get_gamma()
+        gamma = self.get_adiabatic_index()
         energy = self.get_internal_energy('specific cgs')
         h2frac = self.get_H2_fraction()
         mu = (0.24/4.0) + ((1.0-h2frac)*0.76) + (h2frac*.76/2.0)
         mu = 1 / mu # mean molecular weight
-        self.temp = (mu * constants.m_H / constants.k_B) * energy * (gamma-1)
+        self['temperature'] = (mu * constants.m_H / constants.k_B) * energy * (gamma-1)
 
     def get_temperature(self):
         """
         Return Particle Temperatures in degrees Kelvin.
         """
         try:
-            return self.temp
+            return self.temperature
         except AttributeError:
             self.calculate_temperature()
-            return self.temp
+            return self.temperature
 
     def calculate_sound_speed(self):
         """
@@ -433,23 +443,3 @@ class PartTypeSPH(hdf5.PartTypeX):
         except AttributeError:
             self.calculate_jeans_length()
             return self.jeans_length
-
-    def calculate_optical_depth(self,sigma):
-        """
-        Estimate optical depth of the gas based on Jeans Length.
-        sigma:: cross-section of the species of interest.
-        """
-        n = self.get_number_density()
-        L = self.get_jeans_length()
-        self.tau = n*L*sigma
-
-    def get_optical_depth(self,sigma):
-        """
-        Return estimate of the optical depth based on Jeans Length.
-        sigma:: cross-section of the species of interest.
-        """
-        try:
-            return self.tau
-        except AttributeError:
-            self.calculate_optical_depth(self,sigma)
-            return self.tau

@@ -5,6 +5,7 @@
 import os
 import sys
 import numpy
+import pandas
 from numba import jit
 from scipy import weave
 from scipy.weave import converters
@@ -186,7 +187,14 @@ def set_view(view, xyz, **kwargs):
         if uvw is None or dens is None:
             raise KeyError("setting face-on view requires density, "\
                            "position and velocity!")
-        pos, vel = analyze.data_slice(dens > dlim, xyz, uvw)
+        pos_vel = pandas.concat([xyz,uvw,dens,mass], axis=1)
+        pos_vel = pos_vel[pos_vel[dens.name] > dlim]
+        pos = pos_vel[['x', 'y', 'z']]
+        vel = pos_vel[['u', 'v', 'w']]
+        try:
+            mass = pos_vel[mass.name]
+        except AttributeError:
+            pass
         axis, angle = analyze.faceon_rotation(pos, vel, mass)
         xyz = coordinates.rotate(xyz, axis, angle)
         uvw = coordinates.rotate(uvw, axis, angle)
@@ -246,7 +254,7 @@ def build_grid(width,pps):
     yvals = numpy.arange(-width/2,width/2,yres)
     return numpy.meshgrid(xvals,yvals)
 
-def project(snapshot, loadable, scale, view, **kwargs):
+def project(snapshot, scale, view, **kwargs):
     pps = kwargs.pop('pps',500)
     sm = kwargs.pop('sm',1.7)
     shiftx = kwargs.pop('shiftx',None)
@@ -255,20 +263,17 @@ def project(snapshot, loadable, scale, view, **kwargs):
     dens_lim = kwargs.pop('dens_lim', None)
     boxsize = float("".join(ch if ch.isdigit() else "" for ch in scale))
     unit = "".join(ch if not ch.isdigit() else "" for ch in scale)
-    scalar = snapshot.gas._load_dict[loadable]()
-    pos = snapshot.gas.get_coords(unit)
+    dens = snapshot.gas.get_number_density()
+    xyz = snapshot.gas.get_coords(unit)
+    uvw = snapshot.gas.get_velocities()
     hsml = snapshot.gas.get_smoothing_length(unit)
-    if loadable not in ['density', 'ndensity']:
-        dens = snapshot.gas.get_number_density()
-    else:
-        dens = scalar
 
     print 'Calculating...'
-    pos = analyze.center_box(pos,density=dens,**kwargs)
-    pos = set_view(view, pos)
-    x = pos[:,0]
-    y = pos[:,1]
-    z = pos[:,2]
+    xyz = analyze.center_box(xyz, velocity=uvw, density=dens, **kwargs)
+    xyz = set_view(view, xyz)
+    x = xyz.x
+    y = xyz.y
+    z = xyz.z
     if shiftx:
         x += shiftx
     if shifty:
@@ -279,18 +284,11 @@ def project(snapshot, loadable, scale, view, **kwargs):
     # Artificially shrink sink smoothing lengths.
     for s in snapshot.sinks:
         hsml[s.index] *= .5
-    arrs = [scalar, hsml]
-    if loadable in ['density', 'ndensity']:
-        x,y,z,scalar,hsml = trim_view(boxsize, x,y,z,scalar,hsml,**kwargs)
-        if dens_lim:
-            arrs = [scalar,x,y,z,hsml]
-            scalar,x,y,z,hsml = analyze.data_slice(scalar > dens_lim, *arrs)
-    else:
-        arrs.append(dens)
-        x,y,z,scalar,hsml,dens = trim_view(boxsize, x,y,z, *arrs, **kwargs)
-        if dens_lim:
-            arrs = [dens,x,y,z,scalar,hsml]
-            dens,x,y,z,scalar,hsml = analyze.data_slice(dens > dens_lim, *arrs)
+    data = snap.gas['x', 'y', 'z', 'ndensity', 'smoothing_length'].copy(deep=True)
+    data = trim_view(boxsize, data, **kwargs)
+    if dens_lim:
+        arrs = [scalar,x,y,z,hsml]
+        scalar,x,y,z,hsml = analyze.data_slice(scalar > dens_lim, *arrs)
     hsml = numpy.fmax(sm * hsml, boxsize/pps/2)
     xi,yi = build_grid(boxsize,pps)
     zi = scalar_map(x,y,scalar,hsml,boxsize,pps,xi.shape)

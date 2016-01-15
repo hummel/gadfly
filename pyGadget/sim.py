@@ -4,6 +4,7 @@ import os
 import glob
 import numpy
 import subprocess
+import threading
 import Queue
 import multiprocessing as mp
 
@@ -26,8 +27,11 @@ class Simulation(object):
                                     os.getenv('HOME') + '/data/sinks/')
         self.plotpath = simargs.pop('plotpath',
                                     os.getenv('HOME') + '/data/simplots/')
+        self.set_field_names(simargs.pop('field_names',{}))
                                      
-        self.hires = simargs.pop('refine', True)
+        self.refine_gas = simargs.pop('refine_gas', False)
+        self.refine_nbody = simargs.pop('refine_nbody', False)
+
         self.sink_tracking = simargs.pop('track_sinks', False)
         self.coordinates = simargs.pop('coordinates', 'physical')
         self.batch_viewscale = None
@@ -37,6 +41,20 @@ class Simulation(object):
 
         self.snapfiles = self.find_snapshots()
         self.track_sinks(self.sink_tracking)
+
+    def set_field_names(self, name_dict={}):
+        self.hdf5_fields = {'particleIDs':'ParticleIDs',
+                            'masses':'Masses',
+                            'coordinates':'Coordinates',
+                            'velocities':'Velocities',
+                            'smoothing_length':'SmoothingLength',
+                            'density':'Density',
+                            'internal_energy':'InternalEnergy',
+                            'adiabatic_index':'Adiabatic index',
+                            'abundances':'ChemicalAbundances',
+                            'sink_value':'SinkValue'}
+        self.hdf5_fields.update(name_dict)
+        self._internal_fields = {v:k for k,v in self.hdf5_fields.items()}
 
     def track_sinks(self, boolean=True):
         self.sink_tracking = boolean
@@ -58,7 +76,8 @@ class Simulation(object):
                         self.sinks.append(s)
 
     def refine_by_mass(self, boolean=True):
-        self.hires = boolean
+        self.refine_gas = boolean
+        self.refine_nbody = boolean
 
     def set_coordinate_system(self,coordinates):
         self.units.set_coordinate_system(coordinates)
@@ -94,8 +113,11 @@ class Simulation(object):
     def load_snapshot(self, num, *load_keys,**kwargs):
         if ((kwargs.pop('track_sinks',False)) or self.sink_tracking):
             kwargs['track_sinks'] = True
-        if not self.hires:
-            kwargs['refine_gas'] = False
+        if ((kwargs.pop('refine_gas',False)) or self.refine_gas):
+            kwargs['refine_gas'] = True
+        if ((kwargs.pop('refine_nbody',False)) or self.refine_nbody):
+            kwargs['refine_nbody'] = True
+
         try:
             fname = self.snapfiles[num]
         except KeyError:
@@ -160,3 +182,35 @@ class Simulation(object):
                 wp = self.plotpath + self.name
                 task(snap, wp)
         print "Compute process complete."
+
+#===============================================================================
+class Loader(threading.Thread):
+    def __init__(self, load_function, file_queue, data_queue):
+        self.file_queue = file_queue
+        self.data_queue = data_queue
+        self.load_function = load_function
+        threading.Thread.__init__(self)
+
+    def run(self):
+        lock = threading.Lock()
+        while 1:
+            try:
+                args = self.file_queue.get(timeout=1)
+            except Queue.Empty:
+                break # reached end of queue
+            if args is None:
+                self.data_queue.put(None)
+            else:
+                fname = args[0]
+                lock.acquire()
+                print 'loading snapshot', fname
+                lock.release()
+                try:
+                    snapshot = self.load_function(*args)
+                    snapshot.close()
+                    self.data_queue.put(snapshot)
+                except IOError:
+                    lock.acquire()
+                    print 'Warning: snapshot '+str(fname)+' not found!'
+                    lock.release()
+                    pass

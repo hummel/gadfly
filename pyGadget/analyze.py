@@ -1,6 +1,7 @@
 # analyze.py
 # Jacob Hummel
 import numpy
+import pandas
 import units
 import constants
 
@@ -8,70 +9,61 @@ import constants
 def reject_outliers(data, m=2):
     return data[numpy.abs(data - numpy.mean(data)) < m * numpy.std(data)]
 
-def data_slice(expr, *args):
-    arrs = [i for i in args]
-    slice_ = numpy.where(expr)[0]
-    for i,array in enumerate(arrs):
-        arrs[i] = array[slice_]
-    return arrs
-
-def find_center(x, y, z, dens=None, **kwargs):
+def find_center(pos_vel, density=None, **kwargs):
     centering = kwargs.pop('centering','box')
     verbose = kwargs.get('verbose', True)
     if centering in ['avg', 'max']:
-        if dens is not None:
+        if density is not None:
             dens_limit = kwargs.pop('dens_limit', 1e8)
             nparticles = kwargs.pop('centering_npart', 100)
             if centering == 'avg':
-                hidens = numpy.where(dens >= dens_limit)[0]
+                hidens = numpy.where(density >= dens_limit)[0]
                 while hidens.size < nparticles:
                     dens_limit /= 2
-                    hidens = numpy.where(dens >= dens_limit)[0]
+                    hidens = numpy.where(density >= dens_limit)[0]
                 if verbose:
                     print ('Center averaged over %d particles' %hidens.size)
                     print ('Center averaged over all particles with density '\
                                'greater than %.2e particles/cc' %dens_limit)
                 #Center on highest density clump, rejecting outliers:
-                cx = numpy.average(reject_outliers(x[hidens]))
-                cy = numpy.average(reject_outliers(y[hidens]))
-                cz = numpy.average(reject_outliers(z[hidens]))
-                print 'Density averaged box center: %.3e %.3e %.3e' %(cx,cy,cz)
+                center = reject_outliers(pos_vel).mean()
+                print 'Density averaged box center:',
             elif centering == 'max':
-                center = dens.argmax()
-                cx,cy,cz = x[center], y[center], z[center]
-                print 'Density maximum box center: %.3e %.3e %.3e' %(cx,cy,cz)
+                center = pos_vel.iloc[density.argmax()]
+                print 'Density maximum box center:',
         else:
             raise KeyError("'avg' and 'max' centering require gas density")
     elif centering == 'box':
-        cx = (x.max() + x.min())/2
-        cy = (y.max() + y.min())/2
-        cz = (z.max() + z.min())/2
-        print 'Simple box center: %.3e %.3e %.3e' %(cx,cy,cz)
+        center = (pos_vel.max() + pos_vel.min())/2
+        try:
+            center[['u', 'v', 'w']] = 0
+        except ValueError:
+            pass
+        print 'Simple box center:',
     else:
         raise KeyError("Centering options are 'avg', 'max', and 'box'")
-    return cx,cy,cz
+    print '%.3e %.3e %.3e' %(center.x, center.y, center.z)
+    return center
 
-def center_box(pos, center=None, **kwargs):
-    dens = kwargs.pop('density', None)
+def center_box(pos_vel, center=None, vcenter=None, **kwargs):
+    density = kwargs.pop('density', None)
     centering = kwargs.get('centering', None)
-    x = pos[:,0]
-    y = pos[:,1]
-    z = pos[:,2]
     if center:
-        cx = center[0]
-        cy = center[1]
-        cz = center[2]
+        center = pandas.Series(center, index=['x', 'y', 'z'])
+        vc = pandas.Series([0,0,0], index=['u', 'v', 'w'])
+        center = pandas.concat([center, vc])
+        if vcenter is not None:
+            center['u'] = vcenter[0]
+            center['v'] = vcenter[1]
+            center['w'] = vcenter[2]
     elif centering:
-        cx,cy,cz = find_center(x,y,z, dens, **kwargs)
+        center = find_center(pos_vel, density, **kwargs)
     else:
         print "WARNING! NO CENTER OR CENTERING ALGORITHM SPECIFIED!"
         print "Attempting simple box centering..."
-        cx,cy,cz = find_center(x,y,z, centering='box')
-
-    x -= cx
-    y -= cy
-    z -= cz
-    return numpy.column_stack((x,y,z))
+        center = find_center(pos_vel, density, **kwargs)
+    pos_vel -= center
+    return pos_vel
 
 def angular_momentum(xyz, uvw, mass):
     rxv = numpy.cross(xyz, uvw)
