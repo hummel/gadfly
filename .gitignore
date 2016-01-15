@@ -1,0 +1,19 @@
+##################
+### .gitignore ###
+##################
+
+## python build artifacts ##
+*.pyc
+build/*
+dist/*
+pyGadget.egg-info/*
+doc/build/*
+
+## data, images, and log files ##
+*.hdf5
+*.h5
+*.pdf
+*.log
+*.out
+*.err
+
