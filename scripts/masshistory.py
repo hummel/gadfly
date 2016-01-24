@@ -3,11 +3,12 @@
 # Jacob Hummel
 
 import sys
+import numpy as np
 import pandas as pd
 import pyGadget
 #===============================================================================
-def get_cdgm(sim, key):
-    snap = sim.load_snapshot(key, 'masses', 'coordinates', 'velocities',
+def get_cdgm(sim, tracer_pid, key):
+    snap = sim.load_snapshot(key, 'particleIDs', 'masses', 'coordinates', 'velocities',
                              'ndensity')
     z = snap.header.Redshift
     if sim.tsink:
@@ -19,9 +20,17 @@ def get_cdgm(sim, key):
         print "t_sink={:.1f}".format(t)
     else:
         print "Snapshot {}: z={:.3f}".format(key, z)
-    pos = snap.gas.get_coords(unit='pc', system='spherical', centering='avg')
+    pids = snap.gas.get_PIDs()
+    tracer_idx = np.where(pids == tracer_pid)[0]
+    del pids
+
+    xyz = snap.gas.get_coords(unit='pc', system='cartesian')
+    center = xyz[tracer_idx][0]
+    tracer_pos = (center[0], center[1], center[2])
+    pos = snap.gas.get_coords(unit='pc', system='spherical', center=tracer_pos)
     r = pos[:,0]
-    del pos
+    del xyz, pos
+
     dens = snap.gas.get_number_density()
     mass = snap.gas.get_masses()
     mdata = [z,t]
@@ -37,11 +46,11 @@ def get_cdgm(sim, key):
 
 if __name__ == '__main__':
     simname = sys.argv[1]
+    tracer_id = int(sys.argv[2])
     sim = pyGadget.sim.Simulation(simname, length='pc', track_sinks=True)
     keys = sim.snapfiles.keys()
     keys.sort()
-#    ikeys = keys[:500] + keys[500::2]
-    ikeys = keys
+    ikeys = keys[:-1]
     nkeys = ['10cc', '100cc', '1e4cc', '1e6cc', '1e8cc', '1e9cc', '1e10cc', '1e11cc']
     rkeys = ['1kpc', '100pc', '10pc', '1pc', '.1pc', '1e4AU', '5e3AU', '1e3AU']
     col_names = ['z', 'time']
@@ -50,7 +59,7 @@ if __name__ == '__main__':
     df = pd.DataFrame(index=ikeys, columns=col_names)
     for key in ikeys:
         try:
-            mdata = get_cdgm(sim, key)
+            mdata = get_cdgm(sim, tracer_id, key)
             df.loc[key] = mdata
         except(IOError):
             pass
