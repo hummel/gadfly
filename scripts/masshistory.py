@@ -25,10 +25,10 @@ def get_cdgm(sim, key):
     dens = snap.gas.get_number_density()
     mass = snap.gas.get_masses()
     mdata = [z,t]
-    for dlim in [10,100,1e4,1e8,1e10]:
+    for dlim in [10,100,1e4,1e6,1e8,1e9,1e10,1e11]:
         (m,) = pyGadget.analyze.data_slice(dens >= dlim, mass)
         mdata.append(m.sum())
-    for rlim in [100, 10, 1, .1, 0.04848, 0.02424, 0.004848]:
+    for rlim in [1000, 100, 10, 1, .1, 0.04848, 0.02424, 0.004848]:
         (m,) = pyGadget.analyze.data_slice(r <= rlim, mass)
         mdata.append(m.sum())
     snap.gas.cleanup()
@@ -42,8 +42,8 @@ if __name__ == '__main__':
     keys.sort()
 #    ikeys = keys[:500] + keys[500::2]
     ikeys = keys
-    nkeys = ['10cc', '100cc', '1e4cc', '1e8cc', '1e10cc']
-    rkeys = ['100pc', '10pc', '1pc', '.1pc', '1e4AU', '5e3AU', '1e3AU']
+    nkeys = ['10cc', '100cc', '1e4cc', '1e6cc', '1e8cc', '1e9cc', '1e10cc', '1e11cc']
+    rkeys = ['1kpc', '100pc', '10pc', '1pc', '.1pc', '1e4AU', '5e3AU', '1e3AU']
     col_names = ['z', 'time']
     col_names.extend(nkeys)
     col_names.extend(rkeys)
