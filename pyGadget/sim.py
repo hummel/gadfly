@@ -91,15 +91,12 @@ class Simulation(object):
             raise KeyError
 
     def find_snapshots(self, *nums):
-        path = self.filepath + self.name
-        files0 = glob.glob(path+'/snapshot_???.hdf5')
-        files1 = glob.glob(path+'/snapshot_????.hdf5')
-        files0.sort()
-        files1.sort()
-        files = files0 + files1
+        path = self.filepath + '/' + self.name
+        files = glob.glob(path+'/snapshot_*')
+        files.sort()
         snapfiles = {}
         for f in files:
-            num = int(f[:-5].split('_')[-1])
+            num = int(f.split('_')[1].split('.')[0])
             if nums:
                 if num in nums:
                     snapfiles[num] = f

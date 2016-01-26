@@ -5,7 +5,7 @@ Physical cgs unit conversions for analyzing my Gadget2 HDF5 snapshot data.
 """
 ### Code units:
 Mass_g = 1.989e43
-Length_cm = 3.085678e21
+Length_cm = 3.085678e24
 Velocity_cgs= 1.0e5
 
 ### cgs Conversions

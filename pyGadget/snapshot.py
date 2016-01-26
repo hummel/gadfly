@@ -21,8 +21,7 @@ class File(object):
     def __init__(self, sim, filename, **kwargs):
         self.sim = sim
         self.filename = filename
-        f = filename.replace('.hdf5','')
-        self.number = int(f.split('_')[-1])
+        self.number = int(self.filename.split('_')[1].split('.')[0])
         self.file_id = h5py.File(filename, 'r')
         self.header = Header(self.file_id)
         kwargs['refine'] = kwargs.pop('refine_nbody', False)
