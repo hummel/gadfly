@@ -8,10 +8,8 @@ import threading
 import Queue
 import multiprocessing as mp
 
-import sink
 import units
 import snapshot
-import plotting
 
 class Simulation(object):
     """
@@ -23,8 +21,6 @@ class Simulation(object):
         self.name = sim_name
         self.filepath = simargs.pop('path',os.getenv('HOME')+'/sim/')
         self.datapath = simargs.pop('datapath',os.getenv('HOME')+'/data/')
-        self.sinkpath = simargs.pop('sinkpath',
-                                    os.getenv('HOME') + '/data/sinks/')
         self.plotpath = simargs.pop('plotpath',
                                     os.getenv('HOME') + '/data/simplots/')
         self.set_field_names(simargs.pop('field_names',{}))
@@ -32,7 +28,6 @@ class Simulation(object):
         self.refine_gas = simargs.pop('refine_gas', False)
         self.refine_nbody = simargs.pop('refine_nbody', False)
 
-        self.sink_tracking = simargs.pop('track_sinks', False)
         self.coordinates = simargs.pop('coordinates', 'physical')
         self.batch_viewscale = None
 
@@ -40,7 +35,6 @@ class Simulation(object):
         self.units.set_coordinate_system(self.coordinates)
 
         self.snapfiles = self.find_snapshots()
-        self.track_sinks(self.sink_tracking)
 
     def set_field_names(self, name_dict={}):
         self.hdf5_fields = {'particleIDs':'ParticleIDs',
@@ -55,25 +49,6 @@ class Simulation(object):
                             'sink_value':'SinkValue'}
         self.hdf5_fields.update(name_dict)
         self._internal_fields = {v:k for k,v in self.hdf5_fields.items()}
-
-    def track_sinks(self, boolean=True):
-        self.sink_tracking = boolean
-        self.tsink = None
-        if self.sink_tracking:
-            try:
-                self.sink1 = sink.SinkHistory(self.sinkpath + self.name)
-                print "Found sinkfiles.  Loading sinkdata."
-                self.tsink = self.sink1.time[0]
-            except IOError:
-                pass
-            if self.tsink:
-                self.sinks = [self.sink1]
-                nsinks = self.sink1.all_ids.size
-                if nsinks > 1:
-                    for i in range(2,nsinks+1):
-                        s = sink.SinkHistory(self.sinkpath+self.name, i)
-                        vars(self)['sink'+str(i)] = s
-                        self.sinks.append(s)
 
     def refine_by_mass(self, boolean=True):
         self.refine_gas = boolean
@@ -111,8 +86,6 @@ class Simulation(object):
         self.snapfiles = self.find_snapshots(*nums)
 
     def load_snapshot(self, num, *load_keys,**kwargs):
-        if ((kwargs.pop('track_sinks',False)) or self.sink_tracking):
-            kwargs['track_sinks'] = True
         if ((kwargs.pop('refine_gas',False)) or self.refine_gas):
             kwargs['refine_gas'] = True
         if ((kwargs.pop('refine_nbody',False)) or self.refine_nbody):
@@ -127,11 +100,6 @@ class Simulation(object):
                 raise IOError('Sim ' + self.name + ' snapshot '
                               + str(num) + ' not found!')
         snap = snapshot.File(self, fname, **kwargs)
-
-        if kwargs.get('track_sinks', False):
-            if snap.gas._sink_indices.size > 0:
-                if snap.sim.tsink is None:
-                    snap.sim.tsink = snap.header.Time * units.Time_yr
 
         if load_keys:
             snap.gas.load_data(*load_keys,**kwargs)

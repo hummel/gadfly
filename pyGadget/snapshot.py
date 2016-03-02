@@ -29,9 +29,6 @@ class File(object):
         self.dm = PartTypeNbody(self.file_id, 1, sim, **kwargs)
         kwargs['refine'] = kwargs.pop('refine_gas', False)
         self.gas = PartTypeSPH(self.file_id, 0, sim, **kwargs)
-        self.sinks = []
-        if kwargs.get('track_sinks', False):
-            self.sinks = self.gas.get_sink_properties()
 
     def __getstate__(self):
         result = self.__dict__.copy()
@@ -42,18 +39,6 @@ class File(object):
 #        self.__dict__ = in_dict
 #        self.file_id = h5py.File(self.filename, 'r')
 #        self.header = hdf5.Header(self.file_id)
-
-    def update_sink_coordinates(self, x,y,z):
-        for s in self.sinks:
-            s.update_coordinates(x,y,z)
-
-    def update_sink_velocities(self, u,v,w):
-        for s in self.sinks:
-            s.update_velocities(u,v,w)
-
-    def update_sink_frame_ofR(self, xyz, uvw):
-        self.update_sink_coordinates(xyz[:,0], xyz[:,1], xyz[:,2])
-        self.update_sink_velocities(uvw[:,0], uvw[:,1], uvw[:,2])
         
     def keys(self):
         for key in self.file_id.keys():

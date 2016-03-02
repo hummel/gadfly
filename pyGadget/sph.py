@@ -9,7 +9,6 @@ from pandas import Series, DataFrame
 from nbody import PartTypeNbody
 import units
 import constants
-import sink
 
 class PartTypeSPH(PartTypeNbody):
     """
@@ -25,11 +24,6 @@ class PartTypeSPH(PartTypeNbody):
         if self.refined:
             print 'Turning on gas particle refinement.'
             self.refine_dataset()
-
-        self.sink_tracking = kwargs.pop('track_sinks', False)
-        if self.sink_tracking:
-            print 'Tracking sinks.'
-            self.locate_sink_particles()
 
     def __getstate__(self):
         result = self.__dict__.copy()
@@ -83,23 +77,6 @@ class PartTypeSPH(PartTypeNbody):
         if criterion is None:
             criterion = (self.masses > self.masses.min()) & (self.sink_value == 0.)
         super(PartTypeNbody, self).refine_dataset(criterion)
-
-    def locate_sink_particles(self):
-        sinks = self.get_sinks()
-        self._sink_indices = numpy.where(sinks != 0.)[0]
-        print self._sink_indices.size, 'sinks found.'
-
-    def get_sink_properties(self):
-        mass = self.get_masses()
-        pos = self.get_coords()
-        vel = self.get_velocities()
-        pid = self.get_PIDs()
-        sinks = []
-        for index in self._sink_indices:
-            sinks.append(sink.Sink(m = mass[index], pid = pid[index],
-                                   pos = pos[index], vel=vel[index],
-                                   index=index))
-        return sinks
 
     def load_density(self, unit=None):
         """
