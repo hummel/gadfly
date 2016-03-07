@@ -8,7 +8,6 @@ from pandas import Series, DataFrame
 
 from nbody import PartTypeNbody
 import units
-import constants
 
 class PartTypeSPH(PartTypeNbody):
     """

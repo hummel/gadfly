@@ -7,7 +7,6 @@ import numpy
 from pandas import Series, DataFrame
 
 import units
-import constants
 import coordinates
 import analyze
 import visualize

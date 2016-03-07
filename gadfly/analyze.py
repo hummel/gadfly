@@ -3,7 +3,6 @@
 import numpy
 import pandas
 import units
-import constants
 
 #===============================================================================
 def reject_outliers(data, m=2):
