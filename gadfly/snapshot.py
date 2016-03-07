@@ -26,9 +26,9 @@ class File(object):
         self.file_id = h5py.File(filename, 'r')
         self.header = Header(self.file_id)
         kwargs['refine'] = kwargs.pop('refine_nbody', False)
-        self.dm = PartTypeNbody(self.file_id, 1, sim, **kwargs)
+        self.define_ptype('dm', 1, PartTypeNbody, **kwargs)
         kwargs['refine'] = kwargs.pop('refine_gas', False)
-        self.gas = PartTypeSPH(self.file_id, 0, sim, **kwargs)
+        self.define_ptype('gas', 0, PartTypeSPH, **kwargs)
 
     def __getstate__(self):
         result = self.__dict__.copy()
@@ -36,10 +36,8 @@ class File(object):
         del result['file_id']
         return result
 
-#    def __setstate__(self, in_dict):
-#        self.__dict__ = in_dict
-#        self.file_id = h5py.File(self.filename, 'r')
-#        self.header = hdf5.Header(self.file_id)
+    def define_ptype(self, groupname, ptype, ptype_class, **kwargs):
+        vars(self)[groupname] = ptype_class(self.file_id, ptype, self.sim, **kwargs)
         
     def keys(self):
         for key in self.file_id.keys():
