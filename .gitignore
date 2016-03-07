@@ -6,7 +6,7 @@
 *.pyc
 build/*
 dist/*
-pyGadget.egg-info/*
+gadfly.egg-info/*
 doc/build/*
 
 ## data, images, and log files ##
