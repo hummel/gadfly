@@ -32,6 +32,7 @@ class File(object):
 
     def __getstate__(self):
         result = self.__dict__.copy()
+        self.close()
         del result['file_id']
         return result
 
@@ -45,5 +46,8 @@ class File(object):
             print key
         
     def close(self):
-        self.file_id.close()
-
+        try:
+            self.file_id.close()
+        except(ValueError):
+            print 'File already closed.'
+            pass
