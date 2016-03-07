@@ -6,11 +6,11 @@ except ImportError:
     from distutils.core import setup
     have_setuptools = False
 
-def setup_pyGadget():
+def setup_gadfly():
 
     setup(
-        name='pyGadget',
-        version='0.0',
+        name='gadfly',
+        version='0.1',
         description='Toolkit for analyzing Gadget SPH using pandas dataframes',
         author='Jacob Hummel',
         author_email='jhummel@astro.as.utexas.edu',
@@ -26,13 +26,13 @@ def setup_pyGadget():
             'Topic :: Scientific/Engineering :: Physics'
         ],
         # zip_safe=False,
-        packages=['pyGadget'], # ['pyGadget', 'pyGadget.more'],
+        packages=['gadfly'], # ['gadfly', 'gadfly.more'],
         package_dir={
-            'pyGadget' : 'pyGadget',
-            # 'pyGadget.more' : 'pyGadget/more',
+            'gadfly' : 'gadfly',
+            # 'gadfly.more' : 'gadfly/more',
         },
     )
     return
 
 if __name__ == '__main__':
-    setup_pyGadget()
+    setup_gadfly()
