@@ -3,46 +3,49 @@
 """
 Physical cgs unit conversions for analyzing my Gadget2 HDF5 snapshot data.
 """
-### Code units:
-Mass_g = 1.989e43
-Length_cm = 3.085678e21
-Velocity_cgs= 1.0e5
 
-### cgs Conversions
-Time_s= Length_cm / Velocity_cgs
-Density_cgs= Mass_g / Length_cm**3
-Pressure_cgs= Mass_g / Length_cm/ Time_s**2
-Energy_cgs= Mass_g * Length_cm**2 / Time_s**2
-
-### Additional Mass Conversions
-Mass_sun = Mass_g / 1.989e33
-
-### Additional Distance Conversions
-Length_AU = Length_cm / 1.49598e13
-Length_pc = Length_cm / 3.085678e18
-Length_kpc = Length_pc / 1e3
-
-### Additional Velocity Conversions
-Velocity_kms = Velocity_cgs / 1e5
-
-### Additional Time Conversions
-Time_yr = Time_s / 3.15569e7
-Time_myr = Time_yr / 1e6
-Time_gyr = Time_yr / 1e9
 
 ### Unit Selection Dictionaries
 
 class Units(object):
     def __init__(self, **unitargs):
         super(Units,self).__init__()
-        self.lengths = {'cm':Length_cm, 'AU':Length_AU,
+
+        ### Code units:
+        UnitMass_in_g = unitargs.pop('UnitMass_in_g', 1.989e43)
+        UnitLength_in_cm = unitargs.pop('UnitLength_in_cm', 3.085678e21)
+        UnitVelocity_in_cm_per_s= unitargs.pop('UnitVelocity_in_cm_per_s', 1e5)
+
+        ### cgs Conversions
+        Time_s= UnitLength_in_cm / UnitVelocity_in_cm_per_s
+        Density_cgs= UnitMass_in_g / UnitLength_in_cm**3
+        Pressure_cgs= UnitMass_in_g / UnitLength_in_cm/ Time_s**2
+        Energy_cgs= UnitMass_in_g * UnitLength_in_cm**2 / Time_s**2
+
+        ### Additional Mass Conversions
+        Mass_sun = UnitMass_in_g / 1.989e33
+
+        ### Additional Distance Conversions
+        Length_AU = UnitLength_in_cm / 1.49598e13
+        Length_pc = UnitLength_in_cm / 3.085678e18
+        Length_kpc = Length_pc / 1e3
+
+        ### Additional Velocity Conversions
+        Velocity_kms = UnitVelocity_in_cm_per_s / 1e5
+
+        ### Additional Time Conversions
+        Time_yr = Time_s / 3.15569e7
+        Time_myr = Time_yr / 1e6
+        Time_gyr = Time_yr / 1e9
+
+        self.lengths = {'cm':UnitLength_in_cm, 'AU':Length_AU,
                         'pc':Length_pc, 'kpc':Length_kpc}
-        self.masses = {'g':Mass_g, 'solar':Mass_sun}
+        self.masses = {'g':UnitMass_in_g, 'solar':Mass_sun}
         self.times = {'s':Time_s, 'yr':Time_yr, 'myr':Time_myr, 'gyr':Time_gyr}
-        self.velocities = {'cgs':Velocity_cgs, 'kms':Velocity_kms}
+        self.velocities = {'cgs':UnitVelocity_in_cm_per_s, 'kms':Velocity_kms}
         self.densities = {'cgs':Density_cgs}
         self.pressures = {'cgs':Pressure_cgs}
-        self.energies = {'cgs':Energy_cgs, 'specific cgs':Energy_cgs/Mass_g}
+        self.energies = {'cgs':Energy_cgs, 'specific cgs':Energy_cgs/UnitMass_in_g}
 
         self.remove_h = not unitargs.pop('units_over_h', False)
         self.set_coordinate_system(unitargs.pop('coordinates', 'physical'))
@@ -55,8 +58,6 @@ class Units(object):
         self.set_energy(unitargs.pop('energy', 'cgs'))
         self._coord_unit = self.length_unit
         self._smoothing_unit = self.length_unit
-        self._sink_mass_unit = None
-        self._sink_coord_unit = None
 
     def set_coordinate_system(self,coordinates):
         if coordinates not in ['physical', 'comoving']:
@@ -103,10 +104,3 @@ class Units(object):
         val /= self.lengths[u1]
         val *= self.lengths[u2]
         return val
-
-    def update_sink_coords(self, new_unit, sinks):
-        for sink in sinks:
-            sink.x = self.convert_units(sink.x, self._sink_coord_unit, new_unit)
-            sink.y = self.convert_units(sink.y, self._sink_coord_unit, new_unit)
-            sink.z = self.convert_units(sink.z, self._sink_coord_unit, new_unit)
-        self._sink_coord_unit = new_unit
