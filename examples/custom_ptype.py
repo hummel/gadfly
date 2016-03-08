@@ -6,18 +6,18 @@ This module contains classes for reading Gadget2 SPH particle data.
 import numpy
 from pandas import Series, DataFrame
 
-from nbody import PartTypeNbody
-import units
-import constants
+import gadfly as gdf
+from gadfly import units
 
-class PartTypeSPH(PartTypeNbody):
+
+class PartTypeCustom(gdf.nbody.PartTypeNbody):
     """
     Class for SPH particles.
     Extends: nbody.PartTypeNbody
     """
     def __init__(self, file_id, ptype, sim, **kwargs):
         kwargs.pop('refine_nbody', None)
-        super(PartTypeNbody,self).__init__(file_id, ptype, sim, **kwargs)
+        super(gdf.nbody.PartTypeNbody,self).__init__(file_id, ptype, sim, **kwargs)
         self.__init_load_dict__()
 
         self.refined = kwargs.pop('refine', False)
@@ -47,7 +47,7 @@ class PartTypeSPH(PartTypeNbody):
         self.__init_load_dict__()
 
     def __init_load_dict__(self):
-        super(PartTypeSPH,self).__init_load_dict__()
+        super(PartTypeCustom,self).__init_load_dict__()
         sph_loaders = {'density':self.get_density,
                        'ndensity':self.get_number_density,
                        'internal_energy':self.get_internal_energy,
@@ -180,7 +180,7 @@ class PartTypeSPH(PartTypeNbody):
         """
         Load particle adiabatic index.
         """
-        gamma = self._adiabatic_index.value
+        gamma = self._Adiabatic_index.value
         if self._drop_ids is not None:
             gamma = Series(gamma, index=self._particleIDs.value)
             self['adiabatic_index'] = gamma.drop(self._drop_ids)
@@ -264,7 +264,7 @@ class PartTypeSPH(PartTypeNbody):
         default_species = ['H2', 'HII', 'DII', 'HD', 'HeII', 'HeIII']
         if tracked_species is None:
             tracked_species = default_species
-        abundances = self._abundances.value
+        abundances = self._ChemicalAbundances.value
         abundances = DataFrame(abundances, index=self._particleIDs.value,
                                columns=tracked_species)
         if self._drop_ids is not None:
@@ -353,7 +353,7 @@ class PartTypeSPH(PartTypeNbody):
         h2frac = self.get_H2_fraction()
         mu = (0.24/4.0) + ((1.0-h2frac)*0.76) + (h2frac*.76/2.0)
         mu = 1 / mu # mean molecular weight
-        self['temperature'] = (mu * constants.m_H / constants.k_B) * energy * (gamma-1)
+        self['temperature'] = (mu * 1.6726e-24 / 1.3806e-16) * energy * (gamma-1)
 
     def get_temperature(self):
         """

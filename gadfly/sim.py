@@ -43,10 +43,7 @@ class Simulation(object):
                             'velocities':'Velocities',
                             'smoothing_length':'SmoothingLength',
                             'density':'Density',
-                            'internal_energy':'InternalEnergy',
-                            'adiabatic_index':'Adiabatic index',
-                            'abundances':'ChemicalAbundances',
-                            'sink_value':'SinkValue'}
+                            'internal_energy':'InternalEnergy'}
         self.hdf5_fields.update(name_dict)
         self._internal_fields = {v:k for k,v in self.hdf5_fields.items()}
 
@@ -101,10 +98,10 @@ class Simulation(object):
                               + str(num) + ' not found!')
         snap = snapshot.File(self, fname, **kwargs)
 
-        if load_keys:
-            snap.gas.load_data(*load_keys,**kwargs)
-        else:
-            snap.gas.cleanup()
+        #if load_keys:
+        #    snap.gas.load_data(*load_keys,**kwargs)
+        #else:
+        #    snap.gas.cleanup()
         return snap
 
     def multitask(self, task, *data, **kwargs):
