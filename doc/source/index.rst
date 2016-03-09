@@ -8,14 +8,14 @@ Overview
 
 .. This is a comment.
 
-Tools for reading and analyzing hdf5 snapshot files from a modified version of the SPH simulation code Gadget2
+Tools for reading and analyzing hdf5 snapshot files produced by the smoothed-particle hydrodynamics simulation code GADGET.
 
 Contents:
 
 .. toctree::
    :maxdepth: 2
 
-Using pyGadget
+Using gadfly
 ==============
 
 .. toctree::
