@@ -1,37 +1,37 @@
-.. _pyGadget:
+.. _gadfly:
 
-pyGadget -- :mod:`pyGadget`
+gadfly -- :mod:`gadfly`
 ====================================
 
-.. currentmodule:: pyGadget
+.. currentmodule:: gadfly
 
-.. automodule:: pyGadget
+.. automodule:: gadfly
 	:members:
 
 
 Simulation Metadata Class
 *************************
-.. autoclass:: pyGadget.sim.Simulation
+.. autoclass:: gadfly.sim.Simulation
 	:members:
 
 Gadget Header
 *************
-.. autoclass:: pyGadget.hdf5.Header
+.. autoclass:: gadfly.hdf5.Header
 	:members:
 
 N-body Particles (PartType1)
 ****************************
-.. autoclass:: pyGadget.nbody.PartTypeNbody
+.. autoclass:: gadfly.nbody.PartTypeNbody
 	:members:
 
 Gas Particles (PartType0)
 *************************
-.. autoclass:: pyGadget.sph.PartTypeSPH
+.. autoclass:: gadfly.sph.PartTypeSPH
 	:members:
 
 Particle Data Base Class
 ************************
-.. autoclass:: pyGadget.hdf5.PartType
+.. autoclass:: gadfly.hdf5.PartType
 	:members:
 
 
