@@ -16,13 +16,14 @@ class Simulation(object):
     Class for simulations.  Primarily for gathering metadata such as file
     paths and unit coversions.
     """
-    def __init__(self, sim_name, **simargs):
+    def __init__(self, path, **simargs):
         super(Simulation,self).__init__()
-        self.name = sim_name
-        self.filepath = simargs.pop('path',os.getenv('HOME')+'/sim/')
-        self.datapath = simargs.pop('datapath',os.getenv('HOME')+'/data/')
-        self.plotpath = simargs.pop('plotpath',
-                                    os.getenv('HOME') + '/data/simplots/')
+        if os.path.isdir(path):
+            self.filepath = path
+        else:
+            raise IOError('Path not found.')
+        self.name = path.split('/')[-1]
+        self.savepath = simargs.pop('savepath', self.filepath)
         self.set_field_names(simargs.pop('field_names',{}))
                                      
         self.refine_gas = simargs.pop('refine_gas', False)
@@ -63,9 +64,8 @@ class Simulation(object):
             raise KeyError
 
     def find_snapshots(self, *nums):
-        path = self.filepath + self.name
-        files0 = glob.glob(path+'/snapshot_???.hdf5')
-        files1 = glob.glob(path+'/snapshot_????.hdf5')
+        files0 = glob.glob(self.filepath+'/snapshot_???.hdf5')
+        files1 = glob.glob(self.filepath+'/snapshot_????.hdf5')
         files0.sort()
         files1.sort()
         files = files0 + files1
