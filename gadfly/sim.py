@@ -24,6 +24,7 @@ class Simulation(object):
             raise IOError('Path not found.')
         self.name = path.split('/')[-1]
         self.savepath = simargs.pop('savepath', self.filepath)
+        self.snapfile_base = simargs.pop('snapfile_base', 'snapshot')
         self.set_field_names(simargs.pop('field_names',{}))
                                      
         self.refine_gas = simargs.pop('refine_gas', False)
@@ -35,7 +36,7 @@ class Simulation(object):
         self.units = units.Units(**simargs)
         self.units.set_coordinate_system(self.coordinates)
 
-        self.snapfiles = self.find_snapshots()
+        self.snapfiles = self.find_snapshots(self.snapfile_base)
 
     def set_field_names(self, name_dict={}):
         self.hdf5_fields = {'particleIDs':'ParticleIDs',
@@ -63,9 +64,9 @@ class Simulation(object):
         else:
             raise KeyError
 
-    def find_snapshots(self, *nums):
-        files0 = glob.glob(self.filepath+'/snapshot_???.hdf5')
-        files1 = glob.glob(self.filepath+'/snapshot_????.hdf5')
+    def find_snapshots(self, snapfile_base, *nums):
+        files0 = glob.glob(self.filepath+'/'+snapfile_base+'_???.hdf5')
+        files1 = glob.glob(self.filepath+'/'+snapfile_base+'_????.hdf5')
         files0.sort()
         files1.sort()
         files = files0 + files1
