@@ -20,3 +20,7 @@ The bolded entries are optional, needed only to take advantage of `gadfly`'s vol
 `python setup.py install`
 
 to install `gadfly`. 
+
+Documentation
+=============
+Documentation is available on [Read the Docs](http://gadfly.readthedocs.org/en/latest/#), but is very much a work in progress at the moment.
